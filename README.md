@@ -2,23 +2,41 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
-First, run the development server:
+This project uses [Bun](https://bun.sh) as the package manager and runtime.
+
+First, install dependencies:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+bun install
+```
+
+Then, run the development server:
+
+```bash
+bun run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Setup
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create a `.env.local` file in the root directory with your Google AI API key:
+
+```bash
+GOOGLE_GENERATIVE_AI_API_KEY=your-api-key-here
+```
+
+Get your API key from [Google AI Studio](https://aistudio.google.com/app/apikey).
+
+## Tech Stack
+
+- **Framework**: Next.js 16 (App Router)
+- **Runtime**: Bun
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS v4
+- **AI Provider**: Google Gemini (via Vercel AI SDK)
+- **State Management**: React Context
+- **Validation**: Zod v3
 
 ## Learn More
 
