@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 
 const navItems = [
@@ -15,8 +16,15 @@ export function Sidebar() {
   return (
     <aside className="hidden md:flex md:flex-col md:w-60 md:fixed md:inset-y-0 bg-surface border-r border-border">
       <div className="p-6">
-        <Link href="/recipes" className="flex items-center gap-2">
-          <span className="text-3xl">🥗</span>
+        <Link href="/recipes" className="flex items-center gap-3">
+          <Image 
+            src="/logo.png" 
+            alt="PlateMyDay Logo" 
+            width={48} 
+            height={48}
+            className="w-12 h-12"
+            priority
+          />
           <h1 className="text-xl font-bold text-primary-dark">PlateMyDay</h1>
         </Link>
       </div>

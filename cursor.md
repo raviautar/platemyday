@@ -1,165 +1,70 @@
 # PlateMyDay - Cursor Agent Guide
 
-## Project Summary
+> **META**: Keep this file focused on HIGH-IMPACT signals only. No nitty-gritty details. Information here should help agents navigate and understand the project without extensive exploration.
 
-**PlateMyDay** is an AI-powered meal planning application that helps users create and manage recipes and generate weekly meal plans using Google Gemini AI.
+## Critical Rules
 
-### Core Features
-- Recipe management (Create, Read, Update, Delete)
-- AI-powered recipe generation
-- Weekly meal planning with AI assistance
-- Drag-and-drop meal organization
-- Customizable AI prompts
+1. **ALWAYS use `bun`** (not npm) - `bun install`, `bun add`, `bun run dev`
+2. **AI Provider**: Google Gemini (`gemini-3-flash-preview`) via `@ai-sdk/google` - NOT Claude/Anthropic
+3. **Environment**: `GOOGLE_GENERATIVE_AI_API_KEY` required in `.env.local`
+4. **No AI-slop comments** - Only comment when logic is non-obvious
+5. **Build verification**: Always run `bun run build` after completing new features to verify everything works
 
-### Technology Stack
+## Project Overview
+
+AI-powered meal planning app with recipe management and weekly meal planning using Google Gemini.
+
+### Tech Stack
 - **Framework**: Next.js 16 (App Router)
-- **Runtime**: Bun (package manager and runtime)
+- **Runtime**: Bun
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS v4
-- **AI Provider**: Google Gemini (`gemini-3-flash-preview`) via Vercel AI SDK
-- **State Management**: React Context API
+- **AI**: Google Gemini via Vercel AI SDK
+- **State**: React Context + localStorage
 - **Validation**: Zod v3
-- **Drag & Drop**: @hello-pangea/dnd
-- **Data Persistence**: Browser localStorage
 
-### Project Structure
-
-```
-platemyday/
-├── src/
-│   ├── app/                    # Next.js App Router pages
-│   │   ├── api/               # API routes for AI generation
-│   │   ├── meal-plan/         # Meal planning page
-│   │   ├── recipes/           # Recipe management page
-│   │   └── settings/          # Settings page
-│   ├── components/            # React components
-│   │   ├── layout/           # App shell, navigation
-│   │   ├── meal-plan/        # Meal plan UI components
-│   │   ├── recipes/          # Recipe UI components
-│   │   └── ui/               # Reusable UI components
-│   ├── contexts/             # React Context providers
-│   ├── hooks/                # Custom React hooks
-│   ├── lib/                  # Utilities (AI schemas, constants)
-│   └── types/                # TypeScript type definitions
-└── public/                   # Static assets
-```
-
-## Key Files for Agent Navigation
-
-### Core Application
-- `src/app/layout.tsx` - Root layout with metadata and font configuration
-- `src/components/layout/AppShell.tsx` - App shell with all context providers (Recipe, MealPlan, Settings, Toast)
-- `src/components/layout/Sidebar.tsx` - Desktop navigation sidebar
-- `src/components/layout/BottomNav.tsx` - Mobile bottom navigation
-- `src/app/globals.css` - Global styles and Tailwind CSS configuration
-
-### Recipe Management
-- `src/app/recipes/page.tsx` - Recipes page with list, modals, and state management
-- `src/contexts/RecipeContext.tsx` - Recipe state management and CRUD operations
-- `src/components/recipes/RecipeList.tsx` - Recipe list display with search
-- `src/components/recipes/RecipeCard.tsx` - Individual recipe card component
-- `src/components/recipes/RecipeForm.tsx` - Recipe create/edit form
-- `src/components/recipes/RecipeDetail.tsx` - Recipe detail view modal
-- `src/components/recipes/AIRecipeGenerator.tsx` - AI recipe generation modal
-- `src/app/api/generate-recipe/route.ts` - API endpoint for AI recipe generation
-
-### Meal Planning
-- `src/app/meal-plan/page.tsx` - Meal plan page with generation logic
-- `src/contexts/MealPlanContext.tsx` - Meal plan state management
-- `src/components/meal-plan/WeekView.tsx` - Week grid with drag-and-drop functionality
-- `src/components/meal-plan/DayColumn.tsx` - Individual day column component
-- `src/components/meal-plan/MealCard.tsx` - Individual meal card component
-- `src/components/meal-plan/MealPlanControls.tsx` - Controls for generating/clearing plans
-- `src/app/api/generate-meal-plan/route.ts` - API endpoint for AI meal plan generation
-
-### Settings
-- `src/app/settings/page.tsx` - Settings page for customizing AI prompts
-- `src/contexts/SettingsContext.tsx` - Settings state management
-
-### Types & Utilities
-- `src/types/index.ts` - TypeScript interfaces (Recipe, MealSlot, WeekPlan, etc.)
-- `src/lib/ai.ts` - Zod schemas for AI structured outputs
-- `src/lib/constants.ts` - Constants (days of week, meal types, storage keys)
-- `src/hooks/useLocalStorage.ts` - Custom hook for localStorage persistence
-
-### UI Components
-- `src/components/ui/Button.tsx` - Button component
-- `src/components/ui/Input.tsx` - Input component
-- `src/components/ui/Textarea.tsx` - Textarea component
-- `src/components/ui/Toast.tsx` - Toast notification system
-- `src/components/ui/Modal.tsx` - Modal component
-- `src/components/ui/LoadingSpinner.tsx` - Loading spinner
-
-## Rules & Conventions
-
-### Package Management
-- **ALWAYS use `bun` instead of `npm`** for this project
-- Install dependencies: `bun install`
-- Add packages: `bun add <package-name>`
-- Remove packages: `bun remove <package-name>`
-- Run dev server: `bun run dev`
-
-### AI Provider
-- This project uses **Google Gemini** (NOT Claude/Anthropic)
-- Provider package: `@ai-sdk/google`
-- Model: `gemini-3-flash-preview`
-- Environment variable: `GOOGLE_GENERATIVE_AI_API_KEY`
-
-### Code Style
-- **No AI-slop comments**: Only add comments if absolutely necessary and logic is not straightforward
-- Use TypeScript for type safety
-- Use React Context for state management
-- All data is stored in localStorage
+## Architecture Essentials
 
 ### Data Flow
-1. User actions trigger context updates (Recipe, MealPlan, Settings)
-2. Context updates automatically sync to localStorage via `useLocalStorage` hook
-3. Components read from context using custom hooks (`useRecipes`, `useMealPlan`, `useSettings`)
-4. AI generation happens via API routes that use Vercel AI SDK with Google provider
+1. **State Management**: React Context (Recipe, MealPlan, Settings) → auto-syncs to localStorage
+2. **AI Generation**: API routes (`/api/generate-recipe`, `/api/generate-meal-plan`) → Vercel AI SDK → Google Gemini
+3. **Storage Keys**: `platemyday-recipes`, `platemyday-meal-plans`, `platemyday-settings` (defined in `src/lib/constants.ts`)
 
-### Storage Keys
-- Recipes: `platemyday-recipes`
-- Meal Plans: `platemyday-meal-plans`
-- Settings: `platemyday-settings`
+### Key Entry Points
+- **Layout**: `src/components/layout/AppShell.tsx` - All context providers wrapped here
+- **Navigation**: `src/components/layout/Sidebar.tsx` (desktop) + logo at `public/logo.png`
+- **Types**: `src/types/index.ts` - Core interfaces (Recipe, MealSlot, WeekPlan)
+- **AI Schemas**: `src/lib/ai.ts` - Zod schemas for AI validation
+- **Contexts**: `src/contexts/` - RecipeContext, MealPlanContext, SettingsContext
 
-All storage keys are defined in `src/lib/constants.ts`
+## Common Modification Patterns
 
-## Development Workflow
+### Adding Recipe Property
+1. Update `Recipe` in `src/types/index.ts`
+2. Update `recipeSchema` in `src/lib/ai.ts` (if AI-generated)
+3. Update `RecipeForm` component
+
+### Adding Navigation Page
+1. Create `src/app/[page-name]/page.tsx`
+2. Add to `src/components/layout/Sidebar.tsx` and `BottomNav.tsx`
+
+### Modifying AI Behavior
+- Default prompts: `src/contexts/SettingsContext.tsx`
+- User customization: Settings page
+- API routes: Accept custom system prompts in request body
+
+## Quick Commands
 
 ```bash
-# Setup
-bun install
-cp .env.local.example .env.local  # Add your GOOGLE_GENERATIVE_AI_API_KEY
-
-# Development
-bun run dev          # Start dev server at http://localhost:3000
-bun run build        # Build for production
-bun run start        # Start production server
-bun run lint         # Run ESLint
+bun install                    # Setup dependencies
+bun run dev                    # Start dev server (localhost:3000)
+bun run build                  # Build for production (ALWAYS run after new features)
+bun run lint                   # Run ESLint
 ```
 
-## Common Tasks
+## Important Notes
 
-### Adding a New Recipe Property
-1. Update `Recipe` interface in `src/types/index.ts`
-2. Update `recipeSchema` in `src/lib/ai.ts` if AI-generated
-3. Update `RecipeForm` component to include the new field
-4. Update `RecipeCard` or `RecipeDetail` to display the new property
-
-### Adding a New Page
-1. Create page in `src/app/[page-name]/page.tsx`
-2. Add navigation link in `src/components/layout/Sidebar.tsx`
-3. Add navigation link in `src/components/layout/BottomNav.tsx`
-
-### Modifying AI Prompts
-1. Update default prompts in `src/contexts/SettingsContext.tsx`
-2. Users can customize prompts in the Settings page
-3. API routes accept custom system prompts in request body
-
-## Architecture Notes
-
-- **Client-side only**: All data is stored in localStorage, no backend database
-- **React Server Components**: Pages are server components by default, use `'use client'` for interactivity
-- **Context providers**: All wrapped in `AppShell` component
-- **Type safety**: Zod schemas validate AI outputs before processing
-- **Responsive design**: Mobile-first approach with Tailwind CSS
+- **Client-side only**: No backend database, all localStorage
+- **Server Components**: Use `'use client'` for interactivity
+- **Type safety**: Zod validates all AI outputs
+- **Responsive**: Mobile-first with Tailwind CSS
