@@ -1,16 +1,19 @@
 'use client';
 
-import { MealSlot, Recipe } from '@/types';
+import { MealSlot, Recipe, LoadingRecipe } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { Sparkles } from 'lucide-react';
+import { StreamingRecipeDetail } from './StreamingRecipeDetail';
 
 interface MealDetailProps {
   meal: MealSlot | null;
   isOpen: boolean;
   onClose: () => void;
   onAddToLibrary?: (meal: MealSlot) => void;
+  loadingRecipe?: LoadingRecipe;
+  onAddToLibraryNew?: (recipe: LoadingRecipe) => void;
 }
 
 const tagColors = [
@@ -29,12 +32,24 @@ function getTagColor(tag: string): string {
   return tagColors[hash % tagColors.length];
 }
 
-export function MealDetail({ meal, isOpen, onClose, onAddToLibrary }: MealDetailProps) {
+export function MealDetail({ meal, isOpen, onClose, onAddToLibrary, loadingRecipe, onAddToLibraryNew }: MealDetailProps) {
   const { getRecipe } = useRecipes();
 
   if (!meal) return null;
 
-  const recipe: Recipe | null = meal.recipeId ? getRecipe(meal.recipeId) : null;
+  if (loadingRecipe) {
+    return (
+      <StreamingRecipeDetail
+        meal={meal}
+        loadingRecipe={loadingRecipe}
+        isOpen={isOpen}
+        onClose={onClose}
+        onAddToLibrary={onAddToLibraryNew}
+      />
+    );
+  }
+
+  const recipe = meal.recipeId ? getRecipe(meal.recipeId) : undefined;
   const isUnmatched = meal.recipeTitleFallback !== undefined;
   const title = isUnmatched ? meal.recipeTitleFallback : (recipe?.title || 'Unknown Recipe');
 

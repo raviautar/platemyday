@@ -41,3 +41,17 @@ export interface AppSettings {
   mealPlanSystemPrompt: string;
   unitSystem: UnitSystem;
 }
+
+export interface LoadingRecipe {
+  title: string;
+  description?: string;
+  ingredients: string[];
+  instructions: string[];
+  servings?: number;
+  prepTimeMinutes?: number;
+  cookTimeMinutes?: number;
+  tags: string[];
+  mealTypes: MealType[];
+  isLoading: boolean;
+  loadedFields: Set<string>;
+}

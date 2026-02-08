@@ -1,16 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { MealSlot, MealType } from '@/types';
+import { MealSlot, MealType, LoadingRecipe } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { Sparkles } from 'lucide-react';
 import { MealDetail } from './MealDetail';
 import { useToast } from '@/components/ui/Toast';
+import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
+import { Button } from '@/components/ui/Button';
 
 interface MealCardProps {
   meal: MealSlot;
   onRemove?: () => void;
   onMealUpdated?: (oldTitle: string, newRecipeId: string) => void;
+  loadingRecipe?: LoadingRecipe;
+  onAddToLibrary?: (recipe: LoadingRecipe) => void;
 }
 
 const mealTypeColors: Record<MealType, string> = {
@@ -20,18 +24,19 @@ const mealTypeColors: Record<MealType, string> = {
   snack: 'bg-surface-dark text-muted',
 };
 
-export function MealCard({ meal, onRemove, onMealUpdated }: MealCardProps) {
+export function MealCard({ meal, onRemove, onMealUpdated, loadingRecipe, onAddToLibrary }: MealCardProps) {
   const { getRecipe, addRecipe } = useRecipes();
   const { showToast } = useToast();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const recipe = meal.recipeId ? getRecipe(meal.recipeId) : null;
   
   const isUnmatched = meal.recipeTitleFallback !== undefined;
+  const isLoading = loadingRecipe?.isLoading ?? false;
   const title = isUnmatched 
     ? meal.recipeTitleFallback 
     : (recipe?.title || 'Unknown Recipe');
 
-  const handleAddToLibrary = (mealToAdd: MealSlot) => {
+  const handleAddToLibraryLegacy = (mealToAdd: MealSlot) => {
     if (!mealToAdd.recipeTitleFallback) return;
 
     const newRecipe = addRecipe({
@@ -53,6 +58,13 @@ export function MealCard({ meal, onRemove, onMealUpdated }: MealCardProps) {
     showToast(`Added "${mealToAdd.recipeTitleFallback}" to your recipes. Go to Recipes to edit details.`);
   };
 
+  const handleAddClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (loadingRecipe && onAddToLibrary) {
+      onAddToLibrary(loadingRecipe);
+    }
+  };
+
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest('button')) return;
@@ -67,17 +79,22 @@ export function MealCard({ meal, onRemove, onMealUpdated }: MealCardProps) {
   return (
     <>
       <div 
-        className={`bg-white rounded-lg p-2 shadow-sm cursor-pointer hover:shadow-md transition-shadow ${
+        className={`bg-white rounded-lg p-2 shadow-sm cursor-pointer hover:shadow-md transition-shadow relative ${
           isUnmatched 
             ? 'border-2 border-dashed border-secondary' 
             : 'border border-border'
-        }`}
-        title={isUnmatched ? 'Click to view details and add to your library' : 'Click to view recipe details'}
+        } ${isLoading ? 'opacity-75' : ''}`}
+        title={isLoading ? 'Generating recipe details...' : isUnmatched ? 'Click to view details and add to your library' : 'Click to view recipe details'}
         onClick={handleCardClick}
       >
+        {isLoading && (
+          <div className="absolute top-1 right-1">
+            <LoadingSpinner size="sm" />
+          </div>
+        )}
         <div className="flex items-start justify-between gap-1">
-          <div className="min-w-0">
-            <div className="flex items-center gap-1 mb-1">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-1 mb-1 flex-wrap">
               <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full ${mealTypeColors[meal.mealType]}`}>
                 {meal.mealType}
               </span>
@@ -91,6 +108,18 @@ export function MealCard({ meal, onRemove, onMealUpdated }: MealCardProps) {
             <p className={`text-sm font-medium line-clamp-2 ${isUnmatched ? 'text-muted' : ''}`}>
               {title}
             </p>
+            {isLoading && (
+              <p className="text-[10px] text-muted mt-0.5">Generating details...</p>
+            )}
+            {!isLoading && loadingRecipe && (
+              <Button 
+                size="sm" 
+                onClick={handleAddClick}
+                className="mt-1.5 text-xs h-6 px-2"
+              >
+                Add to Library
+              </Button>
+            )}
           </div>
           {onRemove && (
             <button onClick={handleRemoveClick} className="text-muted hover:text-danger text-sm shrink-0">&times;</button>
@@ -102,7 +131,9 @@ export function MealCard({ meal, onRemove, onMealUpdated }: MealCardProps) {
         meal={meal}
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
-        onAddToLibrary={handleAddToLibrary}
+        onAddToLibrary={handleAddToLibraryLegacy}
+        loadingRecipe={loadingRecipe}
+        onAddToLibraryNew={onAddToLibrary}
       />
     </>
   );
