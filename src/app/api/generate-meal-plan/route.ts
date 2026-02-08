@@ -1,4 +1,4 @@
-import { generateText, Output, type LanguageModel } from 'ai';
+import { generateText, Output } from 'ai';
 import { google } from '@ai-sdk/google';
 import { mealPlanSchema } from '@/lib/ai';
 
@@ -19,7 +19,7 @@ ${preferences ? `User preferences: ${preferences}` : ''}
 You can use recipes from the list above (include their IDs) or suggest new recipes. Each day should have breakfast, lunch, and dinner at minimum. Add snacks where appropriate for variety.`;
 
     const result = await generateText({
-      model: google('gemini-2.0-flash-exp') as LanguageModel,
+      model: google('gemini-3-flash-preview'),
       output: Output.object({ schema: mealPlanSchema }),
       system: systemPrompt,
       prompt,

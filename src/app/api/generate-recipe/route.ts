@@ -1,4 +1,4 @@
-import { generateText, Output, type LanguageModel } from 'ai';
+import { generateText, Output } from 'ai';
 import { google } from '@ai-sdk/google';
 import { recipeSchema } from '@/lib/ai';
 
@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     const { prompt, systemPrompt } = await req.json();
 
     const result = await generateText({
-      model: google('gemini-2.0-flash-exp') as LanguageModel,
+      model: google('gemini-3-flash-preview'),
       output: Output.object({ schema: recipeSchema }),
       system: systemPrompt,
       prompt: prompt,

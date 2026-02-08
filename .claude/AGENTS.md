@@ -15,7 +15,7 @@
 This project uses **Google Gemini** as the LLM provider (not Claude/Anthropic).
 
 - Provider package: `@ai-sdk/google`
-- Model: `gemini-2.0-flash-exp`
+- Model: `gemini-3-flash-preview`
 - Environment variable: `GOOGLE_GENERATIVE_AI_API_KEY`
 
 ## Technology Stack
