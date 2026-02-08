@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { AIRecipeOutput } from '@/lib/ai';
+import { Plus } from 'lucide-react';
 
 interface AIRecipeGeneratorProps {
   isOpen: boolean;
@@ -15,16 +16,36 @@ interface AIRecipeGeneratorProps {
   onSave: (recipe: Omit<Recipe, 'id' | 'createdAt'>) => void;
 }
 
+const ingredientSuggestions = [
+  '500g chicken breast',
+  'pasta',
+  '2 cups rice',
+  'beef',
+  'salmon',
+  'tofu',
+  'broccoli',
+  'tomatoes',
+  'garlic',
+  'onions',
+  'bell peppers',
+  'mushrooms',
+];
+
 export function AIRecipeGenerator({ isOpen, onClose, onSave }: AIRecipeGeneratorProps) {
   const { settings } = useSettings();
   const [prompt, setPrompt] = useState('');
-  const [showSystemPrompt, setShowSystemPrompt] = useState(false);
-  const [systemPrompt, setSystemPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<AIRecipeOutput | null>(null);
   const [error, setError] = useState('');
 
-  const effectiveSystemPrompt = systemPrompt || settings.recipeSystemPrompt;
+  const handleAddIngredient = (ingredient: string) => {
+    const currentText = prompt.trim();
+    if (currentText) {
+      setPrompt(`${currentText}, ${ingredient}`);
+    } else {
+      setPrompt(ingredient);
+    }
+  };
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return;
@@ -36,7 +57,7 @@ export function AIRecipeGenerator({ isOpen, onClose, onSave }: AIRecipeGenerator
       const res = await fetch('/api/generate-recipe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: prompt.trim(), systemPrompt: effectiveSystemPrompt }),
+        body: JSON.stringify({ prompt: prompt.trim(), systemPrompt: settings.recipeSystemPrompt }),
       });
 
       if (!res.ok) {
@@ -61,32 +82,31 @@ export function AIRecipeGenerator({ isOpen, onClose, onSave }: AIRecipeGenerator
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="AI Recipe Generator">
+    <Modal isOpen={isOpen} onClose={onClose} title="Create Recipe">
       <div className="space-y-4">
         <Textarea
-          label="What would you like to cook?"
+          label="Describe your recipe"
           value={prompt}
           onChange={e => setPrompt(e.target.value)}
-          placeholder="e.g., A healthy pasta dish with vegetables that takes under 30 minutes"
+          placeholder="e.g., Lasagna with beef and ricotta cheese, or a quick vegetarian stir-fry with tofu and broccoli"
           rows={3}
         />
 
-        <button
-          type="button"
-          onClick={() => setShowSystemPrompt(!showSystemPrompt)}
-          className="text-sm text-muted hover:text-foreground"
-        >
-          {showSystemPrompt ? 'Hide' : 'Show'} system prompt
-        </button>
-
-        {showSystemPrompt && (
-          <Textarea
-            value={systemPrompt}
-            onChange={e => setSystemPrompt(e.target.value)}
-            placeholder={settings.recipeSystemPrompt}
-            rows={3}
-          />
-        )}
+        <div>
+          <p className="text-xs font-medium text-muted mb-2">Quick add ingredients:</p>
+          <div className="flex flex-wrap gap-2">
+            {ingredientSuggestions.map((ingredient) => (
+              <button
+                key={ingredient}
+                onClick={() => handleAddIngredient(ingredient)}
+                className="inline-flex items-center gap-1 px-2.5 py-1 text-xs bg-surface hover:bg-surface-dark text-foreground rounded-full transition-colors"
+              >
+                <Plus className="w-3 h-3" />
+                {ingredient}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="flex gap-2">
           <Button onClick={handleGenerate} disabled={loading || !prompt.trim()}>
@@ -94,7 +114,16 @@ export function AIRecipeGenerator({ isOpen, onClose, onSave }: AIRecipeGenerator
           </Button>
         </div>
 
-        {error && <p className="text-danger text-sm">{error}</p>}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <p className="text-sm text-red-800">
+              <span className="font-medium">Oops! </span>
+              {error.includes('Failed to generate') 
+                ? "We couldn't generate your recipe. Please make sure your description is food-related and try again!"
+                : error}
+            </p>
+          </div>
+        )}
 
         {preview && (
           <div className="bg-surface rounded-lg p-4 space-y-3">
@@ -105,6 +134,13 @@ export function AIRecipeGenerator({ isOpen, onClose, onSave }: AIRecipeGenerator
               <span>Cook: {preview.cookTimeMinutes}m</span>
               <span>{preview.servings} servings</span>
             </div>
+            {preview.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {preview.tags.map(tag => (
+                  <span key={tag} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{tag}</span>
+                ))}
+              </div>
+            )}
             <div>
               <h4 className="font-medium text-sm mb-1">Ingredients</h4>
               <ul className="list-disc list-inside text-sm space-y-0.5">
@@ -118,7 +154,7 @@ export function AIRecipeGenerator({ isOpen, onClose, onSave }: AIRecipeGenerator
               </ol>
             </div>
             <div className="flex gap-2 pt-2">
-              <Button onClick={handleSave}>Save to Collection</Button>
+              <Button onClick={handleSave}>Save Recipe</Button>
               <Button variant="ghost" onClick={() => setPreview(null)}>Discard</Button>
             </div>
           </div>

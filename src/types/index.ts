@@ -34,7 +34,10 @@ export interface WeekPlan {
   createdAt: string;
 }
 
+export type UnitSystem = 'metric' | 'imperial';
+
 export interface AppSettings {
   recipeSystemPrompt: string;
   mealPlanSystemPrompt: string;
+  unitSystem: UnitSystem;
 }

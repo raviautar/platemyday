@@ -4,13 +4,16 @@ import { useState } from 'react';
 import { Recipe } from '@/types';
 import { RecipeCard } from './RecipeCard';
 import { Input } from '@/components/ui/Input';
+import { Button } from '@/components/ui/Button';
+import { Sparkles, ChefHat } from 'lucide-react';
 
 interface RecipeListProps {
   recipes: Recipe[];
   onSelectRecipe: (recipe: Recipe) => void;
+  onCreateRecipe: () => void;
 }
 
-export function RecipeList({ recipes, onSelectRecipe }: RecipeListProps) {
+export function RecipeList({ recipes, onSelectRecipe, onCreateRecipe }: RecipeListProps) {
   const [search, setSearch] = useState('');
 
   const filtered = recipes.filter(r =>
@@ -33,10 +36,23 @@ export function RecipeList({ recipes, onSelectRecipe }: RecipeListProps) {
       )}
 
       {recipes.length === 0 && (
-        <div className="text-center py-16">
-          <p className="text-4xl mb-4">🍳</p>
-          <p className="text-lg font-medium text-foreground">No recipes yet</p>
-          <p className="text-muted mt-1">Create your first recipe or generate one with AI!</p>
+        <div className="flex flex-col items-center justify-center py-20 px-4">
+          <div className="relative mb-6">
+            <div className="absolute inset-0 bg-primary/10 rounded-full blur-2xl"></div>
+            <div className="relative bg-gradient-to-br from-primary/20 to-accent/20 p-6 rounded-full">
+              <ChefHat className="w-16 h-16 text-primary" strokeWidth={1.5} />
+            </div>
+          </div>
+          
+          <h2 className="text-2xl font-bold text-foreground mb-2">Your Recipe Collection Awaits</h2>
+          <p className="text-muted text-center max-w-md mb-6">
+            Describe any dish and get a complete recipe instantly.
+          </p>
+          
+          <Button variant="primary" size="lg" onClick={onCreateRecipe}>
+            <Sparkles className="w-5 h-5 mr-2" />
+            Create Recipe
+          </Button>
         </div>
       )}
 

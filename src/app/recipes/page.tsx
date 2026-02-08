@@ -9,6 +9,7 @@ import { RecipeForm } from '@/components/recipes/RecipeForm';
 import { RecipeDetail } from '@/components/recipes/RecipeDetail';
 import { AIRecipeGenerator } from '@/components/recipes/AIRecipeGenerator';
 import { Button } from '@/components/ui/Button';
+import { Sparkles } from 'lucide-react';
 
 export default function RecipesPage() {
   const { recipes, addRecipe, updateRecipe, deleteRecipe } = useRecipes();
@@ -45,12 +46,14 @@ export default function RecipesPage() {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-foreground">Recipes</h1>
         <div className="flex gap-2">
-          <Button variant="accent" onClick={() => setShowAI(true)}>AI Generate</Button>
-          <Button onClick={() => { setEditingRecipe(null); setShowForm(true); }}>+ New</Button>
+          <Button variant="primary" onClick={() => setShowAI(true)}>
+            <Sparkles className="w-4 h-4 mr-1.5" />
+            Create Recipe
+          </Button>
         </div>
       </div>
 
-      <RecipeList recipes={recipes} onSelectRecipe={setSelectedRecipe} />
+      <RecipeList recipes={recipes} onSelectRecipe={setSelectedRecipe} onCreateRecipe={() => setShowAI(true)} />
 
       <RecipeForm
         isOpen={showForm}
@@ -72,7 +75,7 @@ export default function RecipesPage() {
         onClose={() => setShowAI(false)}
         onSave={(recipe) => {
           addRecipe(recipe);
-          showToast('AI recipe saved!');
+          showToast('Recipe saved!');
           setShowAI(false);
         }}
       />

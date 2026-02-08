@@ -1,13 +1,14 @@
 'use client';
 
 import React, { createContext, useContext, useCallback } from 'react';
-import { AppSettings } from '@/types';
+import { AppSettings, UnitSystem } from '@/types';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { DEFAULT_SETTINGS, STORAGE_KEYS } from '@/lib/constants';
+import { DEFAULT_SETTINGS, STORAGE_KEYS, getRecipeSystemPrompt, getMealPlanSystemPrompt } from '@/lib/constants';
 
 interface SettingsContextType {
   settings: AppSettings;
   updateSettings: (updates: Partial<AppSettings>) => void;
+  updateUnitSystem: (unitSystem: UnitSystem) => void;
   resetSettings: () => void;
 }
 
@@ -20,12 +21,21 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     setSettings(prev => ({ ...prev, ...updates }));
   }, [setSettings]);
 
+  const updateUnitSystem = useCallback((unitSystem: UnitSystem) => {
+    setSettings(prev => ({
+      ...prev,
+      unitSystem,
+      recipeSystemPrompt: getRecipeSystemPrompt(unitSystem),
+      mealPlanSystemPrompt: getMealPlanSystemPrompt(unitSystem),
+    }));
+  }, [setSettings]);
+
   const resetSettings = useCallback(() => {
     setSettings(DEFAULT_SETTINGS);
   }, [setSettings]);
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings, resetSettings }}>
+    <SettingsContext.Provider value={{ settings, updateSettings, updateUnitSystem, resetSettings }}>
       {children}
     </SettingsContext.Provider>
   );
