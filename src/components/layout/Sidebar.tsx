@@ -8,6 +8,7 @@ const navItems = [
   { href: '/recipes', label: 'Recipes', icon: '🍽️' },
   { href: '/meal-plan', label: 'Meal Plan', icon: '📅' },
   { href: '/settings', label: 'Settings', icon: '⚙️' },
+  { href: '/upgrade', label: 'Upgrade', icon: '⭐' },
 ];
 
 export function Sidebar() {

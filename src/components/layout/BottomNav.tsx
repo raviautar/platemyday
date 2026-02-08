@@ -2,13 +2,14 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { UtensilsCrossed, Calendar, Settings, User } from 'lucide-react';
+import { UtensilsCrossed, Calendar, Settings, User, Sparkles } from 'lucide-react';
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 
 const navItems = [
   { href: '/recipes', label: 'Recipes', icon: UtensilsCrossed },
   { href: '/meal-plan', label: 'Meal Plan', icon: Calendar },
   { href: '/settings', label: 'Settings', icon: Settings },
+  { href: '/upgrade', label: 'Upgrade', icon: Sparkles },
 ];
 
 export function BottomNav() {
