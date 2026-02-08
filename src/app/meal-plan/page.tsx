@@ -7,9 +7,14 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/components/ui/Toast';
 import { WeekView } from '@/components/meal-plan/WeekView';
 import { MealPlanControls } from '@/components/meal-plan/MealPlanControls';
-import { WeekPlan, MealSlot } from '@/types';
+import { WeekPlan, MealSlot, MealType } from '@/types';
 import { DAYS_OF_WEEK } from '@/lib/constants';
 import { AIMealPlanOutput } from '@/lib/ai';
+
+export interface UnmatchedRecipe {
+  title: string;
+  mealType: MealType;
+}
 
 export default function MealPlanPage() {
   const { recipes, addRecipe } = useRecipes();
@@ -17,6 +22,7 @@ export default function MealPlanPage() {
   const { settings } = useSettings();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [unmatchedRecipes, setUnmatchedRecipes] = useState<UnmatchedRecipe[]>([]);
 
   const handleGenerate = async (preferences: string, systemPrompt?: string) => {
     if (recipes.length === 0) {
@@ -43,10 +49,11 @@ export default function MealPlanPage() {
 
       const aiPlan: AIMealPlanOutput = await res.json();
 
-      // Convert AI output to WeekPlan format
       const today = new Date();
       const monday = new Date(today);
       monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+
+      const unmatched: UnmatchedRecipe[] = [];
 
       const newPlan: WeekPlan = {
         id: crypto.randomUUID(),
@@ -57,8 +64,9 @@ export default function MealPlanPage() {
           date.setDate(monday.getDate() + index);
 
           const meals: MealSlot[] = aiDay.meals.map(aiMeal => {
-            // Try to match with existing recipe
             let recipeId = aiMeal.recipeId;
+            let recipeTitleFallback: string | undefined = undefined;
+
             if (!recipeId || !recipes.find(r => r.id === recipeId)) {
               const match = recipes.find(r =>
                 r.title.toLowerCase() === aiMeal.recipeTitle.toLowerCase()
@@ -66,26 +74,24 @@ export default function MealPlanPage() {
               if (match) {
                 recipeId = match.id;
               } else {
-                // Create a placeholder recipe for unmatched titles
-                const newRecipe = addRecipe({
-                  title: aiMeal.recipeTitle,
-                  description: `Auto-created from meal plan`,
-                  ingredients: [],
-                  instructions: [],
-                  servings: 4,
-                  prepTimeMinutes: 0,
-                  cookTimeMinutes: 0,
-                  tags: [aiMeal.mealType],
-                  isAIGenerated: true,
-                });
-                recipeId = newRecipe.id;
+                recipeTitleFallback = aiMeal.recipeTitle;
+                const isDuplicate = unmatched.some(u => 
+                  u.title.toLowerCase() === aiMeal.recipeTitle.toLowerCase()
+                );
+                if (!isDuplicate) {
+                  unmatched.push({
+                    title: aiMeal.recipeTitle,
+                    mealType: aiMeal.mealType,
+                  });
+                }
               }
             }
 
             return {
               id: crypto.randomUUID(),
-              recipeId: recipeId!,
+              recipeId: recipeId || '',
               mealType: aiMeal.mealType,
+              recipeTitleFallback,
             };
           });
 
@@ -98,12 +104,42 @@ export default function MealPlanPage() {
       };
 
       setWeekPlan(newPlan);
-      showToast('Meal plan generated!');
+      setUnmatchedRecipes(unmatched);
+      
+      if (unmatched.length > 0) {
+        showToast(`Meal plan generated with ${unmatched.length} new recipe${unmatched.length > 1 ? 's' : ''} to add`);
+      } else {
+        showToast('Meal plan generated!');
+      }
     } catch (err) {
       showToast(err instanceof Error ? err.message : 'Failed to generate meal plan', 'error');
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRecipeAdded = (title: string, newRecipeId: string) => {
+    setUnmatchedRecipes(prev => prev.filter(r => r.title !== title));
+    
+    if (weekPlan) {
+      const updatedPlan: WeekPlan = {
+        ...weekPlan,
+        days: weekPlan.days.map(day => ({
+          ...day,
+          meals: day.meals.map(meal => 
+            meal.recipeTitleFallback?.toLowerCase() === title.toLowerCase()
+              ? { ...meal, recipeId: newRecipeId, recipeTitleFallback: undefined }
+              : meal
+          ),
+        })),
+      };
+      setWeekPlan(updatedPlan);
+    }
+  };
+
+  const handleClearPlan = () => {
+    clearWeekPlan();
+    setUnmatchedRecipes([]);
   };
 
   return (
@@ -112,7 +148,7 @@ export default function MealPlanPage() {
 
       <MealPlanControls
         onGenerate={handleGenerate}
-        onClear={clearWeekPlan}
+        onClear={handleClearPlan}
         hasExistingPlan={!!weekPlan}
         loading={loading}
         defaultSystemPrompt={settings.mealPlanSystemPrompt}
@@ -124,6 +160,8 @@ export default function MealPlanPage() {
             weekPlan={weekPlan}
             onMoveMeal={moveMeal}
             onRemoveMeal={removeMeal}
+            unmatchedRecipes={unmatchedRecipes}
+            onRecipeAdded={handleRecipeAdded}
           />
         ) : (
           <div className="text-center py-16">

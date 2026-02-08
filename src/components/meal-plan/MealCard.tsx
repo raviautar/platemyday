@@ -17,17 +17,37 @@ const mealTypeColors: Record<MealType, string> = {
 
 export function MealCard({ meal, onRemove }: MealCardProps) {
   const { getRecipe } = useRecipes();
-  const recipe = getRecipe(meal.recipeId);
-  const title = recipe?.title || 'Unknown Recipe';
+  const recipe = meal.recipeId ? getRecipe(meal.recipeId) : null;
+  
+  const isUnmatched = meal.recipeTitleFallback !== undefined;
+  const title = isUnmatched 
+    ? meal.recipeTitleFallback 
+    : (recipe?.title || 'Unknown Recipe');
 
   return (
-    <div className="bg-white rounded-lg border border-border p-2 shadow-sm">
+    <div 
+      className={`bg-white rounded-lg p-2 shadow-sm ${
+        isUnmatched 
+          ? 'border-2 border-dashed border-secondary' 
+          : 'border border-border'
+      }`}
+      title={isUnmatched ? 'This recipe needs to be added to your library' : undefined}
+    >
       <div className="flex items-start justify-between gap-1">
         <div className="min-w-0">
-          <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full mb-1 ${mealTypeColors[meal.mealType]}`}>
-            {meal.mealType}
-          </span>
-          <p className="text-sm font-medium line-clamp-2">{title}</p>
+          <div className="flex items-center gap-1 mb-1">
+            <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full ${mealTypeColors[meal.mealType]}`}>
+              {meal.mealType}
+            </span>
+            {isUnmatched && (
+              <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-secondary/20 text-secondary-dark">
+                New
+              </span>
+            )}
+          </div>
+          <p className={`text-sm font-medium line-clamp-2 ${isUnmatched ? 'text-muted' : ''}`}>
+            {title}
+          </p>
         </div>
         {onRemove && (
           <button onClick={onRemove} className="text-muted hover:text-danger text-sm shrink-0">&times;</button>

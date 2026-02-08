@@ -18,6 +18,7 @@ export interface MealSlot {
   id: string;
   recipeId: string;
   mealType: MealType;
+  recipeTitleFallback?: string;
 }
 
 export interface DayPlan {
