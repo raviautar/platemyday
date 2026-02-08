@@ -2,7 +2,6 @@
 
 import { WeekPlan } from '@/types';
 import { DayColumn } from './DayColumn';
-import { UnmatchedRecipesPrompt } from './UnmatchedRecipesPrompt';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { UnmatchedRecipe } from '@/app/meal-plan/page';
 
@@ -26,24 +25,18 @@ export function WeekView({ weekPlan, onMoveMeal, onRemoveMeal, unmatchedRecipes,
   };
 
   return (
-    <>
-      <UnmatchedRecipesPrompt
-        unmatchedRecipes={unmatchedRecipes}
-        onRecipeAdded={onRecipeAdded}
-      />
-      
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
-          {weekPlan.days.map((day, index) => (
-            <DayColumn
-              key={day.dayOfWeek}
-              day={day}
-              dayIndex={index}
-              onRemoveMeal={onRemoveMeal}
-            />
-          ))}
-        </div>
-      </DragDropContext>
-    </>
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+        {weekPlan.days.map((day, index) => (
+          <DayColumn
+            key={day.dayOfWeek}
+            day={day}
+            dayIndex={index}
+            onRemoveMeal={onRemoveMeal}
+            onRecipeAdded={onRecipeAdded}
+          />
+        ))}
+      </div>
+    </DragDropContext>
   );
 }

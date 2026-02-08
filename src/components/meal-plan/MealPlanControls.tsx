@@ -15,39 +15,20 @@ interface MealPlanControlsProps {
 
 export function MealPlanControls({ onGenerate, onClear, hasExistingPlan, loading, defaultSystemPrompt }: MealPlanControlsProps) {
   const [preferences, setPreferences] = useState('');
-  const [showSystemPrompt, setShowSystemPrompt] = useState(false);
-  const [systemPrompt, setSystemPrompt] = useState('');
 
   const handleGenerate = () => {
-    onGenerate(preferences, systemPrompt || undefined);
+    onGenerate(preferences, undefined);
   };
 
   return (
     <div className="bg-white rounded-xl border border-border p-4 space-y-3">
       <Textarea
-        label="Preferences (optional)"
+        label="Customize your week"
         value={preferences}
         onChange={e => setPreferences(e.target.value)}
         placeholder="e.g., No red meat this week, extra protein, kid-friendly meals..."
         rows={2}
       />
-
-      <button
-        type="button"
-        onClick={() => setShowSystemPrompt(!showSystemPrompt)}
-        className="text-sm text-muted hover:text-foreground"
-      >
-        {showSystemPrompt ? 'Hide' : 'Show'} system prompt
-      </button>
-
-      {showSystemPrompt && (
-        <Textarea
-          value={systemPrompt}
-          onChange={e => setSystemPrompt(e.target.value)}
-          placeholder={defaultSystemPrompt}
-          rows={3}
-        />
-      )}
 
       <div className="flex gap-2">
         <Button onClick={handleGenerate} disabled={loading}>

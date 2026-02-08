@@ -6,9 +6,10 @@
 
 1. **ALWAYS use `bun`** (not npm) - `bun install`, `bun add`, `bun run dev`
 2. **AI Provider**: Google Gemini (`gemini-3-flash-preview`) via `@ai-sdk/google` - NOT Claude/Anthropic
-3. **Environment**: `GOOGLE_GENERATIVE_AI_API_KEY` required in `.env.local`
-4. **No AI-slop comments** - Only comment when logic is non-obvious
-5. **Build verification**: Always run `bun run build` after completing new features to verify everything works
+3. **Environment**: `GOOGLE_GENERATIVE_AI_API_KEY` + Clerk keys (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`) in `.env.local`
+4. **Auth**: Clerk for optional authentication - app works without login, auth only for saving recipes
+5. **No AI-slop comments** - Only comment when logic is non-obvious
+6. **Build verification**: Always run `bun run build` after completing new features to verify everything works
 
 ## Project Overview
 
@@ -20,8 +21,10 @@ AI-powered meal planning app with recipe management and weekly meal planning usi
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS v4
 - **AI**: Google Gemini via Vercel AI SDK
+- **Auth**: Clerk (optional, for recipe storage)
 - **State**: React Context + localStorage
 - **Validation**: Zod v3
+- **Icons**: Lucide React
 
 ## Architecture Essentials
 
@@ -31,11 +34,13 @@ AI-powered meal planning app with recipe management and weekly meal planning usi
 3. **Storage Keys**: `platemyday-recipes`, `platemyday-meal-plans`, `platemyday-settings` (defined in `src/lib/constants.ts`)
 
 ### Key Entry Points
-- **Layout**: `src/components/layout/AppShell.tsx` - All context providers wrapped here
-- **Navigation**: `src/components/layout/Sidebar.tsx` (desktop) + logo at `public/logo.png`
-- **Types**: `src/types/index.ts` - Core interfaces (Recipe, MealSlot, WeekPlan)
+- **Layout**: `src/app/layout.tsx` - ClerkProvider wraps app, then AppShell with context providers
+- **Navigation**: `src/components/layout/Sidebar.tsx` (desktop), `BottomNav.tsx` (mobile) + logo at `public/logo.png`
+- **Auth Middleware**: `src/middleware.ts` - Clerk config (all routes public)
+- **Types**: `src/types/index.ts` - Core interfaces (Recipe, MealSlot, WeekPlan, AppSettings)
 - **AI Schemas**: `src/lib/ai.ts` - Zod schemas for AI validation
 - **Contexts**: `src/contexts/` - RecipeContext, MealPlanContext, SettingsContext
+- **Constants**: `src/lib/constants.ts` - Default prompts, unit system functions
 
 ## Common Modification Patterns
 

@@ -8,9 +8,10 @@ interface DayColumnProps {
   day: DayPlan;
   dayIndex: number;
   onRemoveMeal: (dayIndex: number, mealId: string) => void;
+  onRecipeAdded: (title: string, newRecipeId: string) => void;
 }
 
-export function DayColumn({ day, dayIndex, onRemoveMeal }: DayColumnProps) {
+export function DayColumn({ day, dayIndex, onRemoveMeal, onRecipeAdded }: DayColumnProps) {
   return (
     <div className="bg-surface rounded-xl p-3 min-w-[160px]">
       <h3 className="font-semibold text-sm text-center text-primary-dark mb-2">
@@ -37,6 +38,7 @@ export function DayColumn({ day, dayIndex, onRemoveMeal }: DayColumnProps) {
                     <MealCard
                       meal={meal}
                       onRemove={() => onRemoveMeal(dayIndex, meal.id)}
+                      onMealUpdated={onRecipeAdded}
                     />
                   </div>
                 )}
