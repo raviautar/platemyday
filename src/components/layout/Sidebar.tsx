@@ -15,18 +15,18 @@ export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="hidden md:flex md:flex-col md:w-60 md:fixed md:inset-y-0 bg-surface border-r border-border">
+    <aside className="hidden md:flex md:flex-col md:w-60 md:fixed md:top-14 md:bottom-0 md:left-0 bg-surface border-r border-border">
       <div className="p-6">
         <Link href="/recipes" className="flex items-center gap-3">
           <Image 
-            src="/logo.png" 
-            alt="PlateMyDay Logo" 
+            src="/icon.png" 
+            alt="PlateMyMeal Logo" 
             width={48} 
             height={48}
-            className="w-12 h-12"
+            className="w-12 h-12 rounded-lg"
             priority
           />
-          <h1 className="text-xl font-bold text-primary-dark">PlateMyDay</h1>
+          <h1 className="text-xl font-bold text-primary-dark">PlateMyMeal</h1>
         </Link>
       </div>
       <nav className="flex-1 px-3">

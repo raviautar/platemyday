@@ -21,6 +21,7 @@ AI-powered meal planning app with recipe management and weekly meal planning usi
 - **Runtime**: Bun
 - **Language**: TypeScript
 - **Styling**: Tailwind CSS v4
+- **Fonts**: Outfit (Google Font) for branding/headers, Geist for body text
 - **AI**: Google Gemini via Vercel AI SDK
 - **Auth**: Clerk (optional, for recipe storage)
 - **State**: React Context + localStorage
@@ -28,6 +29,13 @@ AI-powered meal planning app with recipe management and weekly meal planning usi
 - **Icons**: Lucide React
 
 ## Architecture Essentials
+
+### Design System
+- **Brand Font**: Outfit (defined in `layout.tsx` as `--font-outfit`) - playful yet professional
+- **Color Scheme**: Emerald/teal gradient (`from-emerald-600 to-teal-600`) for headers and primary actions
+- **Header**: `TopBanner.tsx` - Fixed top banner with ChefHat icon, gradient shimmer text effect, animated on hover
+- **Floating Action Buttons**: Positioned `bottom-20 md:bottom-8 right-4 md:right-8` (above mobile BottomNav), circular 16x16, gradient background
+- **Mobile Navigation**: `BottomNav.tsx` fixed at bottom (h-16), FABs must account for this spacing
 
 ### Data Flow
 1. **State Management**: React Context (Recipe, MealPlan, Settings) → auto-syncs to localStorage
@@ -39,7 +47,7 @@ AI-powered meal planning app with recipe management and weekly meal planning usi
 
 ### Key Entry Points
 - **Layout**: `src/app/layout.tsx` - ClerkProvider wraps app, then AppShell with context providers
-- **Navigation**: `src/components/layout/Sidebar.tsx` (desktop), `BottomNav.tsx` (mobile) + logo at `public/logo.png`
+- **Navigation**: `src/components/layout/Sidebar.tsx` (desktop), `BottomNav.tsx` (mobile) + logo at `public/icon.png`
 - **Auth Middleware**: `src/middleware.ts` - Clerk config (all routes public)
 - **Types**: `src/types/index.ts` - Core interfaces (Recipe, MealSlot, WeekPlan, AppSettings, LoadingRecipe)
 - **AI Schemas**: `src/lib/ai.ts` - Zod schemas for AI validation (recipeSchema, mealPlanSchema, mealPlanWithDetailsSchema)
@@ -56,6 +64,12 @@ AI-powered meal planning app with recipe management and weekly meal planning usi
 ### Adding Navigation Page
 1. Create `src/app/[page-name]/page.tsx`
 2. Add to `src/components/layout/Sidebar.tsx` and `BottomNav.tsx`
+
+### Adding Floating Action Buttons
+- Position: `fixed bottom-20 md:bottom-8 right-4 md:right-8` (accounts for mobile BottomNav)
+- Size: `w-16 h-16 rounded-full`
+- Style: `bg-gradient-to-br from-primary to-emerald-600` with hover scale effects
+- z-index: `z-40` (above content, below modals)
 
 ### Modifying AI Behavior
 - Default prompts: `src/contexts/SettingsContext.tsx`

@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { UtensilsCrossed, Calendar, Settings, User, Sparkles } from 'lucide-react';
-import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
+import { UtensilsCrossed, Calendar, Settings, Sparkles } from 'lucide-react';
 
 const navItems = [
   { href: '/recipes', label: 'Recipes', icon: UtensilsCrossed },
@@ -36,29 +35,6 @@ export function BottomNav() {
             </Link>
           );
         })}
-        
-        <div className="flex flex-col items-center justify-center py-2 px-4 min-w-[72px]">
-          <SignedOut>
-            <SignInButton mode="modal">
-              <button className="flex flex-col items-center text-muted transition-colors hover:text-primary">
-                <User className="w-5 h-5" strokeWidth={2} />
-                <span className="text-xs mt-0.5">Profile</span>
-              </button>
-            </SignInButton>
-          </SignedOut>
-          <SignedIn>
-            <div className="flex flex-col items-center">
-              <UserButton 
-                appearance={{
-                  elements: {
-                    avatarBox: "w-5 h-5"
-                  }
-                }}
-              />
-              <span className="text-xs mt-0.5 text-primary font-medium">Profile</span>
-            </div>
-          </SignedIn>
-        </div>
       </div>
     </nav>
   );

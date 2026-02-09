@@ -8,8 +8,7 @@ import { RecipeList } from '@/components/recipes/RecipeList';
 import { RecipeForm } from '@/components/recipes/RecipeForm';
 import { RecipeDetail } from '@/components/recipes/RecipeDetail';
 import { AIRecipeGenerator } from '@/components/recipes/AIRecipeGenerator';
-import { Button } from '@/components/ui/Button';
-import { Sparkles } from 'lucide-react';
+import { Plus } from 'lucide-react';
 
 export default function RecipesPage() {
   const { recipes, addRecipe, updateRecipe, deleteRecipe } = useRecipes();
@@ -45,15 +44,17 @@ export default function RecipesPage() {
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-foreground">Recipes</h1>
-        <div className="flex gap-2">
-          <Button variant="primary" onClick={() => setShowAI(true)}>
-            <Sparkles className="w-4 h-4 mr-1.5" />
-            Create Recipe
-          </Button>
-        </div>
       </div>
 
       <RecipeList recipes={recipes} onSelectRecipe={setSelectedRecipe} onCreateRecipe={() => setShowAI(true)} />
+
+      <button
+        onClick={() => setShowAI(true)}
+        className="fixed bottom-20 md:bottom-8 right-4 md:right-8 w-16 h-16 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white rounded-full shadow-2xl hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 z-40 flex items-center justify-center"
+        aria-label="Create Recipe"
+      >
+        <Plus className="w-8 h-8" strokeWidth={2.5} />
+      </button>
 
       <RecipeForm
         isOpen={showForm}
