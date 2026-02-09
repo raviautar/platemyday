@@ -8,7 +8,6 @@ import { MealDetail } from './MealDetail';
 import { MealOptionsMenu } from './MealOptionsMenu';
 import { useToast } from '@/components/ui/Toast';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
-import { Button } from '@/components/ui/Button';
 
 interface MealCardProps {
   meal: MealSlot;
@@ -62,13 +61,6 @@ export function MealCard({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, 
     showToast(`Added "${mealToAdd.recipeTitleFallback}" to your recipes. Go to Recipes to edit details.`);
   };
 
-  const handleAddClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (loadingRecipe && onAddToLibrary) {
-      onAddToLibrary(loadingRecipe);
-    }
-  };
-
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest('button')) return;
@@ -117,15 +109,6 @@ export function MealCard({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, 
             </p>
             {isLoading && (
               <p className="text-[10px] text-muted mt-0.5">Generating details...</p>
-            )}
-            {!isLoading && loadingRecipe && (
-              <Button 
-                size="sm" 
-                onClick={handleAddClick}
-                className="mt-1.5 text-xs h-6 px-2"
-              >
-                Add to Library
-              </Button>
             )}
           </div>
           {onRemove && weekDays && currentDayIndex !== undefined && (
