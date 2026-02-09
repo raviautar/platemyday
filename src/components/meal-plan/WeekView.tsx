@@ -3,19 +3,17 @@
 import { WeekPlan, SuggestedRecipe } from '@/types';
 import { DayColumn } from './DayColumn';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
-import { UnmatchedRecipe } from '@/app/meal-plan/page';
 
 interface WeekViewProps {
   weekPlan: WeekPlan;
   onMoveMeal: (mealId: string, sourceDayIndex: number, destDayIndex: number, destMealIndex: number) => void;
   onRemoveMeal: (dayIndex: number, mealId: string) => void;
-  unmatchedRecipes: UnmatchedRecipe[];
   onRecipeAdded: (title: string, newRecipeId: string) => void;
   suggestedRecipes: Record<string, SuggestedRecipe>;
   onAddToLibrary: (recipe: SuggestedRecipe) => void;
 }
 
-export function WeekView({ weekPlan, onMoveMeal, onRemoveMeal, unmatchedRecipes, onRecipeAdded, suggestedRecipes, onAddToLibrary }: WeekViewProps) {
+export function WeekView({ weekPlan, onMoveMeal, onRemoveMeal, onRecipeAdded, suggestedRecipes, onAddToLibrary }: WeekViewProps) {
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 

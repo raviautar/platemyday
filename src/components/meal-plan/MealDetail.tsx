@@ -1,5 +1,6 @@
 'use client';
 
+import { useState, useEffect, useRef } from 'react';
 import { MealSlot, Recipe, SuggestedRecipe } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -34,14 +35,35 @@ function getTagColor(tag: string): string {
 
 export function MealDetail({ meal, isOpen, onClose, onAddToLibrary, suggestedRecipe, onAddToLibraryNew }: MealDetailProps) {
   const { getRecipe } = useRecipes();
+  const cachedRecipeRef = useRef<SuggestedRecipe | undefined>(undefined);
+  const wasOpenRef = useRef(false);
+
+  if (suggestedRecipe && isOpen) {
+    cachedRecipeRef.current = suggestedRecipe;
+  }
+
+  useEffect(() => {
+    if (isOpen && !wasOpenRef.current) {
+      wasOpenRef.current = true;
+    } else if (!isOpen && wasOpenRef.current) {
+      wasOpenRef.current = false;
+      setTimeout(() => {
+        if (!wasOpenRef.current) {
+          cachedRecipeRef.current = undefined;
+        }
+      }, 300);
+    }
+  }, [isOpen]);
 
   if (!meal) return null;
 
-  if (suggestedRecipe) {
+  const activeSuggestedRecipe = suggestedRecipe || (isOpen ? cachedRecipeRef.current : undefined);
+
+  if (activeSuggestedRecipe) {
     return (
       <StreamingRecipeDetail
         meal={meal}
-        suggestedRecipe={suggestedRecipe}
+        suggestedRecipe={activeSuggestedRecipe}
         isOpen={isOpen}
         onClose={onClose}
         onAddToLibrary={onAddToLibraryNew}

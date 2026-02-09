@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, memo } from 'react';
 import { MealSlot, MealType, SuggestedRecipe, DayPlan } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { Sparkles } from 'lucide-react';
@@ -27,7 +27,7 @@ const mealTypeColors: Record<MealType, string> = {
   snack: 'bg-surface-dark text-muted',
 };
 
-export function MealCard({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, onMealUpdated, suggestedRecipe, onAddToLibrary }: MealCardProps) {
+const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, onMealUpdated, suggestedRecipe, onAddToLibrary }: MealCardProps) => {
   const { getRecipe, addRecipe } = useRecipes();
   const { showToast } = useToast();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -133,4 +133,17 @@ export function MealCard({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, 
       />
     </>
   );
-}
+};
+
+export const MealCard = memo(MealCardComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.meal.id === nextProps.meal.id &&
+    prevProps.meal.recipeId === nextProps.meal.recipeId &&
+    prevProps.meal.recipeTitleFallback === nextProps.meal.recipeTitleFallback &&
+    prevProps.currentDayIndex === nextProps.currentDayIndex &&
+    prevProps.suggestedRecipe?.isLoading === nextProps.suggestedRecipe?.isLoading &&
+    prevProps.suggestedRecipe?.title === nextProps.suggestedRecipe?.title &&
+    prevProps.suggestedRecipe?.ingredients.length === nextProps.suggestedRecipe?.ingredients.length &&
+    prevProps.suggestedRecipe?.instructions.length === nextProps.suggestedRecipe?.instructions.length
+  );
+});

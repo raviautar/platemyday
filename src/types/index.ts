@@ -57,5 +57,5 @@ export interface SuggestedRecipe {
   tags: string[];
   mealTypes: MealType[];
   isLoading: boolean;
-  loadedFields: Set<string>;
+  loadedFields: string[];
 }

@@ -1,20 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/components/ui/Toast';
 import { WeekView } from '@/components/meal-plan/WeekView';
 import { MealPlanControls } from '@/components/meal-plan/MealPlanControls';
-import { WeekPlan, MealSlot, MealType, SuggestedRecipe } from '@/types';
+import { WeekPlan, SuggestedRecipe } from '@/types';
 import { DAYS_OF_WEEK } from '@/lib/constants';
 import { History } from 'lucide-react';
-
-export interface UnmatchedRecipe {
-  title: string;
-  mealType: MealType;
-}
 
 export default function MealPlanPage() {
   const { recipes, addRecipe } = useRecipes();
@@ -22,10 +17,16 @@ export default function MealPlanPage() {
   const { settings } = useSettings();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [unmatchedRecipes, setUnmatchedRecipes] = useState<UnmatchedRecipe[]>([]);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
-  
-  const suggestedRecipes = weekPlan?.suggestedRecipes || {};
+  const weekPlanRef = useRef(weekPlan);
+  const suggestedRecipesRef = useRef<Record<string, SuggestedRecipe>>(weekPlan?.suggestedRecipes || {});
+
+  useEffect(() => {
+    weekPlanRef.current = weekPlan;
+    suggestedRecipesRef.current = weekPlan?.suggestedRecipes || {};
+  }, [weekPlan]);
+
+  const suggestedRecipes = useMemo(() => weekPlan?.suggestedRecipes || {}, [weekPlan?.suggestedRecipes]);
 
   const getWeekStartDate = (weekStartDay: string) => {
     const today = new Date();
@@ -50,30 +51,74 @@ export default function MealPlanPage() {
 
   const updateWeekPlanFromPartial = (partialData: any) => {
     const weekStart = getWeekStartDate(settings.weekStartDay);
-    
+    const currentWeekPlan = weekPlanRef.current;
+
     const days = partialData.days.map((day: any, index: number) => {
       const date = new Date(weekStart);
       date.setDate(weekStart.getDate() + index);
-      
+      const existingDayMeals = currentWeekPlan?.days[index]?.meals || [];
+      const usedExistingIds = new Set<string>();
+
       return {
         date: date.toISOString().split('T')[0],
         dayOfWeek: day.dayOfWeek || DAYS_OF_WEEK[index],
-        meals: (day.meals || []).map((meal: any) => ({
-          id: crypto.randomUUID(),
-          recipeId: meal.recipeId || '',
-          mealType: meal.mealType,
-          recipeTitleFallback: meal.recipeId ? undefined : meal.recipeTitle,
-        })),
+        meals: (day.meals || []).map((meal: any, mealIndex: number) => {
+          const recipeId = meal.recipeId || '';
+          const recipeTitleFallback = meal.recipeId ? undefined : meal.recipeTitle;
+          const positionalMatch = existingDayMeals[mealIndex];
+          const signatureMatchesPositional =
+            positionalMatch &&
+            positionalMatch.mealType === meal.mealType &&
+            positionalMatch.recipeId === recipeId &&
+            positionalMatch.recipeTitleFallback === recipeTitleFallback;
+
+          if (signatureMatchesPositional && !usedExistingIds.has(positionalMatch.id)) {
+            usedExistingIds.add(positionalMatch.id);
+            return {
+              id: positionalMatch.id,
+              recipeId,
+              mealType: meal.mealType,
+              recipeTitleFallback,
+            };
+          }
+
+          const matchingMeal = existingDayMeals.find((existingMeal) =>
+            !usedExistingIds.has(existingMeal.id) &&
+            existingMeal.mealType === meal.mealType &&
+            existingMeal.recipeId === recipeId &&
+            existingMeal.recipeTitleFallback === recipeTitleFallback
+          );
+
+          if (matchingMeal) {
+            usedExistingIds.add(matchingMeal.id);
+            return {
+              id: matchingMeal.id,
+              recipeId,
+              mealType: meal.mealType,
+              recipeTitleFallback,
+            };
+          }
+
+          return {
+            id: crypto.randomUUID(),
+            recipeId,
+            mealType: meal.mealType,
+            recipeTitleFallback,
+          };
+        }),
       };
     });
-    
-    setWeekPlan({
-      id: crypto.randomUUID(),
+
+    const nextWeekPlan: WeekPlan = {
+      id: currentWeekPlan?.id || crypto.randomUUID(),
       weekStartDate: weekStart.toISOString().split('T')[0],
-      createdAt: new Date().toISOString(),
+      createdAt: currentWeekPlan?.createdAt || new Date().toISOString(),
       days,
-      suggestedRecipes: {},
-    });
+      suggestedRecipes: suggestedRecipesRef.current,
+    };
+
+    weekPlanRef.current = nextWeekPlan;
+    setWeekPlan(nextWeekPlan);
   };
 
   const updateSuggestedRecipesLocal = (newRecipes: any[]) => {
@@ -88,14 +133,48 @@ export default function MealPlanPage() {
       tags: recipe.tags || [],
       mealTypes: [],
       isLoading: true,
-      loadedFields: new Set(Object.keys(recipe)),
+      loadedFields: Object.keys(recipe),
     }));
-    
+
+    const updatedSuggestions = { ...suggestedRecipesRef.current };
+    recipesToUpdate.forEach((recipe) => {
+      const existing = updatedSuggestions[recipe.title];
+      const isComplete = recipe.ingredients.length > 0 &&
+        recipe.instructions.length > 0 &&
+        !!recipe.description &&
+        recipe.servings !== undefined &&
+        recipe.prepTimeMinutes !== undefined &&
+        recipe.cookTimeMinutes !== undefined;
+
+      updatedSuggestions[recipe.title] = {
+        title: recipe.title,
+        description: recipe.description || existing?.description,
+        ingredients: recipe.ingredients || existing?.ingredients || [],
+        instructions: recipe.instructions || existing?.instructions || [],
+        servings: recipe.servings ?? existing?.servings,
+        prepTimeMinutes: recipe.prepTimeMinutes ?? existing?.prepTimeMinutes,
+        cookTimeMinutes: recipe.cookTimeMinutes ?? existing?.cookTimeMinutes,
+        tags: recipe.tags || existing?.tags || [],
+        mealTypes: [],
+        isLoading: !isComplete,
+        loadedFields: recipe.loadedFields,
+      };
+    });
+    suggestedRecipesRef.current = updatedSuggestions;
+
     updateSuggestedRecipes(recipesToUpdate);
   };
 
   const markRecipesCompleteLocal = (newRecipes: any[]) => {
     const titles = newRecipes.map((recipe: any) => recipe.title);
+    const updatedSuggestions = { ...suggestedRecipesRef.current };
+    titles.forEach((title: string) => {
+      const existing = updatedSuggestions[title];
+      if (existing) {
+        updatedSuggestions[title] = { ...existing, isLoading: false };
+      }
+    });
+    suggestedRecipesRef.current = updatedSuggestions;
     markRecipesComplete(titles);
   };
 
@@ -108,8 +187,8 @@ export default function MealPlanPage() {
     const controller = new AbortController();
     setAbortController(controller);
     setLoading(true);
+    suggestedRecipesRef.current = {};
     clearSuggestedRecipes();
-    setUnmatchedRecipes([]);
     
     try {
       const response = await fetch('/api/generate-meal-plan', {
@@ -152,19 +231,19 @@ export default function MealPlanPage() {
             if (message.type === 'update') {
               const partialData = message.data;
               
-              if (partialData.days && partialData.days.length > 0) {
-                updateWeekPlanFromPartial(partialData);
-              }
-              
               if (partialData.newRecipes && partialData.newRecipes.length > 0) {
                 updateSuggestedRecipesLocal(partialData.newRecipes);
               }
+              
+              if (partialData.days && partialData.days.length > 0) {
+                updateWeekPlanFromPartial(partialData);
+              }
             } else if (message.type === 'done') {
               const finalData = message.data;
-              updateWeekPlanFromPartial(finalData);
               if (finalData.newRecipes) {
                 markRecipesCompleteLocal(finalData.newRecipes);
               }
+              updateWeekPlanFromPartial(finalData);
               
               const newRecipeCount = finalData.newRecipes?.length || 0;
               if (newRecipeCount > 0) {
@@ -207,15 +286,16 @@ export default function MealPlanPage() {
     
     const recipe = addRecipe(newRecipe);
     handleRecipeAdded(suggestedRecipe.title, recipe.id);
-    
+
+    const updatedSuggestions = { ...suggestedRecipesRef.current };
+    delete updatedSuggestions[suggestedRecipe.title];
+    suggestedRecipesRef.current = updatedSuggestions;
     removeSuggestedRecipe(suggestedRecipe.title);
     
     showToast(`${suggestedRecipe.title} added to your library!`);
   };
 
   const handleRecipeAdded = (title: string, newRecipeId: string) => {
-    setUnmatchedRecipes(prev => prev.filter(r => r.title !== title));
-    
     if (weekPlan) {
       const updatedPlan: WeekPlan = {
         ...weekPlan,
@@ -236,8 +316,8 @@ export default function MealPlanPage() {
     if (abortController) {
       abortController.abort();
     }
+    suggestedRecipesRef.current = {};
     clearWeekPlan();
-    setUnmatchedRecipes([]);
   };
 
   return (
@@ -272,7 +352,6 @@ export default function MealPlanPage() {
             weekPlan={weekPlan}
             onMoveMeal={moveMeal}
             onRemoveMeal={removeMeal}
-            unmatchedRecipes={unmatchedRecipes}
             onRecipeAdded={handleRecipeAdded}
             suggestedRecipes={suggestedRecipes}
             onAddToLibrary={handleAddToLibrary}

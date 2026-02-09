@@ -97,7 +97,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
           tags: recipe.tags || existing?.tags || [],
           mealTypes: [],
           isLoading: !isComplete,
-          loadedFields: new Set(Object.keys(recipe)),
+          loadedFields: Object.keys(recipe),
         };
       });
       
