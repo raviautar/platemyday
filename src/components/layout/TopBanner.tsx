@@ -1,19 +1,49 @@
 'use client';
 
+import { usePathname } from 'next/navigation';
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
-import { ChefHat, Crown, UserCircle } from 'lucide-react';
+import { Crown, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export function TopBanner() {
+  const pathname = usePathname();
+  const isHomePage = pathname === '/';
+
+  const handleLogoClick = () => {
+    if (isHomePage) {
+      window.dispatchEvent(new CustomEvent('platemyday-scroll-to-hero'));
+    }
+  };
+
   return (
     <header className="fixed top-0 inset-x-0 h-14 bg-gradient-to-r from-emerald-600 to-teal-600 border-b border-emerald-700/30 shadow-lg z-50 flex items-center justify-between px-4 md:px-6 backdrop-blur-sm">
       <div className="flex items-center gap-2">
-        <div className="group">
-          <ChefHat 
-            className="w-7 h-7 md:w-8 md:h-8 text-white drop-shadow-lg transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12" 
-            strokeWidth={2.2}
-          />
-        </div>
+        {isHomePage ? (
+          <button
+            type="button"
+            onClick={handleLogoClick}
+            className="flex-shrink-0 group focus:outline-none"
+            aria-label="Scroll to top"
+          >
+            <img
+              src="/assets/logo.png"
+              alt="PlateMyMeal"
+              width={64}
+              height={64}
+              className="block w-16 h-16 md:w-14 md:h-14 drop-shadow-lg object-contain transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12"
+            />
+          </button>
+        ) : (
+          <Link href="/" className="flex-shrink-0 group">
+            <img
+              src="/assets/logo.png"
+              alt="PlateMyMeal"
+              width={64}
+              height={64}
+              className="block w-16 h-16 md:w-14 md:h-14 drop-shadow-lg object-contain transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12"
+            />
+          </Link>
+        )}
         
         <div className="flex flex-col -space-y-1">
           <h1 className="text-2xl md:text-3xl font-bold text-white tracking-normal drop-shadow-md relative font-[family-name:var(--font-outfit)]">

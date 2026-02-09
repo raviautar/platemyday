@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { UtensilsCrossed, Calendar, Settings, Sparkles } from 'lucide-react';
+import { UtensilsCrossed, Calendar, Settings } from 'lucide-react';
 
 const navItems = [
   { href: '/recipes', label: 'Recipes', icon: UtensilsCrossed },

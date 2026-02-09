@@ -4,14 +4,20 @@ import { mealPlanWithDetailsSchema } from '@/lib/ai';
 
 export async function POST(req: Request) {
   try {
-    const { recipes, systemPrompt, preferences } = await req.json();
+    const { recipes, systemPrompt, preferences, weekStartDay = 'Monday' } = await req.json();
 
     const recipeList = recipes
       .map((r: { id: string; title: string; tags: string[] }) => 
         `- ${r.title} (ID: ${r.id}, Tags: ${r.tags.join(', ')})`)
       .join('\n');
 
-    const prompt = `Create a complete 7-day meal plan (Monday through Sunday) with full recipe details.
+    const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const startIndex = daysOrder.indexOf(weekStartDay);
+    const orderedDays = [...daysOrder.slice(startIndex), ...daysOrder.slice(0, startIndex)];
+
+    const prompt = `Create a complete 7-day meal plan starting from ${weekStartDay} with full recipe details.
+
+IMPORTANT: The days array MUST start with ${weekStartDay} and follow this exact order: ${orderedDays.join(', ')}
 
 Available recipes in user's library:
 ${recipeList}
@@ -27,7 +33,8 @@ IMPORTANT:
    - Relevant tags (e.g., "vegetarian", "quick", "italian")
 3. Each day should have breakfast, lunch, and dinner at minimum
 4. Add snacks where appropriate for variety
-5. Make sure recipe titles in meals exactly match titles in newRecipes array`;
+5. Make sure recipe titles in meals exactly match titles in newRecipes array
+6. Days must be in this exact order: ${orderedDays.join(', ')}`;
 
     const result = await streamText({
       model: google('gemini-3-flash-preview'),

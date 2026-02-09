@@ -19,7 +19,7 @@ export function Sidebar() {
       <div className="p-6">
         <Link href="/recipes" className="flex items-center gap-3">
           <Image 
-            src="/icon.png" 
+            src="/assets/logo.png" 
             alt="PlateMyMeal Logo" 
             width={48} 
             height={48}

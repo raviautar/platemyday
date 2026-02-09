@@ -19,7 +19,7 @@ export const mealPlanSchema = z.object({
       recipeTitle: z.string().describe('Title of an existing recipe from the provided list, or a new recipe title'),
       recipeId: z.string().optional().describe('ID of an existing recipe if matched'),
     })),
-  })).length(7).describe('7 days of meal plans, Monday through Sunday'),
+  })).length(7).describe('7 consecutive days of meal plans starting from the specified week start day'),
 });
 
 export const mealPlanWithDetailsSchema = z.object({
@@ -30,7 +30,7 @@ export const mealPlanWithDetailsSchema = z.object({
       recipeTitle: z.string().describe('Title of recipe'),
       recipeId: z.string().optional().describe('ID of existing recipe if using one from library'),
     })),
-  })).length(7).describe('7 days of meal plans, Monday through Sunday'),
+  })).length(7).describe('7 consecutive days of meal plans starting from the specified week start day'),
   newRecipes: z.array(z.object({
     title: z.string().describe('Recipe title - must match recipeTitle in meals'),
     description: z.string().describe('Brief description of the dish'),

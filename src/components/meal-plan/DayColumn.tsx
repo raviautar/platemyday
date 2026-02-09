@@ -16,10 +16,18 @@ interface DayColumnProps {
 }
 
 export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, onRecipeAdded, loadingRecipes, onAddToLibrary }: DayColumnProps) {
+  const formatDate = (dateStr: string, dayOfWeek: string) => {
+    const date = new Date(dateStr + 'T00:00:00');
+    const month = date.toLocaleDateString('en-US', { month: 'short' });
+    const dayNum = date.getDate();
+    const dayAbbr = dayOfWeek.slice(0, 3);
+    return `${dayAbbr} - ${month} ${dayNum}`;
+  };
+
   return (
     <div className="bg-surface rounded-xl p-3 min-w-[160px]">
       <h3 className="font-semibold text-sm text-center text-primary-dark mb-2">
-        {day.dayOfWeek}
+        {formatDate(day.date, day.dayOfWeek)}
       </h3>
       <Droppable droppableId={`day-${dayIndex}`}>
         {(provided, snapshot) => (

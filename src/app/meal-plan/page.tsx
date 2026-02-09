@@ -25,14 +25,33 @@ export default function MealPlanPage() {
   const [loadingRecipes, setLoadingRecipes] = useState<Map<string, LoadingRecipe>>(new Map());
   const [abortController, setAbortController] = useState<AbortController | null>(null);
 
-  const updateWeekPlanFromPartial = (partialData: any) => {
+  const getWeekStartDate = (weekStartDay: string) => {
     const today = new Date();
-    const monday = new Date(today);
-    monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
+    const dayMap: { [key: string]: number } = {
+      'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+      'Thursday': 4, 'Friday': 5, 'Saturday': 6
+    };
+    
+    const targetDay = dayMap[weekStartDay];
+    const currentDay = today.getDay();
+    
+    let daysToSubtract = currentDay - targetDay;
+    if (daysToSubtract < 0) {
+      daysToSubtract += 7;
+    }
+    
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - daysToSubtract);
+    
+    return weekStart;
+  };
+
+  const updateWeekPlanFromPartial = (partialData: any) => {
+    const weekStart = getWeekStartDate(settings.weekStartDay);
     
     const days = partialData.days.map((day: any, index: number) => {
-      const date = new Date(monday);
-      date.setDate(monday.getDate() + index);
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + index);
       
       return {
         date: date.toISOString().split('T')[0],
@@ -48,7 +67,7 @@ export default function MealPlanPage() {
     
     setWeekPlan({
       id: crypto.randomUUID(),
-      weekStartDate: monday.toISOString().split('T')[0],
+      weekStartDate: weekStart.toISOString().split('T')[0],
       createdAt: new Date().toISOString(),
       days,
     });
@@ -118,7 +137,8 @@ export default function MealPlanPage() {
         body: JSON.stringify({ 
           recipes: recipes.map(r => ({ id: r.id, title: r.title, tags: r.tags })),
           systemPrompt: systemPrompt || settings.mealPlanSystemPrompt,
-          preferences 
+          preferences,
+          weekStartDay: settings.weekStartDay
         }),
         signal: controller.signal,
       });
