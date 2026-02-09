@@ -22,7 +22,7 @@ export function TopBanner() {
           <button
             type="button"
             onClick={handleLogoClick}
-            className="flex-shrink-0 group focus:outline-none"
+            className="flex-shrink-0 focus:outline-none"
             aria-label="Scroll to top"
           >
             <img
@@ -30,17 +30,17 @@ export function TopBanner() {
               alt="PlateMyMeal"
               width={64}
               height={64}
-              className="block w-16 h-16 md:w-14 md:h-14 drop-shadow-lg object-contain transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12"
+              className="block w-16 h-16 md:w-14 md:h-14 drop-shadow-lg object-contain"
             />
           </button>
         ) : (
-          <Link href="/" className="flex-shrink-0 group">
+          <Link href="/" className="flex-shrink-0">
             <img
               src="/assets/logo.png"
               alt="PlateMyMeal"
               width={64}
               height={64}
-              className="block w-16 h-16 md:w-14 md:h-14 drop-shadow-lg object-contain transition-transform duration-300 group-hover:scale-110 group-hover:rotate-12"
+              className="block w-16 h-16 md:w-14 md:h-14 drop-shadow-lg object-contain"
             />
           </Link>
         )}
