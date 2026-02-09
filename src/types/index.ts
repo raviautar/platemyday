@@ -32,6 +32,7 @@ export interface WeekPlan {
   weekStartDate: string;
   days: DayPlan[];
   createdAt: string;
+  suggestedRecipes?: Record<string, SuggestedRecipe>;
 }
 
 export type UnitSystem = 'metric' | 'imperial';
@@ -45,7 +46,7 @@ export interface AppSettings {
   weekStartDay: WeekStartDay;
 }
 
-export interface LoadingRecipe {
+export interface SuggestedRecipe {
   title: string;
   description?: string;
   ingredients: string[];

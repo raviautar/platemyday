@@ -1,6 +1,6 @@
 'use client';
 
-import { MealSlot, Recipe, LoadingRecipe } from '@/types';
+import { MealSlot, Recipe, SuggestedRecipe } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useRecipes } from '@/contexts/RecipeContext';
@@ -12,8 +12,8 @@ interface MealDetailProps {
   isOpen: boolean;
   onClose: () => void;
   onAddToLibrary?: (meal: MealSlot) => void;
-  loadingRecipe?: LoadingRecipe;
-  onAddToLibraryNew?: (recipe: LoadingRecipe) => void;
+  suggestedRecipe?: SuggestedRecipe;
+  onAddToLibraryNew?: (recipe: SuggestedRecipe) => void;
 }
 
 const tagColors = [
@@ -32,16 +32,16 @@ function getTagColor(tag: string): string {
   return tagColors[hash % tagColors.length];
 }
 
-export function MealDetail({ meal, isOpen, onClose, onAddToLibrary, loadingRecipe, onAddToLibraryNew }: MealDetailProps) {
+export function MealDetail({ meal, isOpen, onClose, onAddToLibrary, suggestedRecipe, onAddToLibraryNew }: MealDetailProps) {
   const { getRecipe } = useRecipes();
 
   if (!meal) return null;
 
-  if (loadingRecipe) {
+  if (suggestedRecipe) {
     return (
       <StreamingRecipeDetail
         meal={meal}
-        loadingRecipe={loadingRecipe}
+        suggestedRecipe={suggestedRecipe}
         isOpen={isOpen}
         onClose={onClose}
         onAddToLibrary={onAddToLibraryNew}

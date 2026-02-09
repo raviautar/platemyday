@@ -1,6 +1,6 @@
 'use client';
 
-import { DayPlan, LoadingRecipe } from '@/types';
+import { DayPlan, SuggestedRecipe } from '@/types';
 import { MealCard } from './MealCard';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 
@@ -11,11 +11,11 @@ interface DayColumnProps {
   onRemoveMeal: (dayIndex: number, mealId: string) => void;
   onMoveMeal: (mealId: string, sourceDayIndex: number, targetDayIndex: number) => void;
   onRecipeAdded: (title: string, newRecipeId: string) => void;
-  loadingRecipes: Map<string, LoadingRecipe>;
-  onAddToLibrary: (recipe: LoadingRecipe) => void;
+  suggestedRecipes: Record<string, SuggestedRecipe>;
+  onAddToLibrary: (recipe: SuggestedRecipe) => void;
 }
 
-export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, onRecipeAdded, loadingRecipes, onAddToLibrary }: DayColumnProps) {
+export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, onRecipeAdded, suggestedRecipes, onAddToLibrary }: DayColumnProps) {
   const formatDate = (dateStr: string, dayOfWeek: string) => {
     const date = new Date(dateStr + 'T00:00:00');
     const month = date.toLocaleDateString('en-US', { month: 'short' });
@@ -39,12 +39,12 @@ export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, o
             }`}
           >
             {day.meals.map((meal, mealIndex) => {
-              const loadingRecipe = meal.recipeTitleFallback 
-                ? loadingRecipes.get(meal.recipeTitleFallback) 
+              const suggestedRecipe = meal.recipeTitleFallback 
+                ? suggestedRecipes[meal.recipeTitleFallback] 
                 : undefined;
               
               return (
-                <Draggable key={meal.id} draggableId={meal.id} index={mealIndex} isDragDisabled={loadingRecipe?.isLoading}>
+                <Draggable key={meal.id} draggableId={meal.id} index={mealIndex} isDragDisabled={suggestedRecipe?.isLoading}>
                   {(provided, snapshot) => (
                     <div
                       ref={provided.innerRef}
@@ -59,7 +59,7 @@ export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, o
                         onRemove={() => onRemoveMeal(dayIndex, meal.id)}
                         onMoveTo={(targetDayIndex) => onMoveMeal(meal.id, dayIndex, targetDayIndex)}
                         onMealUpdated={onRecipeAdded}
-                        loadingRecipe={loadingRecipe}
+                        suggestedRecipe={suggestedRecipe}
                         onAddToLibrary={onAddToLibrary}
                       />
                     </div>

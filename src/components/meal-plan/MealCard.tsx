@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { MealSlot, MealType, LoadingRecipe, DayPlan } from '@/types';
+import { MealSlot, MealType, SuggestedRecipe, DayPlan } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { Sparkles } from 'lucide-react';
 import { MealDetail } from './MealDetail';
@@ -16,8 +16,8 @@ interface MealCardProps {
   onRemove?: () => void;
   onMoveTo?: (targetDayIndex: number) => void;
   onMealUpdated?: (oldTitle: string, newRecipeId: string) => void;
-  loadingRecipe?: LoadingRecipe;
-  onAddToLibrary?: (recipe: LoadingRecipe) => void;
+  suggestedRecipe?: SuggestedRecipe;
+  onAddToLibrary?: (recipe: SuggestedRecipe) => void;
 }
 
 const mealTypeColors: Record<MealType, string> = {
@@ -27,14 +27,14 @@ const mealTypeColors: Record<MealType, string> = {
   snack: 'bg-surface-dark text-muted',
 };
 
-export function MealCard({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, onMealUpdated, loadingRecipe, onAddToLibrary }: MealCardProps) {
+export function MealCard({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, onMealUpdated, suggestedRecipe, onAddToLibrary }: MealCardProps) {
   const { getRecipe, addRecipe } = useRecipes();
   const { showToast } = useToast();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const recipe = meal.recipeId ? getRecipe(meal.recipeId) : null;
   
   const isUnmatched = meal.recipeTitleFallback !== undefined;
-  const isLoading = loadingRecipe?.isLoading ?? false;
+  const isLoading = suggestedRecipe?.isLoading ?? false;
   const title = isUnmatched 
     ? meal.recipeTitleFallback 
     : (recipe?.title || 'Unknown Recipe');
@@ -128,7 +128,7 @@ export function MealCard({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, 
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         onAddToLibrary={handleAddToLibraryLegacy}
-        loadingRecipe={loadingRecipe}
+        suggestedRecipe={suggestedRecipe}
         onAddToLibraryNew={onAddToLibrary}
       />
     </>

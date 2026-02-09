@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useCallback } from 'react';
-import { WeekPlan, DayPlan, MealSlot } from '@/types';
+import { WeekPlan, DayPlan, MealSlot, SuggestedRecipe } from '@/types';
 import { useLocalStorage } from '@/hooks/useLocalStorage';
 import { STORAGE_KEYS } from '@/lib/constants';
 
@@ -12,6 +12,10 @@ interface MealPlanContextType {
   removeMeal: (dayIndex: number, mealId: string) => void;
   addMealToDay: (dayIndex: number, meal: MealSlot) => void;
   clearWeekPlan: () => void;
+  updateSuggestedRecipes: (recipes: SuggestedRecipe[]) => void;
+  markRecipesComplete: (titles: string[]) => void;
+  removeSuggestedRecipe: (title: string) => void;
+  clearSuggestedRecipes: () => void;
 }
 
 const MealPlanContext = createContext<MealPlanContextType | null>(null);
@@ -68,8 +72,82 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     setWeekPlanStorage(null);
   }, [setWeekPlanStorage]);
 
+  const updateSuggestedRecipes = useCallback((recipes: SuggestedRecipe[]) => {
+    setWeekPlanStorage(prev => {
+      if (!prev) return prev;
+      const updated = { ...(prev.suggestedRecipes || {}) };
+      
+      recipes.forEach((recipe) => {
+        const existing = updated[recipe.title];
+        const isComplete = recipe.ingredients?.length > 0 && 
+                          recipe.instructions?.length > 0 &&
+                          recipe.description &&
+                          recipe.servings &&
+                          recipe.prepTimeMinutes !== undefined &&
+                          recipe.cookTimeMinutes !== undefined;
+        
+        updated[recipe.title] = {
+          title: recipe.title,
+          description: recipe.description || existing?.description,
+          ingredients: recipe.ingredients || existing?.ingredients || [],
+          instructions: recipe.instructions || existing?.instructions || [],
+          servings: recipe.servings || existing?.servings,
+          prepTimeMinutes: recipe.prepTimeMinutes ?? existing?.prepTimeMinutes,
+          cookTimeMinutes: recipe.cookTimeMinutes ?? existing?.cookTimeMinutes,
+          tags: recipe.tags || existing?.tags || [],
+          mealTypes: [],
+          isLoading: !isComplete,
+          loadedFields: new Set(Object.keys(recipe)),
+        };
+      });
+      
+      return { ...prev, suggestedRecipes: updated };
+    });
+  }, [setWeekPlanStorage]);
+
+  const markRecipesComplete = useCallback((titles: string[]) => {
+    setWeekPlanStorage(prev => {
+      if (!prev || !prev.suggestedRecipes) return prev;
+      const updated = { ...prev.suggestedRecipes };
+      titles.forEach((title) => {
+        const existing = updated[title];
+        if (existing) {
+          updated[title] = { ...existing, isLoading: false };
+        }
+      });
+      return { ...prev, suggestedRecipes: updated };
+    });
+  }, [setWeekPlanStorage]);
+
+  const removeSuggestedRecipe = useCallback((title: string) => {
+    setWeekPlanStorage(prev => {
+      if (!prev || !prev.suggestedRecipes) return prev;
+      const updated = { ...prev.suggestedRecipes };
+      delete updated[title];
+      return { ...prev, suggestedRecipes: updated };
+    });
+  }, [setWeekPlanStorage]);
+
+  const clearSuggestedRecipes = useCallback(() => {
+    setWeekPlanStorage(prev => {
+      if (!prev) return prev;
+      return { ...prev, suggestedRecipes: {} };
+    });
+  }, [setWeekPlanStorage]);
+
   return (
-    <MealPlanContext.Provider value={{ weekPlan, setWeekPlan, moveMeal, removeMeal, addMealToDay, clearWeekPlan }}>
+    <MealPlanContext.Provider value={{ 
+      weekPlan, 
+      setWeekPlan, 
+      moveMeal, 
+      removeMeal, 
+      addMealToDay, 
+      clearWeekPlan,
+      updateSuggestedRecipes,
+      markRecipesComplete,
+      removeSuggestedRecipe,
+      clearSuggestedRecipes
+    }}>
       {children}
     </MealPlanContext.Provider>
   );

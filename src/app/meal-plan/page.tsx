@@ -7,7 +7,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/components/ui/Toast';
 import { WeekView } from '@/components/meal-plan/WeekView';
 import { MealPlanControls } from '@/components/meal-plan/MealPlanControls';
-import { WeekPlan, MealSlot, MealType, LoadingRecipe } from '@/types';
+import { WeekPlan, MealSlot, MealType, SuggestedRecipe } from '@/types';
 import { DAYS_OF_WEEK } from '@/lib/constants';
 import { History } from 'lucide-react';
 
@@ -18,13 +18,14 @@ export interface UnmatchedRecipe {
 
 export default function MealPlanPage() {
   const { recipes, addRecipe } = useRecipes();
-  const { weekPlan, setWeekPlan, moveMeal, removeMeal, clearWeekPlan } = useMealPlan();
+  const { weekPlan, setWeekPlan, moveMeal, removeMeal, clearWeekPlan, updateSuggestedRecipes, markRecipesComplete, removeSuggestedRecipe, clearSuggestedRecipes } = useMealPlan();
   const { settings } = useSettings();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [unmatchedRecipes, setUnmatchedRecipes] = useState<UnmatchedRecipe[]>([]);
-  const [loadingRecipes, setLoadingRecipes] = useState<Map<string, LoadingRecipe>>(new Map());
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  
+  const suggestedRecipes = weekPlan?.suggestedRecipes || {};
 
   const getWeekStartDate = (weekStartDay: string) => {
     const today = new Date();
@@ -71,52 +72,31 @@ export default function MealPlanPage() {
       weekStartDate: weekStart.toISOString().split('T')[0],
       createdAt: new Date().toISOString(),
       days,
+      suggestedRecipes: {},
     });
   };
 
-  const updateLoadingRecipes = (newRecipes: any[]) => {
-    setLoadingRecipes(prev => {
-      const updated = new Map(prev);
-      
-      newRecipes.forEach((recipe: any) => {
-        const existing = updated.get(recipe.title);
-        const isComplete = recipe.ingredients?.length > 0 && 
-                          recipe.instructions?.length > 0 &&
-                          recipe.description &&
-                          recipe.servings &&
-                          recipe.prepTimeMinutes !== undefined &&
-                          recipe.cookTimeMinutes !== undefined;
-        
-        updated.set(recipe.title, {
-          title: recipe.title,
-          description: recipe.description || existing?.description,
-          ingredients: recipe.ingredients || existing?.ingredients || [],
-          instructions: recipe.instructions || existing?.instructions || [],
-          servings: recipe.servings || existing?.servings,
-          prepTimeMinutes: recipe.prepTimeMinutes ?? existing?.prepTimeMinutes,
-          cookTimeMinutes: recipe.cookTimeMinutes ?? existing?.cookTimeMinutes,
-          tags: recipe.tags || existing?.tags || [],
-          mealTypes: [],
-          isLoading: !isComplete,
-          loadedFields: new Set(Object.keys(recipe)),
-        });
-      });
-      
-      return updated;
-    });
+  const updateSuggestedRecipesLocal = (newRecipes: any[]) => {
+    const recipesToUpdate: SuggestedRecipe[] = newRecipes.map((recipe: any) => ({
+      title: recipe.title,
+      description: recipe.description,
+      ingredients: recipe.ingredients || [],
+      instructions: recipe.instructions || [],
+      servings: recipe.servings,
+      prepTimeMinutes: recipe.prepTimeMinutes,
+      cookTimeMinutes: recipe.cookTimeMinutes,
+      tags: recipe.tags || [],
+      mealTypes: [],
+      isLoading: true,
+      loadedFields: new Set(Object.keys(recipe)),
+    }));
+    
+    updateSuggestedRecipes(recipesToUpdate);
   };
 
-  const markRecipesComplete = (newRecipes: any[]) => {
-    setLoadingRecipes(prev => {
-      const updated = new Map(prev);
-      newRecipes.forEach((recipe: any) => {
-        const existing = updated.get(recipe.title);
-        if (existing) {
-          updated.set(recipe.title, { ...existing, isLoading: false });
-        }
-      });
-      return updated;
-    });
+  const markRecipesCompleteLocal = (newRecipes: any[]) => {
+    const titles = newRecipes.map((recipe: any) => recipe.title);
+    markRecipesComplete(titles);
   };
 
   const handleGenerate = async (preferences: string, systemPrompt?: string) => {
@@ -128,7 +108,7 @@ export default function MealPlanPage() {
     const controller = new AbortController();
     setAbortController(controller);
     setLoading(true);
-    setLoadingRecipes(new Map());
+    clearSuggestedRecipes();
     setUnmatchedRecipes([]);
     
     try {
@@ -177,13 +157,13 @@ export default function MealPlanPage() {
               }
               
               if (partialData.newRecipes && partialData.newRecipes.length > 0) {
-                updateLoadingRecipes(partialData.newRecipes);
+                updateSuggestedRecipesLocal(partialData.newRecipes);
               }
             } else if (message.type === 'done') {
               const finalData = message.data;
               updateWeekPlanFromPartial(finalData);
               if (finalData.newRecipes) {
-                markRecipesComplete(finalData.newRecipes);
+                markRecipesCompleteLocal(finalData.newRecipes);
               }
               
               const newRecipeCount = finalData.newRecipes?.length || 0;
@@ -202,16 +182,7 @@ export default function MealPlanPage() {
       }
     } catch (error: any) {
       if (error.name === 'AbortError') {
-        setLoadingRecipes(prev => {
-          const filtered = new Map();
-          prev.forEach((recipe, title) => {
-            if (!recipe.isLoading) {
-              filtered.set(title, recipe);
-            }
-          });
-          return filtered;
-        });
-        showToast('Generation cancelled - kept completed recipes');
+        showToast('Generation cancelled');
       } else {
         showToast(error instanceof Error ? error.message : 'Failed to generate meal plan', 'error');
       }
@@ -221,29 +192,25 @@ export default function MealPlanPage() {
     }
   };
 
-  const handleAddToLibrary = (loadingRecipe: LoadingRecipe) => {
+  const handleAddToLibrary = (suggestedRecipe: SuggestedRecipe) => {
     const newRecipe = {
-      title: loadingRecipe.title,
-      description: loadingRecipe.description || '',
-      ingredients: loadingRecipe.ingredients,
-      instructions: loadingRecipe.instructions,
-      servings: loadingRecipe.servings || 4,
-      prepTimeMinutes: loadingRecipe.prepTimeMinutes || 0,
-      cookTimeMinutes: loadingRecipe.cookTimeMinutes || 0,
-      tags: loadingRecipe.tags,
+      title: suggestedRecipe.title,
+      description: suggestedRecipe.description || '',
+      ingredients: suggestedRecipe.ingredients,
+      instructions: suggestedRecipe.instructions,
+      servings: suggestedRecipe.servings || 4,
+      prepTimeMinutes: suggestedRecipe.prepTimeMinutes || 0,
+      cookTimeMinutes: suggestedRecipe.cookTimeMinutes || 0,
+      tags: suggestedRecipe.tags,
       isAIGenerated: true,
     };
     
     const recipe = addRecipe(newRecipe);
-    handleRecipeAdded(loadingRecipe.title, recipe.id);
+    handleRecipeAdded(suggestedRecipe.title, recipe.id);
     
-    setLoadingRecipes(prev => {
-      const updated = new Map(prev);
-      updated.delete(loadingRecipe.title);
-      return updated;
-    });
+    removeSuggestedRecipe(suggestedRecipe.title);
     
-    showToast(`${loadingRecipe.title} added to your library!`);
+    showToast(`${suggestedRecipe.title} added to your library!`);
   };
 
   const handleRecipeAdded = (title: string, newRecipeId: string) => {
@@ -271,7 +238,6 @@ export default function MealPlanPage() {
     }
     clearWeekPlan();
     setUnmatchedRecipes([]);
-    setLoadingRecipes(new Map());
   };
 
   return (
@@ -308,7 +274,7 @@ export default function MealPlanPage() {
             onRemoveMeal={removeMeal}
             unmatchedRecipes={unmatchedRecipes}
             onRecipeAdded={handleRecipeAdded}
-            loadingRecipes={loadingRecipes}
+            suggestedRecipes={suggestedRecipes}
             onAddToLibrary={handleAddToLibrary}
           />
         ) : (

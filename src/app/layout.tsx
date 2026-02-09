@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
@@ -20,9 +20,27 @@ const outfit = Outfit({
   weight: ["400", "500", "600", "700"],
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#10b981",
+};
+
 export const metadata: Metadata = {
-  title: "PlateMyMeal",
+  title: "PlateMyDay",
   description: "AI-powered meal planning made simple",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "PlateMyDay",
+  },
+  icons: {
+    icon: "/assets/icon.png",
+    apple: "/assets/icon-180.png",
+  },
 };
 
 export default function RootLayout({

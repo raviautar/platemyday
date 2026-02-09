@@ -1,6 +1,6 @@
 'use client';
 
-import { WeekPlan, LoadingRecipe } from '@/types';
+import { WeekPlan, SuggestedRecipe } from '@/types';
 import { DayColumn } from './DayColumn';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
 import { UnmatchedRecipe } from '@/app/meal-plan/page';
@@ -11,11 +11,11 @@ interface WeekViewProps {
   onRemoveMeal: (dayIndex: number, mealId: string) => void;
   unmatchedRecipes: UnmatchedRecipe[];
   onRecipeAdded: (title: string, newRecipeId: string) => void;
-  loadingRecipes: Map<string, LoadingRecipe>;
-  onAddToLibrary: (recipe: LoadingRecipe) => void;
+  suggestedRecipes: Record<string, SuggestedRecipe>;
+  onAddToLibrary: (recipe: SuggestedRecipe) => void;
 }
 
-export function WeekView({ weekPlan, onMoveMeal, onRemoveMeal, unmatchedRecipes, onRecipeAdded, loadingRecipes, onAddToLibrary }: WeekViewProps) {
+export function WeekView({ weekPlan, onMoveMeal, onRemoveMeal, unmatchedRecipes, onRecipeAdded, suggestedRecipes, onAddToLibrary }: WeekViewProps) {
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
@@ -41,7 +41,7 @@ export function WeekView({ weekPlan, onMoveMeal, onRemoveMeal, unmatchedRecipes,
                   onMoveMeal(mealId, sourceDayIndex, targetDayIndex, weekPlan.days[targetDayIndex].meals.length);
                 }}
                 onRecipeAdded={onRecipeAdded}
-                loadingRecipes={loadingRecipes}
+                suggestedRecipes={suggestedRecipes}
                 onAddToLibrary={onAddToLibrary}
               />
             </div>
