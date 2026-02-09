@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { MoreVertical, ArrowRight, Trash2 } from 'lucide-react';
+import { MoreVertical, ArrowRight, Trash2, RefreshCw } from 'lucide-react';
 import { DayPlan } from '@/types';
 
 interface MealOptionsMenuProps {
@@ -9,9 +9,10 @@ interface MealOptionsMenuProps {
   currentDayIndex: number;
   onMoveTo: (targetDayIndex: number) => void;
   onRemove: () => void;
+  onLockedFeatureClick?: () => void;
 }
 
-export function MealOptionsMenu({ weekDays, currentDayIndex, onMoveTo, onRemove }: MealOptionsMenuProps) {
+export function MealOptionsMenu({ weekDays, currentDayIndex, onMoveTo, onRemove, onLockedFeatureClick }: MealOptionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showMoveToSubmenu, setShowMoveToSubmenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -98,6 +99,21 @@ export function MealOptionsMenu({ weekDays, currentDayIndex, onMoveTo, onRemove 
                 ))}
               </div>
             )}
+
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onLockedFeatureClick?.();
+                setIsOpen(false);
+              }}
+              title="Refine recipe"
+              aria-label="Refine recipe"
+              className="w-full px-4 py-2 text-left text-sm text-muted opacity-75 cursor-not-allowed flex items-center gap-2 border-t border-border hover:bg-transparent hover:text-muted"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Refine recipe
+            </button>
 
             <button
               onClick={handleRemoveClick}

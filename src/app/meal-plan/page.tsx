@@ -9,6 +9,7 @@ import { WeekView } from '@/components/meal-plan/WeekView';
 import { MealPlanControls } from '@/components/meal-plan/MealPlanControls';
 import { WeekPlan, MealSlot, MealType, LoadingRecipe } from '@/types';
 import { DAYS_OF_WEEK } from '@/lib/constants';
+import { History } from 'lucide-react';
 
 export interface UnmatchedRecipe {
   title: string;
@@ -275,7 +276,21 @@ export default function MealPlanPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Meal Plan</h1>
+      <div className="flex items-center justify-between gap-4 pb-3 border-b border-border/60 mb-6">
+        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark font-[family-name:var(--font-outfit)]">
+          Meal Plan
+        </h1>
+        <button
+          type="button"
+          aria-label="History of past generations"
+          title="History"
+          onClick={() => showToast('This feature is locked')}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border border-border text-muted opacity-75 cursor-not-allowed hover:opacity-75 hover:text-muted shadow-sm shrink-0"
+        >
+          <History className="w-5 h-5" strokeWidth={2} />
+          <span className="text-sm font-medium hidden sm:inline">History</span>
+        </button>
+      </div>
 
       <MealPlanControls
         onGenerate={handleGenerate}

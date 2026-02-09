@@ -59,7 +59,7 @@ export default function HomePage() {
             </span>
           </h1>
           <p className="text-xl md:text-2xl text-muted mb-12 font-[family-name:var(--font-outfit)]">
-            Your AI Meal Planner
+            Your personalized meal planner
           </p>
           <div className="flex justify-center">
             <ChevronDown className="w-8 h-8 text-primary animate-bounce" />

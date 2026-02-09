@@ -52,7 +52,7 @@ export function TopBanner() {
             </span>
           </h1>
           <p className="text-[10px] md:text-xs text-emerald-50/90 font-medium tracking-wide hidden sm:block font-[family-name:var(--font-outfit)]">
-            Your AI Meal Planner
+            Your personalized meal planner
           </p>
         </div>
       </div>

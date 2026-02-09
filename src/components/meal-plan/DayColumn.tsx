@@ -25,7 +25,7 @@ export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, o
   };
 
   return (
-    <div className="bg-surface rounded-xl p-3 min-w-[160px]">
+    <div className="bg-surface rounded-xl p-3 h-full">
       <h3 className="font-semibold text-sm text-center text-primary-dark mb-2">
         {formatDate(day.date, day.dayOfWeek)}
       </h3>

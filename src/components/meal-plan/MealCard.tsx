@@ -117,6 +117,7 @@ export function MealCard({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, 
               currentDayIndex={currentDayIndex}
               onMoveTo={handleMoveTo}
               onRemove={handleRemove}
+              onLockedFeatureClick={() => showToast('This feature is locked')}
             />
           )}
         </div>
