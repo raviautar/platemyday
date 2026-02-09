@@ -23,6 +23,7 @@ export const DEFAULT_SETTINGS: AppSettings = {
   recipeSystemPrompt: DEFAULT_RECIPE_SYSTEM_PROMPT,
   mealPlanSystemPrompt: DEFAULT_MEAL_PLAN_SYSTEM_PROMPT,
   unitSystem: 'metric',
+  weekStartDay: 'Monday',
 };
 
 export const DAYS_OF_WEEK = [

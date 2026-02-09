@@ -7,7 +7,7 @@ import { UtensilsCrossed, Calendar, Settings, Sparkles } from 'lucide-react';
 const navItems = [
   { href: '/recipes', label: 'Recipes', icon: UtensilsCrossed },
   { href: '/meal-plan', label: 'Meal Plan', icon: Calendar },
-  { href: '/settings', label: 'Customize', icon: Settings },
+  { href: '/customize', label: 'Customize', icon: Settings },
 ];
 
 export function BottomNav() {

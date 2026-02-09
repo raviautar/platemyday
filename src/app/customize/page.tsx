@@ -5,9 +5,11 @@ import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
 import { DEFAULT_SETTINGS } from '@/lib/constants';
-import { UnitSystem } from '@/types';
+import { UnitSystem, WeekStartDay } from '@/types';
 
-export default function SettingsPage() {
+const WEEK_DAYS: WeekStartDay[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+export default function CustomizePage() {
   const { settings, updateSettings, updateUnitSystem, resetSettings } = useSettings();
   const { showToast } = useToast();
 
@@ -16,11 +18,39 @@ export default function SettingsPage() {
     showToast(`Unit system changed to ${unitSystem}`);
   };
 
+  const handleWeekStartDayChange = (day: WeekStartDay) => {
+    updateSettings({ weekStartDay: day });
+    showToast(`Week start day changed to ${day}`);
+  };
+
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Settings</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-6">Customize</h1>
 
       <div className="space-y-6 max-w-2xl">
+        <div className="bg-white rounded-xl border border-border p-4 space-y-4">
+          <h2 className="font-semibold text-lg">Week Start Day</h2>
+          <p className="text-sm text-muted">
+            Choose which day your week starts on. This will affect how your meal plans are displayed.
+          </p>
+
+          <div className="grid grid-cols-7 gap-2">
+            {WEEK_DAYS.map(day => (
+              <button
+                key={day}
+                onClick={() => handleWeekStartDayChange(day)}
+                className={`px-3 py-2 rounded-lg border-2 transition-all text-xs font-medium flex items-center justify-center ${
+                  settings.weekStartDay === day
+                    ? 'border-primary bg-primary/5 text-primary'
+                    : 'border-border bg-white text-muted hover:border-primary/50'
+                }`}
+              >
+                {day.slice(0, 3)}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="bg-white rounded-xl border border-border p-4 space-y-4">
           <h2 className="font-semibold text-lg">Measurement Units</h2>
           <p className="text-sm text-muted">

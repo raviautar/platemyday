@@ -36,10 +36,13 @@ export interface WeekPlan {
 
 export type UnitSystem = 'metric' | 'imperial';
 
+export type WeekStartDay = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+
 export interface AppSettings {
   recipeSystemPrompt: string;
   mealPlanSystemPrompt: string;
   unitSystem: UnitSystem;
+  weekStartDay: WeekStartDay;
 }
 
 export interface LoadingRecipe {

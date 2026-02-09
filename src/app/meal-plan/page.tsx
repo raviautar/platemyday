@@ -277,10 +277,18 @@ export default function MealPlanPage() {
             onAddToLibrary={handleAddToLibrary}
           />
         ) : (
-          <div className="text-center py-16">
-            <p className="text-4xl mb-4">📅</p>
-            <p className="text-lg font-medium text-foreground">No meal plan yet</p>
-            <p className="text-muted mt-1">Generate a weekly meal plan using your recipes and AI!</p>
+          <div className="bg-white rounded-xl border border-border p-12 text-center">
+            <div className="max-w-md mx-auto">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center">
+                <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">No meal plan yet</h3>
+              <p className="text-sm text-muted">
+                Generate a weekly meal plan using your recipes and AI to get started with organized meal planning.
+              </p>
+            </div>
           </div>
         )}
       </div>
