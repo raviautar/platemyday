@@ -69,21 +69,20 @@ export default function HomePage() {
 
       <section className={`snap-start h-screen flex items-center justify-center bg-white relative ${showTopBanner ? 'pt-14' : ''}`}>
         <div className="max-w-4xl mx-auto px-4 md:px-6 text-center">
-          <div className="mb-8 flex justify-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-primary to-emerald-600 rounded-full flex items-center justify-center shadow-xl">
-              <Sparkles className="w-10 h-10 text-white" strokeWidth={2} />
+          <div className="mb-4 md:mb-6 flex justify-center">
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-primary to-emerald-600 rounded-full flex items-center justify-center shadow-xl">
+              <Sparkles className="w-8 h-8 md:w-10 md:h-10 text-white" strokeWidth={2} />
             </div>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 font-[family-name:var(--font-outfit)]">
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-3 md:mb-6 font-[family-name:var(--font-outfit)]">
             AI-Powered Recipes
           </h2>
-          <p className="text-lg md:text-xl text-muted mb-8 max-w-2xl mx-auto leading-relaxed">
-            Generate personalized recipes tailored to your preferences, dietary needs, and available ingredients. 
-            Let our AI create delicious meals just for you.
+          <p className="text-sm md:text-lg text-muted mb-6 md:mb-8 max-w-2xl mx-auto leading-relaxed">
+            Personalized recipes for your diet and ingredients. Delicious meals, instantly.
           </p>
           <Link
             href="/recipes"
-            className="inline-flex items-center gap-2 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white font-semibold px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
+            className="inline-flex items-center gap-2 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white font-semibold px-6 py-3 md:px-8 md:py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
           >
             <Sparkles className="w-5 h-5" />
             Try It Out
@@ -96,21 +95,20 @@ export default function HomePage() {
 
       <section className={`snap-start h-screen flex items-center justify-center bg-surface relative ${showTopBanner ? 'pt-14' : ''}`}>
         <div className="max-w-4xl mx-auto px-4 md:px-6 text-center">
-          <div className="mb-8 flex justify-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-full flex items-center justify-center shadow-xl">
-              <Calendar className="w-10 h-10 text-white" strokeWidth={2} />
+          <div className="mb-4 md:mb-6 flex justify-center">
+            <div className="w-16 h-16 md:w-20 md:h-20 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-full flex items-center justify-center shadow-xl">
+              <Calendar className="w-8 h-8 md:w-10 md:h-10 text-white" strokeWidth={2} />
             </div>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 font-[family-name:var(--font-outfit)]">
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-3 md:mb-6 font-[family-name:var(--font-outfit)]">
             Weekly Meal Plans
           </h2>
-          <p className="text-lg md:text-xl text-muted mb-8 max-w-2xl mx-auto leading-relaxed">
-            Organize your week with intelligent meal planning. Our AI creates balanced, 
-            variety-filled weekly menus using your favorite recipes and dietary preferences.
+          <p className="text-sm md:text-lg text-muted mb-6 md:mb-8 max-w-2xl mx-auto leading-relaxed">
+            Weekly menus from your recipes and preferences. Balanced, varied, ready to go.
           </p>
           <Link
             href="/meal-plan"
-            className="inline-flex items-center gap-2 bg-gradient-to-br from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-semibold px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
+            className="inline-flex items-center gap-2 bg-gradient-to-br from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-semibold px-6 py-3 md:px-8 md:py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
           >
             <Calendar className="w-5 h-5" />
             Plan Your Week
@@ -123,16 +121,16 @@ export default function HomePage() {
 
       <section className={`snap-start h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-emerald-50 to-teal-50 ${showTopBanner ? 'pt-14' : ''}`}>
         <div className="max-w-4xl mx-auto px-4 md:px-6 text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6 font-[family-name:var(--font-outfit)]">
+          <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-3 md:mb-6 font-[family-name:var(--font-outfit)]">
             Get the Most Out of PlateMyMeal
           </h2>
-          <p className="text-lg md:text-xl text-muted mb-12 max-w-2xl mx-auto leading-relaxed">
+          <p className="text-sm md:text-lg text-muted mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed">
             Unlock premium features or install the app for the best experience
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+          <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center">
             <Link
               href="/upgrade"
-              className="inline-flex items-center gap-2 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white font-semibold px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
+              className="inline-flex items-center gap-2 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white font-semibold px-6 py-3 md:px-8 md:py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
             >
               <Crown className="w-5 h-5" />
               Upgrade to Premium
@@ -145,7 +143,7 @@ export default function HomePage() {
                   alert('Install feature coming soon!');
                 }
               }}
-              className="inline-flex items-center gap-2 bg-white hover:bg-surface text-foreground font-semibold px-8 py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 border-2 border-border w-full sm:w-auto justify-center"
+              className="inline-flex items-center gap-2 bg-white hover:bg-surface text-foreground font-semibold px-6 py-3 md:px-8 md:py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 border-2 border-border w-full sm:w-auto justify-center"
             >
               <Download className="w-5 h-5" />
               Install App
