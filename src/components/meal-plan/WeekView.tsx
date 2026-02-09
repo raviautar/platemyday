@@ -28,7 +28,7 @@ export function WeekView({ weekPlan, onMoveMeal, onRemoveMeal, unmatchedRecipes,
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-3">
         {weekPlan.days.map((day, index) => (
           <DayColumn
             key={day.dayOfWeek}
