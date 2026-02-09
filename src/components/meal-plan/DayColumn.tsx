@@ -7,13 +7,15 @@ import { Droppable, Draggable } from '@hello-pangea/dnd';
 interface DayColumnProps {
   day: DayPlan;
   dayIndex: number;
+  weekDays: DayPlan[];
   onRemoveMeal: (dayIndex: number, mealId: string) => void;
+  onMoveMeal: (mealId: string, sourceDayIndex: number, targetDayIndex: number) => void;
   onRecipeAdded: (title: string, newRecipeId: string) => void;
   loadingRecipes: Map<string, LoadingRecipe>;
   onAddToLibrary: (recipe: LoadingRecipe) => void;
 }
 
-export function DayColumn({ day, dayIndex, onRemoveMeal, onRecipeAdded, loadingRecipes, onAddToLibrary }: DayColumnProps) {
+export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, onRecipeAdded, loadingRecipes, onAddToLibrary }: DayColumnProps) {
   return (
     <div className="bg-surface rounded-xl p-3 min-w-[160px]">
       <h3 className="font-semibold text-sm text-center text-primary-dark mb-2">
@@ -44,7 +46,10 @@ export function DayColumn({ day, dayIndex, onRemoveMeal, onRecipeAdded, loadingR
                     >
                       <MealCard
                         meal={meal}
+                        currentDayIndex={dayIndex}
+                        weekDays={weekDays}
                         onRemove={() => onRemoveMeal(dayIndex, meal.id)}
+                        onMoveTo={(targetDayIndex) => onMoveMeal(meal.id, dayIndex, targetDayIndex)}
                         onMealUpdated={onRecipeAdded}
                         loadingRecipe={loadingRecipe}
                         onAddToLibrary={onAddToLibrary}

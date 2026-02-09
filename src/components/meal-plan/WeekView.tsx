@@ -34,7 +34,11 @@ export function WeekView({ weekPlan, onMoveMeal, onRemoveMeal, unmatchedRecipes,
             key={day.dayOfWeek}
             day={day}
             dayIndex={index}
+            weekDays={weekPlan.days}
             onRemoveMeal={onRemoveMeal}
+            onMoveMeal={(mealId, sourceDayIndex, targetDayIndex) => {
+              onMoveMeal(mealId, sourceDayIndex, targetDayIndex, weekPlan.days[targetDayIndex].meals.length);
+            }}
             onRecipeAdded={onRecipeAdded}
             loadingRecipes={loadingRecipes}
             onAddToLibrary={onAddToLibrary}

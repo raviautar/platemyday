@@ -1,17 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { MealSlot, MealType, LoadingRecipe } from '@/types';
+import { MealSlot, MealType, LoadingRecipe, DayPlan } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { Sparkles } from 'lucide-react';
 import { MealDetail } from './MealDetail';
+import { MealOptionsMenu } from './MealOptionsMenu';
 import { useToast } from '@/components/ui/Toast';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Button } from '@/components/ui/Button';
 
 interface MealCardProps {
   meal: MealSlot;
+  currentDayIndex?: number;
+  weekDays?: DayPlan[];
   onRemove?: () => void;
+  onMoveTo?: (targetDayIndex: number) => void;
   onMealUpdated?: (oldTitle: string, newRecipeId: string) => void;
   loadingRecipe?: LoadingRecipe;
   onAddToLibrary?: (recipe: LoadingRecipe) => void;
@@ -24,7 +28,7 @@ const mealTypeColors: Record<MealType, string> = {
   snack: 'bg-surface-dark text-muted',
 };
 
-export function MealCard({ meal, onRemove, onMealUpdated, loadingRecipe, onAddToLibrary }: MealCardProps) {
+export function MealCard({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, onMealUpdated, loadingRecipe, onAddToLibrary }: MealCardProps) {
   const { getRecipe, addRecipe } = useRecipes();
   const { showToast } = useToast();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -71,9 +75,12 @@ export function MealCard({ meal, onRemove, onMealUpdated, loadingRecipe, onAddTo
     setIsDetailOpen(true);
   };
 
-  const handleRemoveClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleRemove = () => {
     if (onRemove) onRemove();
+  };
+
+  const handleMoveTo = (targetDayIndex: number) => {
+    if (onMoveTo) onMoveTo(targetDayIndex);
   };
 
   return (
@@ -121,8 +128,13 @@ export function MealCard({ meal, onRemove, onMealUpdated, loadingRecipe, onAddTo
               </Button>
             )}
           </div>
-          {onRemove && (
-            <button onClick={handleRemoveClick} className="text-muted hover:text-danger text-sm shrink-0">&times;</button>
+          {onRemove && weekDays && currentDayIndex !== undefined && (
+            <MealOptionsMenu
+              weekDays={weekDays}
+              currentDayIndex={currentDayIndex}
+              onMoveTo={handleMoveTo}
+              onRemove={handleRemove}
+            />
           )}
         </div>
       </div>
