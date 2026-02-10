@@ -46,7 +46,7 @@ export default function HomePage() {
           <div className="mb-8 flex justify-center">
             <Image
               src="/assets/logo.png"
-              alt="PlateMyMeal Logo"
+              alt="PlateMyDay Logo"
               width={200}
               height={200}
               className="w-40 h-40 md:w-52 md:h-52 drop-shadow-2xl animate-bounce-slow"
@@ -55,7 +55,7 @@ export default function HomePage() {
           </div>
           <h1 className="text-5xl md:text-7xl font-bold text-foreground mb-4 font-[family-name:var(--font-outfit)]">
             <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 bg-clip-text text-transparent animate-shimmer">
-              PlateMyMeal
+              PlateMyDay
             </span>
           </h1>
           <p className="text-xl md:text-2xl text-muted mb-12 font-[family-name:var(--font-outfit)]">
@@ -122,7 +122,7 @@ export default function HomePage() {
       <section className={`snap-start h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-emerald-50 to-teal-50 ${showTopBanner ? 'pt-14' : ''}`}>
         <div className="max-w-4xl mx-auto px-4 md:px-6 text-center">
           <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-3 md:mb-6 font-[family-name:var(--font-outfit)]">
-            Get the Most Out of PlateMyMeal
+            Get the Most Out of PlateMyDay
           </h2>
           <p className="text-sm md:text-lg text-muted mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed">
             Unlock premium features or install the app for the best experience

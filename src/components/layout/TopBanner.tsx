@@ -27,7 +27,7 @@ export function TopBanner() {
           >
             <img
               src="/assets/logo.png"
-              alt="PlateMyMeal"
+              alt="PlateMyDay"
               width={64}
               height={64}
               className="block w-16 h-16 md:w-14 md:h-14 drop-shadow-lg object-contain"
@@ -37,7 +37,7 @@ export function TopBanner() {
           <Link href="/" className="flex-shrink-0">
             <img
               src="/assets/logo.png"
-              alt="PlateMyMeal"
+              alt="PlateMyDay"
               width={64}
               height={64}
               className="block w-16 h-16 md:w-14 md:h-14 drop-shadow-lg object-contain"
@@ -48,7 +48,7 @@ export function TopBanner() {
         <div className="flex flex-col -space-y-1">
           <h1 className="text-2xl md:text-3xl font-bold text-white tracking-normal drop-shadow-md relative font-[family-name:var(--font-outfit)]">
             <span className="bg-gradient-to-r from-white via-yellow-50 to-white bg-clip-text text-transparent animate-shimmer">
-              PlateMyMeal
+              PlateMyDay
             </span>
           </h1>
           <p className="text-[10px] md:text-xs text-emerald-50/90 font-medium tracking-wide hidden sm:block font-[family-name:var(--font-outfit)]">
