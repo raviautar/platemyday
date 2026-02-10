@@ -213,22 +213,35 @@ export default function MealPlanPage() {
       
       const decoder = new TextDecoder();
       let buffer = '';
+      let receivedData = false;
       
       while (true) {
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          console.log('Stream reading completed');
+          break;
+        }
         
-        buffer += decoder.decode(value, { stream: true });
-        const lines = buffer.split('\n\n');
+        const chunk = decoder.decode(value, { stream: true });
+        buffer += chunk;
+        
+        const lines = buffer.split('\n');
         buffer = lines.pop() || '';
         
         for (const line of lines) {
-          if (!line.startsWith('data: ')) continue;
+          const trimmedLine = line.trim();
+          if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
           
           try {
-            const message = JSON.parse(line.slice(6));
+            const jsonStr = trimmedLine.slice(6).trim();
+            if (!jsonStr) continue;
             
-            if (message.type === 'update') {
+            const message = JSON.parse(jsonStr);
+            receivedData = true;
+            
+            if (message.type === 'start') {
+              console.log('Stream started:', new Date(message.timestamp).toISOString());
+            } else if (message.type === 'update') {
               const partialData = message.data;
               
               if (partialData.newRecipes && partialData.newRecipes.length > 0) {
@@ -255,9 +268,13 @@ export default function MealPlanPage() {
               throw new Error(message.error);
             }
           } catch (parseError) {
-            console.error('Failed to parse SSE message:', parseError);
+            console.error('Failed to parse SSE message:', parseError, 'Line:', trimmedLine);
           }
         }
+      }
+      
+      if (!receivedData) {
+        throw new Error('No data received from server');
       }
     } catch (error: any) {
       if (error.name === 'AbortError') {

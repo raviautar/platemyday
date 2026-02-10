@@ -2,6 +2,10 @@ import { streamText, Output } from 'ai';
 import { google } from '@ai-sdk/google';
 import { mealPlanWithDetailsSchema } from '@/lib/ai';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 60;
+
 export async function POST(req: Request) {
   try {
     const { recipes, systemPrompt, preferences, weekStartDay = 'Monday' } = await req.json();
@@ -44,39 +48,51 @@ IMPORTANT:
     });
 
     const encoder = new TextEncoder();
+    
+    async function* generateStream() {
+      let chunkCount = 0;
+      
+      yield encoder.encode(`: heartbeat\n\n`);
+      
+      yield encoder.encode(`data: ${JSON.stringify({ 
+        type: 'start', 
+        timestamp: Date.now() 
+      })}\n\n`);
+      
+      try {
+        for await (const partialObject of result.partialOutputStream) {
+          const message = `data: ${JSON.stringify({ 
+            type: 'update', 
+            data: partialObject 
+          })}\n\n`;
+          yield encoder.encode(message);
+          chunkCount++;
+        }
+        
+        const finalObject = await result.output;
+        const finalMessage = `data: ${JSON.stringify({ 
+          type: 'done', 
+          data: finalObject 
+        })}\n\n`;
+        yield encoder.encode(finalMessage);
+        
+        console.log(`Stream completed successfully. Sent ${chunkCount} updates.`);
+      } catch (error) {
+        console.error('Streaming error:', error);
+        const errorMessage = `data: ${JSON.stringify({ 
+          type: 'error', 
+          error: error instanceof Error ? error.message : 'Failed to generate meal plan'
+        })}\n\n`;
+        yield encoder.encode(errorMessage);
+      }
+    }
+    
     const stream = new ReadableStream({
       async start(controller) {
         try {
-          for await (const partialObject of result.partialOutputStream) {
-            controller.enqueue(
-              encoder.encode(
-                `data: ${JSON.stringify({ 
-                  type: 'update', 
-                  data: partialObject 
-                })}\n\n`
-              )
-            );
+          for await (const chunk of generateStream()) {
+            controller.enqueue(chunk);
           }
-          
-          const finalObject = await result.output;
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ 
-                type: 'done', 
-                data: finalObject 
-              })}\n\n`
-            )
-          );
-        } catch (error) {
-          console.error('Streaming error:', error);
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({ 
-                type: 'error', 
-                error: 'Failed to generate meal plan' 
-              })}\n\n`
-            )
-          );
         } finally {
           controller.close();
         }
@@ -86,8 +102,10 @@ IMPORTANT:
     return new Response(stream, {
       headers: {
         'Content-Type': 'text/event-stream',
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-cache, no-transform',
         'Connection': 'keep-alive',
+        'X-Accel-Buffering': 'no',
+        'Transfer-Encoding': 'chunked',
       },
     });
   } catch (error) {
