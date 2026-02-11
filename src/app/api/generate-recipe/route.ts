@@ -1,6 +1,8 @@
 import { generateText, Output } from 'ai';
 import { google } from '@ai-sdk/google';
 import { recipeSchema } from '@/lib/ai';
+import { getSettings } from '@/lib/supabase/db';
+import { formatPreferencesPrompt } from '@/lib/constants';
 
 const foodKeywords = [
   'recipe', 'cook', 'bake', 'dish', 'meal', 'food', 'ingredient', 'cuisine',
@@ -16,7 +18,7 @@ function isFoodRelated(prompt: string): boolean {
 
 export async function POST(req: Request) {
   try {
-    const { prompt, systemPrompt } = await req.json();
+    const { prompt, systemPrompt, userId, anonymousId } = await req.json();
 
     if (!isFoodRelated(prompt)) {
       return Response.json(
@@ -25,11 +27,19 @@ export async function POST(req: Request) {
       );
     }
 
+    // Fetch user settings to get preferences
+    const settings = await getSettings(userId, anonymousId);
+    const prefsPrompt = settings ? formatPreferencesPrompt(settings.preferences) : '';
+
+    const enhancedPrompt = prefsPrompt
+      ? `${prompt}\n\nUser preferences: ${prefsPrompt}`
+      : prompt;
+
     const result = await generateText({
       model: google('gemini-3-flash-preview'),
       output: Output.object({ schema: recipeSchema }),
       system: systemPrompt,
-      prompt: prompt,
+      prompt: enhancedPrompt,
     });
 
     if (!result.output || !result.output.title) {

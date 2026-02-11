@@ -1,17 +1,22 @@
 'use client';
 
+import { useState } from 'react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/components/ui/Toast';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
+import { PreferencesSection } from '@/components/settings/PreferencesSection';
 import { DEFAULT_SETTINGS } from '@/lib/constants';
 import { UnitSystem, WeekStartDay } from '@/types';
+
+type Tab = 'general' | 'preferences' | 'prompts' | 'about';
 
 const WEEK_DAYS: WeekStartDay[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export default function CustomizePage() {
   const { settings, updateSettings, updateUnitSystem, resetSettings } = useSettings();
   const { showToast } = useToast();
+  const [activeTab, setActiveTab] = useState<Tab>('general');
 
   const handleUnitSystemChange = (unitSystem: UnitSystem) => {
     updateUnitSystem(unitSystem);
@@ -27,7 +32,54 @@ export default function CustomizePage() {
     <div>
       <h1 className="text-2xl font-bold text-foreground mb-6">Customize</h1>
 
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-6 border-b border-border">
+        <button
+          onClick={() => setActiveTab('general')}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+            activeTab === 'general'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted hover:text-foreground'
+          }`}
+        >
+          General
+        </button>
+        <button
+          onClick={() => setActiveTab('preferences')}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+            activeTab === 'preferences'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted hover:text-foreground'
+          }`}
+        >
+          Preferences
+        </button>
+        <button
+          onClick={() => setActiveTab('prompts')}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+            activeTab === 'prompts'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted hover:text-foreground'
+          }`}
+        >
+          AI Prompts
+        </button>
+        <button
+          onClick={() => setActiveTab('about')}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+            activeTab === 'about'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted hover:text-foreground'
+          }`}
+        >
+          About
+        </button>
+      </div>
+
       <div className="space-y-6 max-w-2xl">
+        {/* General Tab */}
+        {activeTab === 'general' && (
+          <>
         <div className="bg-white rounded-xl border border-border p-4 space-y-4">
           <h2 className="font-semibold text-lg">Week Start Day</h2>
           <p className="text-sm text-muted">
@@ -83,7 +135,17 @@ export default function CustomizePage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-border p-4 space-y-4">
+          </>
+        )}
+
+        {/* Preferences Tab */}
+        {activeTab === 'preferences' && (
+          <PreferencesSection />
+        )}
+
+        {/* AI Prompts Tab */}
+        {activeTab === 'prompts' && (
+          <div className="bg-white rounded-xl border border-border p-4 space-y-4">
           <h2 className="font-semibold text-lg">AI System Prompts</h2>
           <p className="text-sm text-muted">
             Customize the system prompts used when generating recipes and meal plans with AI.
@@ -117,9 +179,12 @@ export default function CustomizePage() {
               Reset to Defaults
             </Button>
           </div>
-        </div>
+          </div>
+        )}
 
-        <div className="bg-white rounded-xl border border-border p-4 space-y-3">
+        {/* About Tab */}
+        {activeTab === 'about' && (
+          <div className="bg-white rounded-xl border border-border p-4 space-y-3">
           <h2 className="font-semibold text-lg">About</h2>
           <p className="text-sm text-muted">
             PlateMyDay is an AI-powered meal planning app. Create recipes manually or with AI,
@@ -134,7 +199,8 @@ export default function CustomizePage() {
               {DEFAULT_SETTINGS.mealPlanSystemPrompt}
             </pre>
           </div>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );

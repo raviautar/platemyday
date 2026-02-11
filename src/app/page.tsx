@@ -3,12 +3,18 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ChevronDown, Sparkles, Calendar, Crown, Download } from 'lucide-react';
 import { TopBanner } from '@/components/layout/TopBanner';
+import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
+import { useSettings } from '@/contexts/SettingsContext';
 
 export default function HomePage() {
   const [showTopBanner, setShowTopBanner] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const { settings } = useSettings();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -80,13 +86,19 @@ export default function HomePage() {
           <p className="text-sm md:text-lg text-muted mb-6 md:mb-8 max-w-2xl mx-auto leading-relaxed">
             Personalized recipes for your diet and ingredients. Delicious meals, instantly.
           </p>
-          <Link
-            href="/recipes"
+          <button
+            onClick={() => {
+              if (!settings.preferences.onboardingCompleted && !settings.preferences.onboardingDismissed) {
+                setShowOnboarding(true);
+              } else {
+                router.push('/recipes');
+              }
+            }}
             className="inline-flex items-center gap-2 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white font-semibold px-6 py-3 md:px-8 md:py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
           >
             <Sparkles className="w-5 h-5" />
-            Try It Out
-          </Link>
+            Let's Get Cookin'
+          </button>
         </div>
         <div className="absolute bottom-20 md:bottom-8 left-1/2 -translate-x-1/2">
           <ChevronDown className="w-8 h-8 text-primary animate-bounce" />
@@ -181,6 +193,8 @@ export default function HomePage() {
           }
         `}</style>
       </div>
+
+      <OnboardingWizard isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
     </>
   );
 }

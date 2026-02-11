@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Recipe } from '@/types';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useUserIdentity } from '@/hooks/useUserIdentity';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
@@ -33,6 +34,7 @@ const ingredientSuggestions = [
 
 export function AIRecipeGenerator({ isOpen, onClose, onSave }: AIRecipeGeneratorProps) {
   const { settings } = useSettings();
+  const { userId, anonymousId } = useUserIdentity();
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<AIRecipeOutput | null>(null);
@@ -57,7 +59,12 @@ export function AIRecipeGenerator({ isOpen, onClose, onSave }: AIRecipeGenerator
       const res = await fetch('/api/generate-recipe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: prompt.trim(), systemPrompt: settings.recipeSystemPrompt }),
+        body: JSON.stringify({
+          prompt: prompt.trim(),
+          systemPrompt: settings.recipeSystemPrompt,
+          userId,
+          anonymousId,
+        }),
       });
 
       if (!res.ok) {

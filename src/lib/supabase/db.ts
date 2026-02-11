@@ -1,5 +1,6 @@
 import { createClient } from './client';
 import { Recipe, WeekPlan, DayPlan, MealSlot, AppSettings, SuggestedRecipe } from '@/types';
+import { DEFAULT_USER_PREFERENCES } from '@/lib/constants';
 
 function getSupabase() {
   return createClient();
@@ -303,6 +304,7 @@ export async function getSettings(userId: string | null, anonymousId: string): P
     mealPlanSystemPrompt: data.meal_plan_system_prompt || '',
     unitSystem: data.unit_system as 'metric' | 'imperial',
     weekStartDay: data.week_start_day as AppSettings['weekStartDay'],
+    preferences: data.preferences || DEFAULT_USER_PREFERENCES,
   };
 }
 
@@ -320,6 +322,7 @@ export async function upsertSettings(
       meal_plan_system_prompt: settings.mealPlanSystemPrompt,
       unit_system: settings.unitSystem,
       week_start_day: settings.weekStartDay,
+      preferences: settings.preferences,
       updated_at: new Date().toISOString(),
     }, {
       onConflict: userId ? 'user_id' : 'anonymous_id',

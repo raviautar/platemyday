@@ -1,6 +1,8 @@
 import { generateText, Output } from 'ai';
 import { google } from '@ai-sdk/google';
 import { recipeSchema } from '@/lib/ai';
+import { getSettings } from '@/lib/supabase/db';
+import { formatPreferencesPrompt } from '@/lib/constants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -8,7 +10,11 @@ export const maxDuration = 30;
 
 export async function POST(req: Request) {
   try {
-    const { mealType, dayOfWeek, currentMeals, preferences, systemPrompt } = await req.json();
+    const { mealType, dayOfWeek, currentMeals, systemPrompt, userId, anonymousId } = await req.json();
+
+    // Fetch user settings to get preferences
+    const settings = await getSettings(userId, anonymousId);
+    const prefsPrompt = settings ? formatPreferencesPrompt(settings.preferences) : '';
 
     const currentMealsList = (currentMeals || [])
       .map((m: { title: string; mealType: string }) => `- ${m.mealType}: ${m.title}`)
@@ -18,9 +24,13 @@ export async function POST(req: Request) {
 
 ${currentMealsList ? `Current meals planned for this day:\n${currentMealsList}\n\nMake sure the suggestion is different from the above meals.` : ''}
 
-${preferences ? `User preferences: ${preferences}` : ''}
+${prefsPrompt ? `User preferences: ${prefsPrompt}` : ''}
 
-Provide a complete recipe with ingredients, instructions, prep time, cook time, servings, and tags.`;
+CRITICAL: Provide a COMPLETE recipe with:
+- Full list of ingredients with precise measurements
+- Detailed step-by-step cooking instructions
+- Servings, prep time, cook time
+- Relevant tags`;
 
     const result = await generateText({
       model: google('gemini-2.5-flash-lite'),

@@ -1,6 +1,8 @@
 import { generateText, Output } from 'ai';
 import { google } from '@ai-sdk/google';
 import { mealPlanWithDetailsSchema } from '@/lib/ai';
+import { getSettings } from '@/lib/supabase/db';
+import { formatPreferencesPrompt } from '@/lib/constants';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -8,7 +10,11 @@ export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
-    const { recipes, systemPrompt, preferences, weekStartDay = 'Monday' } = await req.json();
+    const { recipes, systemPrompt, preferences, weekStartDay = 'Monday', userId, anonymousId } = await req.json();
+
+    // Fetch user settings to get structured preferences
+    const settings = await getSettings(userId, anonymousId);
+    const prefsPrompt = settings ? formatPreferencesPrompt(settings.preferences) : preferences || '';
 
     const recipeList = recipes
       .map((r: { id: string; title: string; tags: string[] }) =>
@@ -26,7 +32,7 @@ IMPORTANT: The days array MUST start with ${weekStartDay} and follow this exact 
 Available recipes in user's library:
 ${recipeList}
 
-${preferences ? `User preferences: ${preferences}` : ''}
+${prefsPrompt ? `User preferences: ${prefsPrompt}` : ''}
 
 IMPORTANT:
 1. Use existing recipes from the library when appropriate (include their IDs)

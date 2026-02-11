@@ -4,6 +4,7 @@ import { useState, memo } from 'react';
 import { MealSlot, MealType, SuggestedRecipe, DayPlan } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useUserIdentity } from '@/hooks/useUserIdentity';
 import { Sparkles } from 'lucide-react';
 import { MealDetail } from './MealDetail';
 import { MealOptionsMenu } from './MealOptionsMenu';
@@ -32,6 +33,7 @@ const mealTypeColors: Record<MealType, string> = {
 const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, onReplaceMeal, suggestedRecipe, onAddToLibrary }: MealCardProps) => {
   const { getRecipe } = useRecipes();
   const { settings } = useSettings();
+  const { userId, anonymousId } = useUserIdentity();
   const { showToast } = useToast();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isReplaceOpen, setIsReplaceOpen] = useState(false);
@@ -80,6 +82,8 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
           dayOfWeek: weekDays?.[currentDayIndex!]?.dayOfWeek,
           currentMeals,
           systemPrompt: settings.mealPlanSystemPrompt,
+          userId,
+          anonymousId,
         }),
       });
 

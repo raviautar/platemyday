@@ -1,25 +1,38 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useUserIdentity } from '@/hooks/useUserIdentity';
 import { useToast } from '@/components/ui/Toast';
 import { WeekView } from '@/components/meal-plan/WeekView';
 import { MealPlanControls } from '@/components/meal-plan/MealPlanControls';
 import { MealPlanHistory } from '@/components/meal-plan/MealPlanHistory';
 import { GeneratingAnimation } from '@/components/ui/GeneratingAnimation';
+import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { WeekPlan, SuggestedRecipe } from '@/types';
 import { DAYS_OF_WEEK } from '@/lib/constants';
-import { History } from 'lucide-react';
+import { History, Sparkles } from 'lucide-react';
+import { MdClose } from 'react-icons/md';
 
 export default function MealPlanPage() {
   const { recipes, addRecipe } = useRecipes();
   const { weekPlan, setWeekPlan, moveMeal, removeMeal, replaceMeal, clearWeekPlan } = useMealPlan();
-  const { settings } = useSettings();
+  const { settings, updateSettings } = useSettings();
+  const { userId, anonymousId } = useUserIdentity();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showHint, setShowHint] = useState(false);
+
+  useEffect(() => {
+    setShowHint(
+      !settings.preferences.onboardingCompleted &&
+      !settings.preferences.onboardingDismissed
+    );
+  }, [settings.preferences]);
 
   const suggestedRecipes = useMemo(() => weekPlan?.suggestedRecipes || {}, [weekPlan?.suggestedRecipes]);
 
@@ -104,7 +117,9 @@ export default function MealPlanPage() {
           recipes: recipes.map(r => ({ id: r.id, title: r.title, tags: r.tags })),
           systemPrompt: systemPrompt || settings.mealPlanSystemPrompt,
           preferences,
-          weekStartDay: settings.weekStartDay
+          weekStartDay: settings.weekStartDay,
+          userId,
+          anonymousId,
         }),
       });
 
@@ -170,6 +185,16 @@ export default function MealPlanPage() {
     clearWeekPlan();
   };
 
+  const handleDismissHint = () => {
+    updateSettings({
+      preferences: {
+        ...settings.preferences,
+        onboardingDismissed: true,
+      },
+    });
+    setShowHint(false);
+  };
+
   return (
     <div>
       <div className="flex items-center justify-between gap-4 pb-3 border-b border-border/60 mb-6">
@@ -187,6 +212,29 @@ export default function MealPlanPage() {
           <span className="text-sm font-medium hidden sm:inline">History</span>
         </button>
       </div>
+
+      {showHint && (
+        <div className="bg-gradient-to-r from-primary/10 to-emerald-50 border border-primary/30 rounded-xl p-4 mb-6 flex items-start justify-between">
+          <div className="flex items-start gap-3 flex-1">
+            <Sparkles className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+            <div>
+              <h3 className="font-semibold text-foreground mb-1">Get Personalized Meal Plans</h3>
+              <p className="text-sm text-muted mb-3">
+                Get balanced meal plans tailored to your diet and nutrition goals.
+              </p>
+              <button
+                onClick={() => setShowOnboarding(true)}
+                className="text-sm font-medium text-primary hover:text-primary-dark underline"
+              >
+                Set up preferences (2 min)
+              </button>
+            </div>
+          </div>
+          <button onClick={handleDismissHint} className="text-muted hover:text-foreground ml-2">
+            <MdClose className="w-5 h-5" />
+          </button>
+        </div>
+      )}
 
       <MealPlanControls
         onGenerate={handleGenerate}
@@ -231,6 +279,8 @@ export default function MealPlanPage() {
         isOpen={historyOpen}
         onClose={() => setHistoryOpen(false)}
       />
+
+      <OnboardingWizard isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
     </div>
   );
 }
