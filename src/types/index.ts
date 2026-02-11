@@ -40,13 +40,13 @@ export type UnitSystem = 'metric' | 'imperial';
 export type WeekStartDay = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 
 export interface UserPreferences {
-  dietaryType: 'omnivore' | 'vegetarian' | 'vegan' | 'keto' | 'paleo' | 'primal' | null;
-  allergies: string[]; // ['nuts', 'dairy', 'gluten', 'soy', 'shellfish', 'eggs']
+  dietaryType: 'omnivore' | 'vegetarian' | 'vegan' | 'pescatarian' | 'keto' | 'paleo' | 'primal' | 'mediterranean' | 'low-carb' | 'flexitarian' | 'whole30' | 'gluten-free' | null;
+  allergies: string[]; // Common: 'nuts', 'peanuts', 'dairy', 'gluten', 'soy', 'shellfish', 'fish', 'eggs', 'sesame', 'corn', 'nightshades', 'red-meat', 'poultry', 'alcohol'
   servings: number; // Default: 2
   macroGoals: {
-    protein?: 'low' | 'moderate' | 'high';
-    carbs?: 'low' | 'moderate' | 'high';
-    fiber?: 'low' | 'moderate' | 'high';
+    protein?: 'low' | 'moderate' | 'high' | number;
+    carbs?: 'low' | 'moderate' | 'high' | number;
+    fiber?: 'low' | 'moderate' | 'high' | number;
   };
   onboardingCompleted: boolean;
   onboardingDismissed: boolean;

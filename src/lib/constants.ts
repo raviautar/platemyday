@@ -69,9 +69,18 @@ export function formatPreferencesPrompt(preferences: UserPreferences): string {
   const macros = preferences.macroGoals;
   if (macros.protein || macros.carbs || macros.fiber) {
     const macroDesc = [];
-    if (macros.protein) macroDesc.push(`${macros.protein} protein`);
-    if (macros.carbs) macroDesc.push(`${macros.carbs} carbs`);
-    if (macros.fiber) macroDesc.push(`${macros.fiber} fiber`);
+    if (macros.protein) {
+      const proteinValue = typeof macros.protein === 'number' ? `${macros.protein}g` : macros.protein;
+      macroDesc.push(`${proteinValue} protein`);
+    }
+    if (macros.carbs) {
+      const carbsValue = typeof macros.carbs === 'number' ? `${macros.carbs}g` : macros.carbs;
+      macroDesc.push(`${carbsValue} carbs`);
+    }
+    if (macros.fiber) {
+      const fiberValue = typeof macros.fiber === 'number' ? `${macros.fiber}g` : macros.fiber;
+      macroDesc.push(`${fiberValue} fiber`);
+    }
     parts.push(`Macro goals: ${macroDesc.join(', ')}`);
   }
 

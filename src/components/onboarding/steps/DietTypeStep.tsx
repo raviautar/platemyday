@@ -1,7 +1,8 @@
 'use client';
 
-import { FaSeedling, FaLeaf, FaDrumstickBite, FaFish } from 'react-icons/fa';
-import { GiMeat } from 'react-icons/gi';
+import { FaSeedling, FaLeaf, FaDrumstickBite, FaFish, FaAppleAlt } from 'react-icons/fa';
+import { GiMeat, GiOlive, GiFruitBowl, GiBread } from 'react-icons/gi';
+import { MdOutlineNoFood } from 'react-icons/md';
 
 interface DietTypeStepProps {
   value: string | null;
@@ -12,9 +13,15 @@ const DIET_OPTIONS = [
   { value: 'omnivore', label: 'Omnivore', icon: FaDrumstickBite, desc: 'No restrictions' },
   { value: 'vegetarian', label: 'Vegetarian', icon: FaSeedling, desc: 'No meat or fish' },
   { value: 'vegan', label: 'Vegan', icon: FaLeaf, desc: 'No animal products' },
+  { value: 'pescatarian', label: 'Pescatarian', icon: FaFish, desc: 'Fish but no meat' },
   { value: 'keto', label: 'Keto', icon: GiMeat, desc: 'Low-carb, high-fat' },
   { value: 'paleo', label: 'Paleo', icon: FaFish, desc: 'Whole foods, no grains' },
   { value: 'primal', label: 'Primal', icon: GiMeat, desc: 'Like paleo, includes dairy' },
+  { value: 'mediterranean', label: 'Mediterranean', icon: GiOlive, desc: 'Olive oil, fish, vegetables' },
+  { value: 'low-carb', label: 'Low-Carb', icon: FaAppleAlt, desc: 'Reduced carbohydrates' },
+  { value: 'flexitarian', label: 'Flexitarian', icon: GiFruitBowl, desc: 'Mostly plant-based' },
+  { value: 'whole30', label: 'Whole30', icon: MdOutlineNoFood, desc: '30-day reset program' },
+  { value: 'gluten-free', label: 'Gluten-Free', icon: GiBread, desc: 'No gluten-containing foods' },
 ];
 
 export function DietTypeStep({ value, onChange }: DietTypeStepProps) {

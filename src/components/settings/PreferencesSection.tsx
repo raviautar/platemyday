@@ -1,15 +1,31 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/components/ui/Toast';
 import { UserPreferences } from '@/types';
-import { FaSeedling, FaLeaf, FaDrumstickBite, FaFish } from 'react-icons/fa';
-import { GiMeat, GiBread, GiWheat } from 'react-icons/gi';
+import { FaSeedling, FaLeaf, FaDrumstickBite, FaFish, FaAppleAlt } from 'react-icons/fa';
+import { GiMeat, GiBread, GiWheat, GiOlive, GiFruitBowl } from 'react-icons/gi';
+import { MdOutlineNoFood } from 'react-icons/md';
 
 export function PreferencesSection() {
   const { settings, updateSettings } = useSettings();
   const { showToast } = useToast();
   const prefs = settings.preferences;
+  
+  const [macroMode, setMacroMode] = useState<Record<'protein' | 'carbs' | 'fiber', 'preset' | 'custom'>>({
+    protein: typeof prefs.macroGoals.protein === 'number' ? 'custom' : 'preset',
+    carbs: typeof prefs.macroGoals.carbs === 'number' ? 'custom' : 'preset',
+    fiber: typeof prefs.macroGoals.fiber === 'number' ? 'custom' : 'preset',
+  });
+
+  useEffect(() => {
+    setMacroMode({
+      protein: typeof prefs.macroGoals.protein === 'number' ? 'custom' : 'preset',
+      carbs: typeof prefs.macroGoals.carbs === 'number' ? 'custom' : 'preset',
+      fiber: typeof prefs.macroGoals.fiber === 'number' ? 'custom' : 'preset',
+    });
+  }, [prefs.macroGoals]);
 
   const handleUpdate = (updates: Partial<UserPreferences>) => {
     updateSettings({
@@ -21,22 +37,49 @@ export function PreferencesSection() {
     showToast('Preferences updated');
   };
 
+  const handleServingsChange = (value: number) => {
+    updateSettings({
+      preferences: {
+        ...prefs,
+        servings: value,
+      },
+    });
+  };
+
+  const handleServingsEnd = () => {
+    showToast('Preferences updated');
+  };
+
   const DIET_OPTIONS = [
     { value: 'omnivore', label: 'Omnivore', icon: FaDrumstickBite },
     { value: 'vegetarian', label: 'Vegetarian', icon: FaSeedling },
     { value: 'vegan', label: 'Vegan', icon: FaLeaf },
+    { value: 'pescatarian', label: 'Pescatarian', icon: FaFish },
     { value: 'keto', label: 'Keto', icon: GiMeat },
     { value: 'paleo', label: 'Paleo', icon: FaFish },
     { value: 'primal', label: 'Primal', icon: GiMeat },
+    { value: 'mediterranean', label: 'Mediterranean', icon: GiOlive },
+    { value: 'low-carb', label: 'Low-Carb', icon: FaAppleAlt },
+    { value: 'flexitarian', label: 'Flexitarian', icon: GiFruitBowl },
+    { value: 'whole30', label: 'Whole30', icon: MdOutlineNoFood },
+    { value: 'gluten-free', label: 'Gluten-Free', icon: GiBread },
   ];
 
   const ALLERGY_OPTIONS = [
     { value: 'nuts', label: 'Nuts', icon: '🥜' },
+    { value: 'peanuts', label: 'Peanuts', icon: '🥜' },
     { value: 'dairy', label: 'Dairy', icon: '🥛' },
     { value: 'gluten', label: 'Gluten', icon: '🌾' },
     { value: 'soy', label: 'Soy', icon: '🫘' },
     { value: 'shellfish', label: 'Shellfish', icon: '🦐' },
+    { value: 'fish', label: 'Fish', icon: '🐟' },
     { value: 'eggs', label: 'Eggs', icon: '🥚' },
+    { value: 'sesame', label: 'Sesame', icon: '🫘' },
+    { value: 'corn', label: 'Corn', icon: '🌽' },
+    { value: 'nightshades', label: 'Nightshades', icon: '🍅' },
+    { value: 'red-meat', label: 'Red Meat', icon: '🥩' },
+    { value: 'poultry', label: 'Poultry', icon: '🍗' },
+    { value: 'alcohol', label: 'Alcohol', icon: '🍷' },
   ];
 
   return (
@@ -63,14 +106,16 @@ export function PreferencesSection() {
             );
           })}
         </div>
-        {prefs.dietaryType && (
-          <button
-            onClick={() => handleUpdate({ dietaryType: null })}
-            className="text-sm text-muted hover:text-foreground underline"
-          >
-            Clear selection
-          </button>
-        )}
+        <button
+          onClick={() => handleUpdate({ dietaryType: null })}
+          className={`w-full px-3 py-2 rounded-lg border-2 transition-all text-sm flex items-center justify-center gap-2 ${
+            !prefs.dietaryType
+              ? 'border-primary bg-primary/5 text-primary font-medium'
+              : 'border-border bg-white text-muted hover:border-primary/50'
+          }`}
+        >
+          I don't care
+        </button>
       </div>
 
       {/* Allergies */}
@@ -114,7 +159,9 @@ export function PreferencesSection() {
             min="1"
             max="10"
             value={prefs.servings}
-            onChange={(e) => handleUpdate({ servings: Number(e.target.value) })}
+            onChange={(e) => handleServingsChange(Number(e.target.value))}
+            onMouseUp={handleServingsEnd}
+            onTouchEnd={handleServingsEnd}
             className="flex-1 h-3 bg-border rounded-lg appearance-none cursor-pointer accent-primary"
             style={{
               background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${((prefs.servings - 1) / 9) * 100}%, var(--color-border) ${((prefs.servings - 1) / 9) * 100}%, var(--color-border) 100%)`
@@ -136,33 +183,84 @@ export function PreferencesSection() {
       {/* Macro Goals */}
       <div className="bg-white rounded-xl border border-border p-4 space-y-4">
         <h2 className="font-semibold text-lg text-foreground">Macro Goals</h2>
-        {['protein', 'carbs', 'fiber'].map(macro => (
-          <div key={macro} className="flex items-center justify-between">
-            <label className="text-sm font-medium capitalize flex items-center gap-2">
-              {macro === 'protein' && <GiMeat className="w-5 h-5 text-accent" />}
-              {macro === 'carbs' && <GiBread className="w-5 h-5 text-secondary" />}
-              {macro === 'fiber' && <GiWheat className="w-5 h-5 text-primary" />}
-              {macro}
-            </label>
-            <select
-              value={prefs.macroGoals[macro as keyof typeof prefs.macroGoals] || ''}
-              onChange={(e) =>
-                handleUpdate({
-                  macroGoals: {
-                    ...prefs.macroGoals,
-                    [macro]: e.target.value || undefined,
-                  },
-                })
-              }
-              className="px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <option value="">Not specified</option>
-              <option value="low">Low</option>
-              <option value="moderate">Moderate</option>
-              <option value="high">High</option>
-            </select>
-          </div>
-        ))}
+        {(['protein', 'carbs', 'fiber'] as const).map(macro => {
+          const currentValue = prefs.macroGoals[macro];
+          const isCustom = macroMode[macro] === 'custom';
+          const macroConfig = {
+            protein: { icon: GiMeat, color: 'text-accent', unit: 'g' },
+            carbs: { icon: GiBread, color: 'text-secondary', unit: 'g' },
+            fiber: { icon: GiWheat, color: 'text-primary', unit: 'g' },
+          }[macro];
+          const Icon = macroConfig.icon;
+
+          return (
+            <div key={macro} className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label className="text-sm font-medium capitalize flex items-center gap-2">
+                  <Icon className={`w-5 h-5 ${macroConfig.color}`} />
+                  {macro}
+                </label>
+                <button
+                  onClick={() => {
+                    const newMode = macroMode[macro] === 'preset' ? 'custom' : 'preset';
+                    setMacroMode({ ...macroMode, [macro]: newMode });
+                    if (newMode === 'preset') {
+                      handleUpdate({
+                        macroGoals: {
+                          ...prefs.macroGoals,
+                          [macro]: undefined,
+                        },
+                      });
+                    }
+                  }}
+                  className="text-xs text-muted hover:text-foreground underline"
+                >
+                  {isCustom ? 'Use preset' : 'Custom amount'}
+                </button>
+              </div>
+              {isCustom ? (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="Enter grams"
+                    value={typeof currentValue === 'number' ? currentValue : ''}
+                    onChange={(e) => {
+                      const numValue = e.target.value === '' ? undefined : Number(e.target.value);
+                      handleUpdate({
+                        macroGoals: {
+                          ...prefs.macroGoals,
+                          [macro]: numValue,
+                        },
+                      });
+                    }}
+                    className="flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  />
+                  <span className="text-sm text-muted">{macroConfig.unit}</span>
+                </div>
+              ) : (
+                <select
+                  value={typeof currentValue === 'string' ? currentValue : ''}
+                  onChange={(e) =>
+                    handleUpdate({
+                      macroGoals: {
+                        ...prefs.macroGoals,
+                        [macro]: e.target.value || undefined,
+                      },
+                    })
+                  }
+                  className="w-full px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                >
+                  <option value="">Not specified</option>
+                  <option value="low">Low</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="high">High</option>
+                </select>
+              )}
+            </div>
+          );
+        })}
         <p className="text-xs text-muted italic">
           These goals help us tailor recipe suggestions to your nutritional needs
         </p>

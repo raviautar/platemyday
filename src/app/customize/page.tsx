@@ -3,18 +3,15 @@
 import { useState } from 'react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/components/ui/Toast';
-import { Button } from '@/components/ui/Button';
-import { Textarea } from '@/components/ui/Textarea';
 import { PreferencesSection } from '@/components/settings/PreferencesSection';
-import { DEFAULT_SETTINGS } from '@/lib/constants';
 import { UnitSystem, WeekStartDay } from '@/types';
 
-type Tab = 'general' | 'preferences' | 'prompts' | 'about';
+type Tab = 'general' | 'preferences';
 
 const WEEK_DAYS: WeekStartDay[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export default function CustomizePage() {
-  const { settings, updateSettings, updateUnitSystem, resetSettings } = useSettings();
+  const { settings, updateSettings, updateUnitSystem } = useSettings();
   const { showToast } = useToast();
   const [activeTab, setActiveTab] = useState<Tab>('general');
 
@@ -53,26 +50,6 @@ export default function CustomizePage() {
           }`}
         >
           Preferences
-        </button>
-        <button
-          onClick={() => setActiveTab('prompts')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-            activeTab === 'prompts'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted hover:text-foreground'
-          }`}
-        >
-          AI Prompts
-        </button>
-        <button
-          onClick={() => setActiveTab('about')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-            activeTab === 'about'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted hover:text-foreground'
-          }`}
-        >
-          About
         </button>
       </div>
 
@@ -141,65 +118,6 @@ export default function CustomizePage() {
         {/* Preferences Tab */}
         {activeTab === 'preferences' && (
           <PreferencesSection />
-        )}
-
-        {/* AI Prompts Tab */}
-        {activeTab === 'prompts' && (
-          <div className="bg-white rounded-xl border border-border p-4 space-y-4">
-          <h2 className="font-semibold text-lg">AI System Prompts</h2>
-          <p className="text-sm text-muted">
-            Customize the system prompts used when generating recipes and meal plans with AI.
-          </p>
-
-          <Textarea
-            label="Recipe Generation Prompt"
-            value={settings.recipeSystemPrompt}
-            onChange={e => updateSettings({ recipeSystemPrompt: e.target.value })}
-            rows={4}
-          />
-
-          <Textarea
-            label="Meal Plan Generation Prompt"
-            value={settings.mealPlanSystemPrompt}
-            onChange={e => updateSettings({ mealPlanSystemPrompt: e.target.value })}
-            rows={4}
-          />
-
-          <div className="flex gap-2">
-            <Button onClick={() => showToast('Settings saved automatically')}>
-              Save
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => {
-                resetSettings();
-                showToast('Settings reset to defaults');
-              }}
-            >
-              Reset to Defaults
-            </Button>
-          </div>
-          </div>
-        )}
-
-        {/* About Tab */}
-        {activeTab === 'about' && (
-          <div className="bg-white rounded-xl border border-border p-4 space-y-3">
-          <h2 className="font-semibold text-lg">About</h2>
-          <p className="text-sm text-muted">
-            PlateMyDay is an AI-powered meal planning app. Create recipes manually or with AI,
-            then generate weekly meal plans and rearrange them with drag-and-drop.
-          </p>
-          <div className="text-xs text-muted">
-            <p>Default prompts for reference:</p>
-            <pre className="mt-1 p-2 bg-surface rounded text-xs whitespace-pre-wrap">
-              {DEFAULT_SETTINGS.recipeSystemPrompt}
-            </pre>
-            <pre className="mt-1 p-2 bg-surface rounded text-xs whitespace-pre-wrap">
-              {DEFAULT_SETTINGS.mealPlanSystemPrompt}
-            </pre>
-          </div>
-          </div>
         )}
       </div>
     </div>

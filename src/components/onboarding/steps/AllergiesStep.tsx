@@ -9,11 +9,19 @@ interface AllergiesStepProps {
 
 const ALLERGY_OPTIONS = [
   { value: 'nuts', label: 'Nuts', icon: '🥜' },
+  { value: 'peanuts', label: 'Peanuts', icon: '🥜' },
   { value: 'dairy', label: 'Dairy', icon: '🥛' },
   { value: 'gluten', label: 'Gluten', icon: '🌾' },
   { value: 'soy', label: 'Soy', icon: '🫘' },
   { value: 'shellfish', label: 'Shellfish', icon: '🦐' },
+  { value: 'fish', label: 'Fish', icon: '🐟' },
   { value: 'eggs', label: 'Eggs', icon: '🥚' },
+  { value: 'sesame', label: 'Sesame', icon: '🫘' },
+  { value: 'corn', label: 'Corn', icon: '🌽' },
+  { value: 'nightshades', label: 'Nightshades', icon: '🍅' },
+  { value: 'red-meat', label: 'Red Meat', icon: '🥩' },
+  { value: 'poultry', label: 'Poultry', icon: '🍗' },
+  { value: 'alcohol', label: 'Alcohol', icon: '🍷' },
 ];
 
 export function AllergiesStep({ value, onChange }: AllergiesStepProps) {
