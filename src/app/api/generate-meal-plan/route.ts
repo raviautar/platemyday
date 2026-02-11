@@ -3,6 +3,13 @@ import { google } from '@ai-sdk/google';
 import { mealPlanWithDetailsSchema } from '@/lib/ai';
 import { getSettings } from '@/lib/supabase/db';
 import { formatPreferencesPrompt } from '@/lib/constants';
+import {
+  consumeRateLimit,
+  generateMealPlanRequestSchema,
+  parseJsonBody,
+  rateLimitResponse,
+  validationErrorResponse,
+} from '@/lib/ai-guardrails';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -10,13 +17,39 @@ export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
-    const { recipes, systemPrompt, preferences, weekStartDay = 'Monday', userId, anonymousId } = await req.json();
+    const body = await parseJsonBody(req);
+    if (body === null) {
+      return Response.json({ error: 'Invalid JSON request body.' }, { status: 400 });
+    }
+
+    const parsed = generateMealPlanRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationErrorResponse(parsed.error);
+    }
+
+    const { recipes, systemPrompt, preferences, weekStartDay, userId, anonymousId } = parsed.data;
+
+    const rateLimit = consumeRateLimit({
+      request: req,
+      key: 'generate-meal-plan',
+      limit: 5,
+      windowMs: 15 * 60 * 1000,
+      userId,
+      anonymousId,
+    });
+
+    if (!rateLimit.allowed) {
+      return rateLimitResponse('meal plan generation', rateLimit.retryAfterSeconds);
+    }
 
     // Fetch user settings to get structured preferences
-    const settings = await getSettings(userId, anonymousId);
+    const settings = userId || anonymousId
+      ? await getSettings(userId ?? null, anonymousId ?? '')
+      : null;
     const prefsPrompt = settings ? formatPreferencesPrompt(settings.preferences) : preferences || '';
 
-    const recipeList = recipes
+    const recipesForPrompt = recipes.slice(0, 200);
+    const recipeList = recipesForPrompt
       .map((r: { id: string; title: string; tags: string[] }) =>
         `- ${r.title} (ID: ${r.id}, Tags: ${r.tags.join(', ')})`)
       .join('\n');
@@ -29,6 +62,7 @@ export async function POST(req: Request) {
 
 IMPORTANT: The days array MUST start with ${weekStartDay} and follow this exact order: ${orderedDays.join(', ')}
 
+${recipes.length > recipesForPrompt.length ? `NOTE: Only the first ${recipesForPrompt.length} recipes are included to keep generation stable.\n` : ''}
 Available recipes in user's library:
 ${recipeList}
 

@@ -3,6 +3,17 @@ import { google } from '@ai-sdk/google';
 import { recipeSchema } from '@/lib/ai';
 import { getSettings } from '@/lib/supabase/db';
 import { formatPreferencesPrompt } from '@/lib/constants';
+import {
+  consumeRateLimit,
+  generateRecipeRequestSchema,
+  parseJsonBody,
+  rateLimitResponse,
+  validationErrorResponse,
+} from '@/lib/ai-guardrails';
+
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const maxDuration = 30;
 
 const foodKeywords = [
   'recipe', 'cook', 'bake', 'dish', 'meal', 'food', 'ingredient', 'cuisine',
@@ -18,7 +29,30 @@ function isFoodRelated(prompt: string): boolean {
 
 export async function POST(req: Request) {
   try {
-    const { prompt, systemPrompt, userId, anonymousId } = await req.json();
+    const body = await parseJsonBody(req);
+    if (body === null) {
+      return Response.json({ error: 'Invalid JSON request body.' }, { status: 400 });
+    }
+
+    const parsed = generateRecipeRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      return validationErrorResponse(parsed.error);
+    }
+
+    const { prompt, systemPrompt, userId, anonymousId } = parsed.data;
+
+    const rateLimit = consumeRateLimit({
+      request: req,
+      key: 'generate-recipe',
+      limit: 20,
+      windowMs: 10 * 60 * 1000,
+      userId,
+      anonymousId,
+    });
+
+    if (!rateLimit.allowed) {
+      return rateLimitResponse('recipe generation', rateLimit.retryAfterSeconds);
+    }
 
     if (!isFoodRelated(prompt)) {
       return Response.json(
@@ -28,7 +62,9 @@ export async function POST(req: Request) {
     }
 
     // Fetch user settings to get preferences
-    const settings = await getSettings(userId, anonymousId);
+    const settings = userId || anonymousId
+      ? await getSettings(userId ?? null, anonymousId ?? '')
+      : null;
     const prefsPrompt = settings ? formatPreferencesPrompt(settings.preferences) : '';
 
     const enhancedPrompt = prefsPrompt
