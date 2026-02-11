@@ -1,9 +1,10 @@
 'use client';
 
-import React, { createContext, useContext, useCallback } from 'react';
+import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
 import { AppSettings, UnitSystem } from '@/types';
-import { useLocalStorage } from '@/hooks/useLocalStorage';
-import { DEFAULT_SETTINGS, STORAGE_KEYS, getRecipeSystemPrompt, getMealPlanSystemPrompt } from '@/lib/constants';
+import { useUserIdentity } from '@/hooks/useUserIdentity';
+import { DEFAULT_SETTINGS, getRecipeSystemPrompt, getMealPlanSystemPrompt } from '@/lib/constants';
+import { getSettings as fetchSettings, upsertSettings } from '@/lib/supabase/db';
 
 interface SettingsContextType {
   settings: AppSettings;
@@ -15,24 +16,50 @@ interface SettingsContextType {
 const SettingsContext = createContext<SettingsContextType | null>(null);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useLocalStorage<AppSettings>(STORAGE_KEYS.SETTINGS, DEFAULT_SETTINGS);
+  const { userId, anonymousId, isLoaded } = useUserIdentity();
+  const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    if (!isLoaded || !anonymousId) return;
+
+    fetchSettings(userId, anonymousId)
+      .then((data) => {
+        if (data) setSettings(data);
+      })
+      .catch((err) => console.error('Failed to load settings:', err));
+  }, [userId, anonymousId, isLoaded]);
+
+  const persistSettings = useCallback((newSettings: AppSettings) => {
+    upsertSettings(newSettings, userId, anonymousId).catch(err =>
+      console.error('Failed to save settings:', err)
+    );
+  }, [userId, anonymousId]);
 
   const updateSettings = useCallback((updates: Partial<AppSettings>) => {
-    setSettings(prev => ({ ...prev, ...updates }));
-  }, [setSettings]);
+    setSettings(prev => {
+      const next = { ...prev, ...updates };
+      persistSettings(next);
+      return next;
+    });
+  }, [persistSettings]);
 
   const updateUnitSystem = useCallback((unitSystem: UnitSystem) => {
-    setSettings(prev => ({
-      ...prev,
-      unitSystem,
-      recipeSystemPrompt: getRecipeSystemPrompt(unitSystem),
-      mealPlanSystemPrompt: getMealPlanSystemPrompt(unitSystem),
-    }));
-  }, [setSettings]);
+    setSettings(prev => {
+      const next = {
+        ...prev,
+        unitSystem,
+        recipeSystemPrompt: getRecipeSystemPrompt(unitSystem),
+        mealPlanSystemPrompt: getMealPlanSystemPrompt(unitSystem),
+      };
+      persistSettings(next);
+      return next;
+    });
+  }, [persistSettings]);
 
   const resetSettings = useCallback(() => {
     setSettings(DEFAULT_SETTINGS);
-  }, [setSettings]);
+    persistSettings(DEFAULT_SETTINGS);
+  }, [persistSettings]);
 
   return (
     <SettingsContext.Provider value={{ settings, updateSettings, updateUnitSystem, resetSettings }}>

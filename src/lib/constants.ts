@@ -37,9 +37,3 @@ export const DAYS_OF_WEEK = [
 ] as const;
 
 export const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'] as const;
-
-export const STORAGE_KEYS = {
-  RECIPES: 'platemyday-recipes',
-  WEEK_PLAN: 'platemyday-week-plan',
-  SETTINGS: 'platemyday-settings',
-} as const;

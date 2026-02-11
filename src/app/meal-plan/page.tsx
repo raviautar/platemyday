@@ -1,30 +1,25 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/components/ui/Toast';
 import { WeekView } from '@/components/meal-plan/WeekView';
 import { MealPlanControls } from '@/components/meal-plan/MealPlanControls';
+import { MealPlanHistory } from '@/components/meal-plan/MealPlanHistory';
+import { GeneratingAnimation } from '@/components/ui/GeneratingAnimation';
 import { WeekPlan, SuggestedRecipe } from '@/types';
 import { DAYS_OF_WEEK } from '@/lib/constants';
 import { History } from 'lucide-react';
 
 export default function MealPlanPage() {
   const { recipes, addRecipe } = useRecipes();
-  const { weekPlan, setWeekPlan, moveMeal, removeMeal, clearWeekPlan, updateSuggestedRecipes, markRecipesComplete, removeSuggestedRecipe, clearSuggestedRecipes } = useMealPlan();
+  const { weekPlan, setWeekPlan, moveMeal, removeMeal, replaceMeal, clearWeekPlan } = useMealPlan();
   const { settings } = useSettings();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
-  const [abortController, setAbortController] = useState<AbortController | null>(null);
-  const weekPlanRef = useRef(weekPlan);
-  const suggestedRecipesRef = useRef<Record<string, SuggestedRecipe>>(weekPlan?.suggestedRecipes || {});
-
-  useEffect(() => {
-    weekPlanRef.current = weekPlan;
-    suggestedRecipesRef.current = weekPlan?.suggestedRecipes || {};
-  }, [weekPlan]);
+  const [historyOpen, setHistoryOpen] = useState(false);
 
   const suggestedRecipes = useMemo(() => weekPlan?.suggestedRecipes || {}, [weekPlan?.suggestedRecipes]);
 
@@ -34,148 +29,63 @@ export default function MealPlanPage() {
       'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
       'Thursday': 4, 'Friday': 5, 'Saturday': 6
     };
-    
+
     const targetDay = dayMap[weekStartDay];
     const currentDay = today.getDay();
-    
+
     let daysToSubtract = currentDay - targetDay;
     if (daysToSubtract < 0) {
       daysToSubtract += 7;
     }
-    
+
     const weekStart = new Date(today);
     weekStart.setDate(today.getDate() - daysToSubtract);
-    
+
     return weekStart;
   };
 
-  const updateWeekPlanFromPartial = (partialData: any) => {
+  const buildWeekPlan = (data: any): WeekPlan => {
     const weekStart = getWeekStartDate(settings.weekStartDay);
-    const currentWeekPlan = weekPlanRef.current;
 
-    const days = partialData.days.map((day: any, index: number) => {
+    const suggestedRecipesMap: Record<string, SuggestedRecipe> = {};
+    if (data.newRecipes) {
+      data.newRecipes.forEach((recipe: any) => {
+        suggestedRecipesMap[recipe.title] = {
+          title: recipe.title,
+          description: recipe.description,
+          ingredients: recipe.ingredients || [],
+          instructions: recipe.instructions || [],
+          servings: recipe.servings,
+          prepTimeMinutes: recipe.prepTimeMinutes,
+          cookTimeMinutes: recipe.cookTimeMinutes,
+          tags: recipe.tags || [],
+        };
+      });
+    }
+
+    const days = data.days.map((day: any, index: number) => {
       const date = new Date(weekStart);
       date.setDate(weekStart.getDate() + index);
-      const existingDayMeals = currentWeekPlan?.days[index]?.meals || [];
-      const usedExistingIds = new Set<string>();
 
       return {
         date: date.toISOString().split('T')[0],
         dayOfWeek: day.dayOfWeek || DAYS_OF_WEEK[index],
-        meals: (day.meals || []).map((meal: any, mealIndex: number) => {
-          const recipeId = meal.recipeId || '';
-          const recipeTitleFallback = meal.recipeId ? undefined : meal.recipeTitle;
-          const positionalMatch = existingDayMeals[mealIndex];
-          const signatureMatchesPositional =
-            positionalMatch &&
-            positionalMatch.mealType === meal.mealType &&
-            positionalMatch.recipeId === recipeId &&
-            positionalMatch.recipeTitleFallback === recipeTitleFallback;
-
-          if (signatureMatchesPositional && !usedExistingIds.has(positionalMatch.id)) {
-            usedExistingIds.add(positionalMatch.id);
-            return {
-              id: positionalMatch.id,
-              recipeId,
-              mealType: meal.mealType,
-              recipeTitleFallback,
-            };
-          }
-
-          const matchingMeal = existingDayMeals.find((existingMeal) =>
-            !usedExistingIds.has(existingMeal.id) &&
-            existingMeal.mealType === meal.mealType &&
-            existingMeal.recipeId === recipeId &&
-            existingMeal.recipeTitleFallback === recipeTitleFallback
-          );
-
-          if (matchingMeal) {
-            usedExistingIds.add(matchingMeal.id);
-            return {
-              id: matchingMeal.id,
-              recipeId,
-              mealType: meal.mealType,
-              recipeTitleFallback,
-            };
-          }
-
-          return {
-            id: crypto.randomUUID(),
-            recipeId,
-            mealType: meal.mealType,
-            recipeTitleFallback,
-          };
-        }),
+        meals: (day.meals || []).map((meal: any) => ({
+          id: crypto.randomUUID(),
+          recipeId: meal.recipeId || '',
+          mealType: meal.mealType,
+          recipeTitleFallback: meal.recipeId ? undefined : meal.recipeTitle,
+        })),
       };
     });
 
-    const nextWeekPlan: WeekPlan = {
-      id: currentWeekPlan?.id || crypto.randomUUID(),
+    return {
+      id: crypto.randomUUID(),
       weekStartDate: weekStart.toISOString().split('T')[0],
-      createdAt: currentWeekPlan?.createdAt || new Date().toISOString(),
+      createdAt: new Date().toISOString(),
       days,
-      suggestedRecipes: suggestedRecipesRef.current,
+      suggestedRecipes: Object.keys(suggestedRecipesMap).length > 0 ? suggestedRecipesMap : undefined,
     };
-
-    weekPlanRef.current = nextWeekPlan;
-    setWeekPlan(nextWeekPlan);
-  };
-
-  const updateSuggestedRecipesLocal = (newRecipes: any[]) => {
-    const recipesToUpdate: SuggestedRecipe[] = newRecipes.map((recipe: any) => ({
-      title: recipe.title,
-      description: recipe.description,
-      ingredients: recipe.ingredients || [],
-      instructions: recipe.instructions || [],
-      servings: recipe.servings,
-      prepTimeMinutes: recipe.prepTimeMinutes,
-      cookTimeMinutes: recipe.cookTimeMinutes,
-      tags: recipe.tags || [],
-      mealTypes: [],
-      isLoading: true,
-      loadedFields: Object.keys(recipe),
-    }));
-
-    const updatedSuggestions = { ...suggestedRecipesRef.current };
-    recipesToUpdate.forEach((recipe) => {
-      const existing = updatedSuggestions[recipe.title];
-      const isComplete = recipe.ingredients.length > 0 &&
-        recipe.instructions.length > 0 &&
-        !!recipe.description &&
-        recipe.servings !== undefined &&
-        recipe.prepTimeMinutes !== undefined &&
-        recipe.cookTimeMinutes !== undefined;
-
-      updatedSuggestions[recipe.title] = {
-        title: recipe.title,
-        description: recipe.description || existing?.description,
-        ingredients: recipe.ingredients || existing?.ingredients || [],
-        instructions: recipe.instructions || existing?.instructions || [],
-        servings: recipe.servings ?? existing?.servings,
-        prepTimeMinutes: recipe.prepTimeMinutes ?? existing?.prepTimeMinutes,
-        cookTimeMinutes: recipe.cookTimeMinutes ?? existing?.cookTimeMinutes,
-        tags: recipe.tags || existing?.tags || [],
-        mealTypes: [],
-        isLoading: !isComplete,
-        loadedFields: recipe.loadedFields,
-      };
-    });
-    suggestedRecipesRef.current = updatedSuggestions;
-
-    updateSuggestedRecipes(recipesToUpdate);
-  };
-
-  const markRecipesCompleteLocal = (newRecipes: any[]) => {
-    const titles = newRecipes.map((recipe: any) => recipe.title);
-    const updatedSuggestions = { ...suggestedRecipesRef.current };
-    titles.forEach((title: string) => {
-      const existing = updatedSuggestions[title];
-      if (existing) {
-        updatedSuggestions[title] = { ...existing, isLoading: false };
-      }
-    });
-    suggestedRecipesRef.current = updatedSuggestions;
-    markRecipesComplete(titles);
   };
 
   const handleGenerate = async (preferences: string, systemPrompt?: string) => {
@@ -184,112 +94,46 @@ export default function MealPlanPage() {
       return;
     }
 
-    const controller = new AbortController();
-    setAbortController(controller);
     setLoading(true);
-    suggestedRecipesRef.current = {};
-    clearSuggestedRecipes();
-    
+
     try {
       const response = await fetch('/api/generate-meal-plan', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: JSON.stringify({
           recipes: recipes.map(r => ({ id: r.id, title: r.title, tags: r.tags })),
           systemPrompt: systemPrompt || settings.mealPlanSystemPrompt,
           preferences,
           weekStartDay: settings.weekStartDay
         }),
-        signal: controller.signal,
       });
 
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || 'Failed to generate meal plan');
       }
-      
-      const reader = response.body?.getReader();
-      if (!reader) throw new Error('No response body');
-      
-      const decoder = new TextDecoder();
-      let buffer = '';
-      let receivedData = false;
-      
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) {
-          console.log('Stream reading completed');
-          break;
-        }
-        
-        const chunk = decoder.decode(value, { stream: true });
-        buffer += chunk;
-        
-        const lines = buffer.split('\n');
-        buffer = lines.pop() || '';
-        
-        for (const line of lines) {
-          const trimmedLine = line.trim();
-          if (!trimmedLine || !trimmedLine.startsWith('data: ')) continue;
-          
-          try {
-            const jsonStr = trimmedLine.slice(6).trim();
-            if (!jsonStr) continue;
-            
-            const message = JSON.parse(jsonStr);
-            receivedData = true;
-            
-            if (message.type === 'start') {
-              console.log('Stream started:', new Date(message.timestamp).toISOString());
-            } else if (message.type === 'update') {
-              const partialData = message.data;
-              
-              if (partialData.newRecipes && partialData.newRecipes.length > 0) {
-                updateSuggestedRecipesLocal(partialData.newRecipes);
-              }
-              
-              if (partialData.days && partialData.days.length > 0) {
-                updateWeekPlanFromPartial(partialData);
-              }
-            } else if (message.type === 'done') {
-              const finalData = message.data;
-              if (finalData.newRecipes) {
-                markRecipesCompleteLocal(finalData.newRecipes);
-              }
-              updateWeekPlanFromPartial(finalData);
-              
-              const newRecipeCount = finalData.newRecipes?.length || 0;
-              if (newRecipeCount > 0) {
-                showToast(`Meal plan generated with ${newRecipeCount} new recipe${newRecipeCount > 1 ? 's' : ''}!`);
-              } else {
-                showToast('Meal plan generated!');
-              }
-            } else if (message.type === 'error') {
-              throw new Error(message.error);
-            }
-          } catch (parseError) {
-            console.error('Failed to parse SSE message:', parseError, 'Line:', trimmedLine);
-          }
-        }
-      }
-      
-      if (!receivedData) {
-        throw new Error('No data received from server');
-      }
-    } catch (error: any) {
-      if (error.name === 'AbortError') {
-        showToast('Generation cancelled');
+
+      const data = await response.json();
+      const newWeekPlan = buildWeekPlan(data);
+
+      const newSuggested = newWeekPlan.suggestedRecipes;
+      await setWeekPlan(newWeekPlan, newSuggested);
+
+      const newRecipeCount = data.newRecipes?.length || 0;
+      if (newRecipeCount > 0) {
+        showToast(`Meal plan generated with ${newRecipeCount} new recipe${newRecipeCount > 1 ? 's' : ''}!`);
       } else {
-        showToast(error instanceof Error ? error.message : 'Failed to generate meal plan', 'error');
+        showToast('Meal plan generated!');
       }
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Failed to generate meal plan', 'error');
     } finally {
       setLoading(false);
-      setAbortController(null);
     }
   };
 
-  const handleAddToLibrary = (suggestedRecipe: SuggestedRecipe) => {
-    const newRecipe = {
+  const handleAddToLibrary = async (suggestedRecipe: SuggestedRecipe) => {
+    const recipe = await addRecipe({
       title: suggestedRecipe.title,
       description: suggestedRecipe.description || '',
       ingredients: suggestedRecipe.ingredients,
@@ -299,16 +143,9 @@ export default function MealPlanPage() {
       cookTimeMinutes: suggestedRecipe.cookTimeMinutes || 0,
       tags: suggestedRecipe.tags,
       isAIGenerated: true,
-    };
-    
-    const recipe = addRecipe(newRecipe);
-    handleRecipeAdded(suggestedRecipe.title, recipe.id);
+    });
 
-    const updatedSuggestions = { ...suggestedRecipesRef.current };
-    delete updatedSuggestions[suggestedRecipe.title];
-    suggestedRecipesRef.current = updatedSuggestions;
-    removeSuggestedRecipe(suggestedRecipe.title);
-    
+    handleRecipeAdded(suggestedRecipe.title, recipe.id);
     showToast(`${suggestedRecipe.title} added to your library!`);
   };
 
@@ -318,7 +155,7 @@ export default function MealPlanPage() {
         ...weekPlan,
         days: weekPlan.days.map(day => ({
           ...day,
-          meals: day.meals.map(meal => 
+          meals: day.meals.map(meal =>
             meal.recipeTitleFallback?.toLowerCase() === title.toLowerCase()
               ? { ...meal, recipeId: newRecipeId, recipeTitleFallback: undefined }
               : meal
@@ -330,10 +167,6 @@ export default function MealPlanPage() {
   };
 
   const handleClearPlan = () => {
-    if (abortController) {
-      abortController.abort();
-    }
-    suggestedRecipesRef.current = {};
     clearWeekPlan();
   };
 
@@ -347,8 +180,8 @@ export default function MealPlanPage() {
           type="button"
           aria-label="History of past generations"
           title="History"
-          onClick={() => showToast('This feature is locked')}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border border-border text-muted opacity-75 cursor-not-allowed hover:opacity-75 hover:text-muted shadow-sm shrink-0"
+          onClick={() => setHistoryOpen(true)}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border border-border text-foreground hover:bg-surface-dark shadow-sm shrink-0 transition-colors"
         >
           <History className="w-5 h-5" strokeWidth={2} />
           <span className="text-sm font-medium hidden sm:inline">History</span>
@@ -364,12 +197,16 @@ export default function MealPlanPage() {
       />
 
       <div className="mt-6">
-        {weekPlan ? (
+        {loading ? (
+          <div className="bg-white rounded-xl border border-border">
+            <GeneratingAnimation message="Creating your meal plan..." />
+          </div>
+        ) : weekPlan ? (
           <WeekView
             weekPlan={weekPlan}
             onMoveMeal={moveMeal}
             onRemoveMeal={removeMeal}
-            onRecipeAdded={handleRecipeAdded}
+            onReplaceMeal={replaceMeal}
             suggestedRecipes={suggestedRecipes}
             onAddToLibrary={handleAddToLibrary}
           />
@@ -389,6 +226,11 @@ export default function MealPlanPage() {
           </div>
         )}
       </div>
+
+      <MealPlanHistory
+        isOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
+      />
     </div>
   );
 }

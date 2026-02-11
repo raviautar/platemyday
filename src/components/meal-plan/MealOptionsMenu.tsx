@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { MoreVertical, ArrowRight, Trash2, RefreshCw } from 'lucide-react';
+import { MoreVertical, ArrowRight, Trash2, RefreshCw, BookOpen } from 'lucide-react';
 import { DayPlan } from '@/types';
 
 interface MealOptionsMenuProps {
@@ -9,10 +9,12 @@ interface MealOptionsMenuProps {
   currentDayIndex: number;
   onMoveTo: (targetDayIndex: number) => void;
   onRemove: () => void;
-  onLockedFeatureClick?: () => void;
+  onReplaceFromLibrary: () => void;
+  onRegenerate: () => void;
+  isRegenerating?: boolean;
 }
 
-export function MealOptionsMenu({ weekDays, currentDayIndex, onMoveTo, onRemove, onLockedFeatureClick }: MealOptionsMenuProps) {
+export function MealOptionsMenu({ weekDays, currentDayIndex, onMoveTo, onRemove, onReplaceFromLibrary, onRegenerate, isRegenerating }: MealOptionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showMoveToSubmenu, setShowMoveToSubmenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -57,6 +59,18 @@ export function MealOptionsMenu({ weekDays, currentDayIndex, onMoveTo, onRemove,
     setIsOpen(false);
   };
 
+  const handleReplaceFromLibrary = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onReplaceFromLibrary();
+    setIsOpen(false);
+  };
+
+  const handleRegenerate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onRegenerate();
+    setIsOpen(false);
+  };
+
   return (
     <div className="relative" ref={menuRef}>
       <button
@@ -68,7 +82,7 @@ export function MealOptionsMenu({ weekDays, currentDayIndex, onMoveTo, onRemove,
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-border z-50 min-w-[160px]">
+        <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-border z-50 min-w-[180px]">
           <div className="py-1">
             <button
               onClick={handleMoveToClick}
@@ -101,18 +115,22 @@ export function MealOptionsMenu({ weekDays, currentDayIndex, onMoveTo, onRemove,
             )}
 
             <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onLockedFeatureClick?.();
-                setIsOpen(false);
-              }}
-              title="Refine recipe"
-              aria-label="Refine recipe"
-              className="w-full px-4 py-2 text-left text-sm text-muted opacity-75 cursor-not-allowed flex items-center gap-2 border-t border-border hover:bg-transparent hover:text-muted"
+              onClick={handleReplaceFromLibrary}
+              className="w-full px-4 py-2 text-left text-sm hover:bg-surface transition-colors flex items-center gap-2 border-t border-border"
             >
-              <RefreshCw className="w-4 h-4" />
-              Refine recipe
+              <BookOpen className="w-4 h-4" />
+              Replace from library
+            </button>
+
+            <button
+              onClick={handleRegenerate}
+              disabled={isRegenerating}
+              className={`w-full px-4 py-2 text-left text-sm hover:bg-surface transition-colors flex items-center gap-2 ${
+                isRegenerating ? 'text-muted cursor-not-allowed' : ''
+              }`}
+            >
+              <RefreshCw className={`w-4 h-4 ${isRegenerating ? 'animate-spin' : ''}`} />
+              {isRegenerating ? 'Regenerating...' : 'Regenerate meal'}
             </button>
 
             <button

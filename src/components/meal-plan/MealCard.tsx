@@ -3,9 +3,11 @@
 import { useState, memo } from 'react';
 import { MealSlot, MealType, SuggestedRecipe, DayPlan } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
+import { useSettings } from '@/contexts/SettingsContext';
 import { Sparkles } from 'lucide-react';
 import { MealDetail } from './MealDetail';
 import { MealOptionsMenu } from './MealOptionsMenu';
+import { ReplaceFromRecipes } from './ReplaceFromRecipes';
 import { useToast } from '@/components/ui/Toast';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
@@ -15,7 +17,7 @@ interface MealCardProps {
   weekDays?: DayPlan[];
   onRemove?: () => void;
   onMoveTo?: (targetDayIndex: number) => void;
-  onMealUpdated?: (oldTitle: string, newRecipeId: string) => void;
+  onReplaceMeal?: (newMeal: MealSlot) => void;
   suggestedRecipe?: SuggestedRecipe;
   onAddToLibrary?: (recipe: SuggestedRecipe) => void;
 }
@@ -27,39 +29,19 @@ const mealTypeColors: Record<MealType, string> = {
   snack: 'bg-surface-dark text-muted',
 };
 
-const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, onMealUpdated, suggestedRecipe, onAddToLibrary }: MealCardProps) => {
-  const { getRecipe, addRecipe } = useRecipes();
+const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, onReplaceMeal, suggestedRecipe, onAddToLibrary }: MealCardProps) => {
+  const { getRecipe } = useRecipes();
+  const { settings } = useSettings();
   const { showToast } = useToast();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isReplaceOpen, setIsReplaceOpen] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
   const recipe = meal.recipeId ? getRecipe(meal.recipeId) : null;
-  
+
   const isUnmatched = meal.recipeTitleFallback !== undefined;
-  const isLoading = suggestedRecipe?.isLoading ?? false;
-  const title = isUnmatched 
-    ? meal.recipeTitleFallback 
+  const title = isUnmatched
+    ? meal.recipeTitleFallback
     : (recipe?.title || 'Unknown Recipe');
-
-  const handleAddToLibraryLegacy = (mealToAdd: MealSlot) => {
-    if (!mealToAdd.recipeTitleFallback) return;
-
-    const newRecipe = addRecipe({
-      title: mealToAdd.recipeTitleFallback,
-      description: 'Auto-created from meal plan',
-      ingredients: [],
-      instructions: [],
-      servings: 4,
-      prepTimeMinutes: 0,
-      cookTimeMinutes: 0,
-      tags: [mealToAdd.mealType],
-      isAIGenerated: true,
-    });
-
-    if (onMealUpdated) {
-      onMealUpdated(mealToAdd.recipeTitleFallback, newRecipe.id);
-    }
-
-    showToast(`Added "${mealToAdd.recipeTitleFallback}" to your recipes. Go to Recipes to edit details.`);
-  };
 
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -67,26 +49,74 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
     setIsDetailOpen(true);
   };
 
-  const handleRemove = () => {
-    if (onRemove) onRemove();
+  const handleReplaceFromLibrary = (recipeId: string) => {
+    if (onReplaceMeal) {
+      onReplaceMeal({
+        ...meal,
+        recipeId,
+        recipeTitleFallback: undefined,
+      });
+      showToast('Meal replaced!');
+    }
   };
 
-  const handleMoveTo = (targetDayIndex: number) => {
-    if (onMoveTo) onMoveTo(targetDayIndex);
+  const handleRegenerate = async () => {
+    if (!onReplaceMeal) return;
+    setIsRegenerating(true);
+
+    try {
+      const currentMeals = weekDays?.[currentDayIndex!]?.meals
+        .filter(m => m.id !== meal.id)
+        .map(m => ({
+          title: m.recipeTitleFallback || 'Existing recipe',
+          mealType: m.mealType,
+        })) || [];
+
+      const response = await fetch('/api/regenerate-meal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mealType: meal.mealType,
+          dayOfWeek: weekDays?.[currentDayIndex!]?.dayOfWeek,
+          currentMeals,
+          systemPrompt: settings.mealPlanSystemPrompt,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to regenerate');
+      }
+
+      const newRecipeData = await response.json();
+
+      onReplaceMeal({
+        id: meal.id,
+        recipeId: '',
+        mealType: meal.mealType,
+        recipeTitleFallback: newRecipeData.title,
+      });
+
+      showToast(`Replaced with "${newRecipeData.title}"!`);
+    } catch (error) {
+      showToast(error instanceof Error ? error.message : 'Failed to regenerate meal', 'error');
+    } finally {
+      setIsRegenerating(false);
+    }
   };
 
   return (
     <>
-      <div 
+      <div
         className={`bg-white rounded-lg p-2 shadow-sm cursor-pointer hover:shadow-md transition-shadow relative ${
-          isUnmatched 
-            ? 'border-2 border-dashed border-secondary' 
+          isUnmatched
+            ? 'border-2 border-dashed border-secondary'
             : 'border border-border'
-        } ${isLoading ? 'opacity-75' : ''}`}
-        title={isLoading ? 'Generating recipe details...' : isUnmatched ? 'Click to view details and add to your library' : 'Click to view recipe details'}
+        } ${isRegenerating ? 'opacity-75' : ''}`}
+        title={isUnmatched ? 'Click to view details and add to your library' : 'Click to view recipe details'}
         onClick={handleCardClick}
       >
-        {isLoading && (
+        {isRegenerating && (
           <div className="absolute top-1 right-1">
             <LoadingSpinner size="sm" />
           </div>
@@ -107,17 +137,19 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
             <p className={`text-sm font-medium line-clamp-2 ${isUnmatched ? 'text-muted' : ''}`}>
               {title}
             </p>
-            {isLoading && (
-              <p className="text-[10px] text-muted mt-0.5">Generating details...</p>
+            {isRegenerating && (
+              <p className="text-[10px] text-muted mt-0.5">Regenerating...</p>
             )}
           </div>
           {onRemove && weekDays && currentDayIndex !== undefined && (
             <MealOptionsMenu
               weekDays={weekDays}
               currentDayIndex={currentDayIndex}
-              onMoveTo={handleMoveTo}
-              onRemove={handleRemove}
-              onLockedFeatureClick={() => showToast('This feature is locked')}
+              onMoveTo={(targetDayIndex) => onMoveTo?.(targetDayIndex)}
+              onRemove={onRemove}
+              onReplaceFromLibrary={() => setIsReplaceOpen(true)}
+              onRegenerate={handleRegenerate}
+              isRegenerating={isRegenerating}
             />
           )}
         </div>
@@ -127,9 +159,15 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
         meal={meal}
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
-        onAddToLibrary={handleAddToLibraryLegacy}
         suggestedRecipe={suggestedRecipe}
-        onAddToLibraryNew={onAddToLibrary}
+        onAddToLibrary={onAddToLibrary}
+      />
+
+      <ReplaceFromRecipes
+        isOpen={isReplaceOpen}
+        onClose={() => setIsReplaceOpen(false)}
+        onSelectRecipe={handleReplaceFromLibrary}
+        mealType={meal.mealType}
       />
     </>
   );
@@ -141,9 +179,6 @@ export const MealCard = memo(MealCardComponent, (prevProps, nextProps) => {
     prevProps.meal.recipeId === nextProps.meal.recipeId &&
     prevProps.meal.recipeTitleFallback === nextProps.meal.recipeTitleFallback &&
     prevProps.currentDayIndex === nextProps.currentDayIndex &&
-    prevProps.suggestedRecipe?.isLoading === nextProps.suggestedRecipe?.isLoading &&
-    prevProps.suggestedRecipe?.title === nextProps.suggestedRecipe?.title &&
-    prevProps.suggestedRecipe?.ingredients.length === nextProps.suggestedRecipe?.ingredients.length &&
-    prevProps.suggestedRecipe?.instructions.length === nextProps.suggestedRecipe?.instructions.length
+    prevProps.suggestedRecipe?.title === nextProps.suggestedRecipe?.title
   );
 });

@@ -1,20 +1,17 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { MealSlot, Recipe, SuggestedRecipe } from '@/types';
+import { MealSlot, SuggestedRecipe } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { Sparkles } from 'lucide-react';
-import { StreamingRecipeDetail } from './StreamingRecipeDetail';
 
 interface MealDetailProps {
   meal: MealSlot | null;
   isOpen: boolean;
   onClose: () => void;
-  onAddToLibrary?: (meal: MealSlot) => void;
   suggestedRecipe?: SuggestedRecipe;
-  onAddToLibraryNew?: (recipe: SuggestedRecipe) => void;
+  onAddToLibrary?: (recipe: SuggestedRecipe) => void;
 }
 
 const tagColors = [
@@ -33,41 +30,87 @@ function getTagColor(tag: string): string {
   return tagColors[hash % tagColors.length];
 }
 
-export function MealDetail({ meal, isOpen, onClose, onAddToLibrary, suggestedRecipe, onAddToLibraryNew }: MealDetailProps) {
+export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibrary }: MealDetailProps) {
   const { getRecipe } = useRecipes();
-  const cachedRecipeRef = useRef<SuggestedRecipe | undefined>(undefined);
-  const wasOpenRef = useRef(false);
-
-  if (suggestedRecipe && isOpen) {
-    cachedRecipeRef.current = suggestedRecipe;
-  }
-
-  useEffect(() => {
-    if (isOpen && !wasOpenRef.current) {
-      wasOpenRef.current = true;
-    } else if (!isOpen && wasOpenRef.current) {
-      wasOpenRef.current = false;
-      setTimeout(() => {
-        if (!wasOpenRef.current) {
-          cachedRecipeRef.current = undefined;
-        }
-      }, 300);
-    }
-  }, [isOpen]);
 
   if (!meal) return null;
 
-  const activeSuggestedRecipe = suggestedRecipe || (isOpen ? cachedRecipeRef.current : undefined);
-
-  if (activeSuggestedRecipe) {
+  // Show suggested recipe detail (AI-generated, not yet in library)
+  if (suggestedRecipe) {
     return (
-      <StreamingRecipeDetail
-        meal={meal}
-        suggestedRecipe={activeSuggestedRecipe}
-        isOpen={isOpen}
-        onClose={onClose}
-        onAddToLibrary={onAddToLibraryNew}
-      />
+      <Modal isOpen={isOpen} onClose={onClose} title={suggestedRecipe.title}>
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1 text-xs bg-secondary/20 text-secondary-dark px-2 py-0.5 rounded-full">
+              <Sparkles className="w-3 h-3" />
+              AI Generated
+            </span>
+            <span className="text-xs bg-secondary/30 text-yellow-800 px-2 py-0.5 rounded-full capitalize">
+              {meal.mealType}
+            </span>
+          </div>
+
+          {suggestedRecipe.description && (
+            <p className="text-muted">{suggestedRecipe.description}</p>
+          )}
+
+          {(suggestedRecipe.prepTimeMinutes !== undefined ||
+            suggestedRecipe.cookTimeMinutes !== undefined ||
+            suggestedRecipe.servings !== undefined) && (
+            <div className="flex gap-4 text-sm text-muted">
+              {suggestedRecipe.servings !== undefined && <span>Servings: {suggestedRecipe.servings}</span>}
+              {suggestedRecipe.prepTimeMinutes !== undefined && <span>Prep: {suggestedRecipe.prepTimeMinutes} min</span>}
+              {suggestedRecipe.cookTimeMinutes !== undefined && <span>Cook: {suggestedRecipe.cookTimeMinutes} min</span>}
+            </div>
+          )}
+
+          {suggestedRecipe.tags.length > 0 && (
+            <div>
+              <h4 className="font-semibold text-sm mb-2">Tags</h4>
+              <div className="flex flex-wrap gap-1">
+                {suggestedRecipe.tags.map(tag => (
+                  <span key={tag} className={`text-xs px-2 py-1 rounded-full ${getTagColor(tag)}`}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {suggestedRecipe.ingredients.length > 0 && (
+            <div>
+              <h4 className="font-semibold mb-2">Ingredients</h4>
+              <ul className="list-disc list-inside space-y-1 text-sm">
+                {suggestedRecipe.ingredients.map((ing, i) => (
+                  <li key={i}>{ing}</li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {suggestedRecipe.instructions.length > 0 && (
+            <div>
+              <h4 className="font-semibold mb-2">Instructions</h4>
+              <ol className="list-decimal list-inside space-y-2 text-sm">
+                {suggestedRecipe.instructions.map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
+              </ol>
+            </div>
+          )}
+
+          {onAddToLibrary && (
+            <div className="bg-secondary/10 border border-secondary rounded-lg p-4">
+              <p className="text-sm text-muted mb-3">
+                Add this recipe to your library to save and use it in future meal plans.
+              </p>
+              <Button onClick={() => { onAddToLibrary(suggestedRecipe); onClose(); }} size="sm">
+                Add to Recipe Library
+              </Button>
+            </div>
+          )}
+        </div>
+      </Modal>
     );
   }
 
@@ -90,19 +133,10 @@ export function MealDetail({ meal, isOpen, onClose, onAddToLibrary, suggestedRec
           </div>
 
           <div className="bg-secondary/10 border border-secondary rounded-lg p-4">
-            <p className="text-sm text-muted mb-3">
-              This recipe was suggested by AI but doesn&apos;t exist in your library yet. Add it to your library to edit and fill in the details.
+            <p className="text-sm text-muted">
+              This recipe was suggested by AI. Recipe details are not available.
             </p>
-            {onAddToLibrary && (
-              <Button onClick={() => { onAddToLibrary(meal); onClose(); }} size="sm">
-                Add to Recipe Library
-              </Button>
-            )}
           </div>
-
-          <p className="text-muted text-sm">
-            Once added, you can edit the recipe to include ingredients, instructions, prep time, and more.
-          </p>
         </div>
       </Modal>
     );
@@ -146,10 +180,7 @@ export function MealDetail({ meal, isOpen, onClose, onAddToLibrary, suggestedRec
             <h4 className="font-semibold text-sm mb-2">Tags</h4>
             <div className="flex flex-wrap gap-1">
               {recipe.tags.map(tag => (
-                <span
-                  key={tag}
-                  className={`text-xs px-2 py-1 rounded-full ${getTagColor(tag)}`}
-                >
+                <span key={tag} className={`text-xs px-2 py-1 rounded-full ${getTagColor(tag)}`}>
                   {tag}
                 </span>
               ))}

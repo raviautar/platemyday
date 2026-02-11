@@ -1,6 +1,8 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
 import { usePathname } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
 import { RecipeProvider } from '@/contexts/RecipeContext';
 import { MealPlanProvider } from '@/contexts/MealPlanContext';
 import { SettingsProvider } from '@/contexts/SettingsContext';
@@ -8,6 +10,27 @@ import { Sidebar } from './Sidebar';
 import { BottomNav } from './BottomNav';
 import { TopBanner } from './TopBanner';
 import { ToastProvider } from '@/components/ui/Toast';
+import { getAnonymousId, clearAnonymousId } from '@/lib/anonymous-id';
+import { migrateAnonymousData } from '@/lib/supabase/db';
+
+function AnonymousMigration() {
+  const { user, isLoaded } = useUser();
+  const migrated = useRef(false);
+
+  useEffect(() => {
+    if (!isLoaded || !user || migrated.current) return;
+    migrated.current = true;
+
+    const anonymousId = getAnonymousId();
+    if (anonymousId) {
+      migrateAnonymousData(anonymousId, user.id)
+        .then(() => clearAnonymousId())
+        .catch((err) => console.error('Migration failed:', err));
+    }
+  }, [user, isLoaded]);
+
+  return null;
+}
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -18,6 +41,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <RecipeProvider>
         <MealPlanProvider>
           <ToastProvider>
+            <AnonymousMigration />
             <div className="min-h-screen bg-background">
               {!isHomePage && <TopBanner />}
               {!isHomePage && <Sidebar />}

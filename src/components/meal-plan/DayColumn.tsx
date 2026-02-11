@@ -1,6 +1,6 @@
 'use client';
 
-import { DayPlan, SuggestedRecipe } from '@/types';
+import { DayPlan, MealSlot, SuggestedRecipe } from '@/types';
 import { MealCard } from './MealCard';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 
@@ -10,12 +10,12 @@ interface DayColumnProps {
   weekDays: DayPlan[];
   onRemoveMeal: (dayIndex: number, mealId: string) => void;
   onMoveMeal: (mealId: string, sourceDayIndex: number, targetDayIndex: number) => void;
-  onRecipeAdded: (title: string, newRecipeId: string) => void;
+  onReplaceMeal: (dayIndex: number, mealId: string, newMeal: MealSlot) => void;
   suggestedRecipes: Record<string, SuggestedRecipe>;
   onAddToLibrary: (recipe: SuggestedRecipe) => void;
 }
 
-export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, onRecipeAdded, suggestedRecipes, onAddToLibrary }: DayColumnProps) {
+export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, onReplaceMeal, suggestedRecipes, onAddToLibrary }: DayColumnProps) {
   const formatDate = (dateStr: string, dayOfWeek: string) => {
     const date = new Date(dateStr + 'T00:00:00');
     const month = date.toLocaleDateString('en-US', { month: 'short' });
@@ -39,12 +39,12 @@ export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, o
             }`}
           >
             {day.meals.map((meal, mealIndex) => {
-              const suggestedRecipe = meal.recipeTitleFallback 
-                ? suggestedRecipes[meal.recipeTitleFallback] 
+              const suggestedRecipe = meal.recipeTitleFallback
+                ? suggestedRecipes[meal.recipeTitleFallback]
                 : undefined;
-              
+
               return (
-                <Draggable key={meal.id} draggableId={meal.id} index={mealIndex} isDragDisabled={suggestedRecipe?.isLoading}>
+                <Draggable key={meal.id} draggableId={meal.id} index={mealIndex}>
                   {(provided, snapshot) => (
                     <div
                       ref={provided.innerRef}
@@ -58,7 +58,7 @@ export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, o
                         weekDays={weekDays}
                         onRemove={() => onRemoveMeal(dayIndex, meal.id)}
                         onMoveTo={(targetDayIndex) => onMoveMeal(meal.id, dayIndex, targetDayIndex)}
-                        onMealUpdated={onRecipeAdded}
+                        onReplaceMeal={(newMeal) => onReplaceMeal(dayIndex, meal.id, newMeal)}
                         suggestedRecipe={suggestedRecipe}
                         onAddToLibrary={onAddToLibrary}
                       />

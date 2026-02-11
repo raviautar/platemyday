@@ -55,7 +55,4 @@ export interface SuggestedRecipe {
   prepTimeMinutes?: number;
   cookTimeMinutes?: number;
   tags: string[];
-  mealTypes: MealType[];
-  isLoading: boolean;
-  loadedFields: string[];
 }

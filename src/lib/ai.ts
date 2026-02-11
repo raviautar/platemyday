@@ -11,17 +11,6 @@ export const recipeSchema = z.object({
   tags: z.array(z.string()).describe('Tags like "vegetarian", "quick", "italian"'),
 });
 
-export const mealPlanSchema = z.object({
-  days: z.array(z.object({
-    dayOfWeek: z.string().describe('Day of the week'),
-    meals: z.array(z.object({
-      mealType: z.enum(['breakfast', 'lunch', 'dinner', 'snack']),
-      recipeTitle: z.string().describe('Title of an existing recipe from the provided list, or a new recipe title'),
-      recipeId: z.string().optional().describe('ID of an existing recipe if matched'),
-    })),
-  })).length(7).describe('7 consecutive days of meal plans starting from the specified week start day'),
-});
-
 export const mealPlanWithDetailsSchema = z.object({
   days: z.array(z.object({
     dayOfWeek: z.string().describe('Day of the week'),
@@ -44,5 +33,4 @@ export const mealPlanWithDetailsSchema = z.object({
 });
 
 export type AIRecipeOutput = z.infer<typeof recipeSchema>;
-export type AIMealPlanOutput = z.infer<typeof mealPlanSchema>;
 export type AIMealPlanWithDetailsOutput = z.infer<typeof mealPlanWithDetailsSchema>;
