@@ -3,13 +3,22 @@
 import { FaSeedling, FaLeaf, FaDrumstickBite, FaFish, FaAppleAlt } from 'react-icons/fa';
 import { GiMeat, GiOlive, GiFruitBowl, GiBread } from 'react-icons/gi';
 import { MdOutlineNoFood } from 'react-icons/md';
+import { UserPreferences } from '@/types';
+
+type DietaryType = UserPreferences['dietaryType'];
+type DietaryTypeValue = Exclude<DietaryType, null>;
 
 interface DietTypeStepProps {
-  value: string | null;
-  onChange: (value: string | null) => void;
+  value: DietaryType;
+  onChange: (value: DietaryType) => void;
 }
 
-const DIET_OPTIONS = [
+const DIET_OPTIONS: Array<{
+  value: DietaryTypeValue;
+  label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  desc: string;
+}> = [
   { value: 'omnivore', label: 'Omnivore', icon: FaDrumstickBite, desc: 'No restrictions' },
   { value: 'vegetarian', label: 'Vegetarian', icon: FaSeedling, desc: 'No meat or fish' },
   { value: 'vegan', label: 'Vegan', icon: FaLeaf, desc: 'No animal products' },
