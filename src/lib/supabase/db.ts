@@ -16,7 +16,7 @@ export async function getRecipes(userId: string | null, anonymousId: string): Pr
   const { data, error } = await getSupabase()
     .from('recipes')
     .select('*')
-    .or(`user_id.eq.seed,${userId ? `user_id.eq.${userId}` : `anonymous_id.eq.${anonymousId}`}`)
+    .or(`${userId ? `user_id.eq.${userId}` : `anonymous_id.eq.${anonymousId}`}`)
     .order('created_at', { ascending: false });
 
   if (error) throw error;

@@ -9,12 +9,14 @@ import { useToast } from '@/components/ui/Toast';
 import { WeekView } from '@/components/meal-plan/WeekView';
 import { MealPlanControls } from '@/components/meal-plan/MealPlanControls';
 import { MealPlanHistory } from '@/components/meal-plan/MealPlanHistory';
+import { ShoppingList } from '@/components/meal-plan/ShoppingList';
 import { GeneratingAnimation } from '@/components/ui/GeneratingAnimation';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { WeekPlan, SuggestedRecipe } from '@/types';
 import { DAYS_OF_WEEK } from '@/lib/constants';
-import { History, Sparkles } from 'lucide-react';
+import { History, Sparkles, ShoppingCart, Settings2 } from 'lucide-react';
 import { MdClose } from 'react-icons/md';
+import Link from 'next/link';
 
 export default function MealPlanPage() {
   const { recipes, addRecipe } = useRecipes();
@@ -24,8 +26,10 @@ export default function MealPlanPage() {
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [shoppingListOpen, setShoppingListOpen] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showHint, setShowHint] = useState(false);
+  const [showCustomizeHint, setShowCustomizeHint] = useState(false);
 
   useEffect(() => {
     setShowHint(
@@ -102,12 +106,8 @@ export default function MealPlanPage() {
   };
 
   const handleGenerate = async (preferences: string, systemPrompt?: string) => {
-    if (recipes.length === 0) {
-      showToast('Add some recipes first to generate a meal plan!', 'error');
-      return;
-    }
-
     setLoading(true);
+    setShowCustomizeHint(false);
 
     try {
       const response = await fetch('/api/generate-meal-plan', {
@@ -140,6 +140,8 @@ export default function MealPlanPage() {
       } else {
         showToast('Meal plan generated!');
       }
+
+      setShowCustomizeHint(true);
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Failed to generate meal plan', 'error');
     } finally {
@@ -183,6 +185,7 @@ export default function MealPlanPage() {
 
   const handleClearPlan = () => {
     clearWeekPlan();
+    setShowCustomizeHint(false);
   };
 
   const handleDismissHint = () => {
@@ -201,16 +204,30 @@ export default function MealPlanPage() {
         <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark font-[family-name:var(--font-outfit)]">
           Meal Plan
         </h1>
-        <button
-          type="button"
-          aria-label="History of past generations"
-          title="History"
-          onClick={() => setHistoryOpen(true)}
-          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border border-border text-foreground hover:bg-surface-dark shadow-sm shrink-0 transition-colors"
-        >
-          <History className="w-5 h-5" strokeWidth={2} />
-          <span className="text-sm font-medium hidden sm:inline">History</span>
-        </button>
+        <div className="flex items-center gap-2">
+          {weekPlan && (
+            <button
+              type="button"
+              aria-label="Shopping list"
+              title="Shopping List"
+              onClick={() => setShoppingListOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border border-border text-foreground hover:bg-surface-dark shadow-sm shrink-0 transition-colors"
+            >
+              <ShoppingCart className="w-5 h-5" strokeWidth={2} />
+              <span className="text-sm font-medium hidden sm:inline">Shopping List</span>
+            </button>
+          )}
+          <button
+            type="button"
+            aria-label="History of past generations"
+            title="History"
+            onClick={() => setHistoryOpen(true)}
+            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border border-border text-foreground hover:bg-surface-dark shadow-sm shrink-0 transition-colors"
+          >
+            <History className="w-5 h-5" strokeWidth={2} />
+            <span className="text-sm font-medium hidden sm:inline">History</span>
+          </button>
+        </div>
       </div>
 
       {showHint && (
@@ -242,6 +259,7 @@ export default function MealPlanPage() {
         hasExistingPlan={!!weekPlan}
         loading={loading}
         defaultSystemPrompt={settings.mealPlanSystemPrompt}
+        onboardingCompleted={settings.preferences.onboardingCompleted}
       />
 
       <div className="mt-6">
@@ -250,14 +268,34 @@ export default function MealPlanPage() {
             <GeneratingAnimation message="Creating your meal plan..." />
           </div>
         ) : weekPlan ? (
-          <WeekView
-            weekPlan={weekPlan}
-            onMoveMeal={moveMeal}
-            onRemoveMeal={removeMeal}
-            onReplaceMeal={replaceMeal}
-            suggestedRecipes={suggestedRecipes}
-            onAddToLibrary={handleAddToLibrary}
-          />
+          <>
+            {/* Post-generation customize hint */}
+            {showCustomizeHint && (
+              <div className="bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200 rounded-xl p-4 mb-4 flex items-start justify-between">
+                <div className="flex items-start gap-3 flex-1">
+                  <Settings2 className="w-5 h-5 text-teal-600 mt-0.5 shrink-0" />
+                  <p className="text-sm text-foreground">
+                    Want better results? Use the <strong>Customize</strong> button to tell us about ingredients you have, preferred cuisines, and more.
+                    {!settings.preferences.onboardingCompleted && (
+                      <> You can also <Link href="/customize" className="text-primary font-medium hover:underline">set up your meal preferences</Link> for even better recommendations.</>
+                    )}
+                  </p>
+                </div>
+                <button onClick={() => setShowCustomizeHint(false)} className="text-muted hover:text-foreground ml-2">
+                  <MdClose className="w-5 h-5" />
+                </button>
+              </div>
+            )}
+
+            <WeekView
+              weekPlan={weekPlan}
+              onMoveMeal={moveMeal}
+              onRemoveMeal={removeMeal}
+              onReplaceMeal={replaceMeal}
+              suggestedRecipes={suggestedRecipes}
+              onAddToLibrary={handleAddToLibrary}
+            />
+          </>
         ) : (
           <div className="bg-white rounded-xl border border-border p-12 text-center">
             <div className="max-w-md mx-auto">
@@ -268,7 +306,7 @@ export default function MealPlanPage() {
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">No meal plan yet</h3>
               <p className="text-sm text-muted">
-                Generate a weekly meal plan using your recipes and AI to get started with organized meal planning.
+                Hit Generate to create a weekly meal plan powered by AI. Customize your week first for the best results.
               </p>
             </div>
           </div>
@@ -279,6 +317,16 @@ export default function MealPlanPage() {
         isOpen={historyOpen}
         onClose={() => setHistoryOpen(false)}
       />
+
+      {weekPlan && (
+        <ShoppingList
+          isOpen={shoppingListOpen}
+          onClose={() => setShoppingListOpen(false)}
+          weekPlan={weekPlan}
+          recipes={recipes}
+          suggestedRecipes={suggestedRecipes}
+        />
+      )}
 
       <OnboardingWizard isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
     </div>

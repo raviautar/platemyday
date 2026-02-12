@@ -49,10 +49,13 @@ export async function POST(req: Request) {
     const prefsPrompt = settings ? formatPreferencesPrompt(settings.preferences) : preferences || '';
 
     const recipesForPrompt = recipes.slice(0, 200);
-    const recipeList = recipesForPrompt
-      .map((r: { id: string; title: string; tags: string[] }) =>
-        `- ${r.title} (ID: ${r.id}, Tags: ${r.tags.join(', ')})`)
-      .join('\n');
+    const hasRecipes = recipesForPrompt.length > 0;
+    const recipeList = hasRecipes
+      ? recipesForPrompt
+          .map((r: { id: string; title: string; tags: string[] }) =>
+            `- ${r.title} (ID: ${r.id}, Tags: ${r.tags.join(', ')})`)
+          .join('\n')
+      : '';
 
     const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const startIndex = daysOrder.indexOf(weekStartDay);
@@ -62,14 +65,13 @@ export async function POST(req: Request) {
 
 IMPORTANT: The days array MUST start with ${weekStartDay} and follow this exact order: ${orderedDays.join(', ')}
 
-${recipes.length > recipesForPrompt.length ? `NOTE: Only the first ${recipesForPrompt.length} recipes are included to keep generation stable.\n` : ''}
-Available recipes in user's library:
-${recipeList}
+${hasRecipes ? `${recipes.length > recipesForPrompt.length ? `NOTE: Only the first ${recipesForPrompt.length} recipes are included to keep generation stable.\n` : ''}Available recipes in user's library:\n${recipeList}` : 'The user has no recipes in their library yet. Create ALL new recipes with complete details.'}
 
 ${prefsPrompt ? `User preferences: ${prefsPrompt}` : ''}
+${preferences ? `Additional context for this week: ${preferences}` : ''}
 
 IMPORTANT:
-1. Use existing recipes from the library when appropriate (include their IDs)
+${hasRecipes ? '1. Use existing recipes from the library when appropriate (include their IDs)' : '1. Create all new recipes since the user has no library yet'}
 2. For any NEW recipes not in the library, provide COMPLETE details including:
    - Full list of ingredients with measurements
    - Step-by-step cooking instructions

@@ -48,7 +48,7 @@ export const generateRecipeRequestSchema = z.object({
 });
 
 export const generateMealPlanRequestSchema = z.object({
-  recipes: z.array(recipeRefSchema).min(1).max(500),
+  recipes: z.array(recipeRefSchema).max(500).default([]),
   systemPrompt: optionalSystemPromptSchema,
   preferences: z.string().trim().max(4000).optional(),
   weekStartDay: z.enum(DAYS_OF_WEEK).optional().default('Monday'),

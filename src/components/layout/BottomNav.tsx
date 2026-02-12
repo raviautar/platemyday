@@ -2,12 +2,12 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { UtensilsCrossed, Calendar, Settings } from 'lucide-react';
+import { Heart, Calendar, Settings } from 'lucide-react';
 
 const navItems = [
-  { href: '/recipes', label: 'Recipes', icon: UtensilsCrossed },
   { href: '/meal-plan', label: 'Meal Plan', icon: Calendar },
-  { href: '/customize', label: 'Customize', icon: Settings },
+  { href: '/recipes', label: 'Recipes', icon: Heart },
+  { href: '/customize', label: 'Preferences', icon: Settings },
 ];
 
 export function BottomNav() {

@@ -17,6 +17,7 @@ import { CompletionStep } from './steps/CompletionStep';
 interface OnboardingWizardProps {
   isOpen: boolean;
   onClose: () => void;
+  onCompleted?: () => void;
 }
 
 const STEPS = [
@@ -27,7 +28,7 @@ const STEPS = [
   { id: 'complete', title: 'Complete' },
 ];
 
-export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
+export function OnboardingWizard({ isOpen, onClose, onCompleted }: OnboardingWizardProps) {
   const { settings, updateSettings } = useSettings();
   const [currentStep, setCurrentStep] = useState(0);
   const [preferences, setPreferences] = useState<UserPreferences>(settings.preferences);
@@ -69,7 +70,11 @@ export function OnboardingWizard({ isOpen, onClose }: OnboardingWizardProps) {
         onboardingCompleted: true,
       },
     });
-    onClose();
+    if (onCompleted) {
+      onCompleted();
+    } else {
+      onClose();
+    }
   };
 
   const renderStep = () => {
