@@ -1,6 +1,8 @@
 'use client';
 
+import { useMemo } from 'react';
 import { DayPlan, MealSlot, SuggestedRecipe } from '@/types';
+import { Flame } from 'lucide-react';
 import { MealCard } from './MealCard';
 import { Droppable, Draggable } from '@hello-pangea/dnd';
 
@@ -16,6 +18,10 @@ interface DayColumnProps {
 }
 
 export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, onReplaceMeal, suggestedRecipes, onAddToLibrary }: DayColumnProps) {
+  const dailyCalories = useMemo(() => {
+    return day.meals.reduce((sum, meal) => sum + (meal.estimatedNutrition?.calories || 0), 0);
+  }, [day.meals]);
+
   const formatDate = (dateStr: string, dayOfWeek: string) => {
     const date = new Date(dateStr + 'T00:00:00');
     const month = date.toLocaleDateString('en-US', { month: 'short' });
@@ -74,6 +80,12 @@ export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, o
           </div>
         )}
       </Droppable>
+      {dailyCalories > 0 && (
+        <div className="flex items-center justify-center gap-1 mt-2 pt-2 border-t border-border/50">
+          <Flame className="w-3 h-3 text-muted" />
+          <span className="text-xs text-muted font-medium">~{dailyCalories} cal</span>
+        </div>
+      )}
     </div>
   );
 }

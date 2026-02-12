@@ -6,15 +6,11 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, Sparkles, Calendar, Crown, Download, Heart } from 'lucide-react';
 import { TopBanner } from '@/components/layout/TopBanner';
-import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
-import { useSettings } from '@/contexts/SettingsContext';
 
 export default function HomePage() {
   const [showTopBanner, setShowTopBanner] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
-  const { settings } = useSettings();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -40,11 +36,6 @@ export default function HomePage() {
     return () => window.removeEventListener('platemyday-scroll-to-hero', handleScrollToHero);
   }, []);
 
-  const handleOnboardingComplete = () => {
-    setShowOnboarding(false);
-    router.push('/meal-plan');
-  };
-
   return (
     <>
       {showTopBanner && <TopBanner />}
@@ -52,7 +43,7 @@ export default function HomePage() {
         ref={scrollContainerRef}
         className="snap-y snap-mandatory h-screen overflow-y-scroll scroll-smooth"
       >
-      {/* Hero Section — no button, just branding */}
+      {/* Hero Section */}
       <section className="snap-start h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-teal-50 to-emerald-50">
         <div className="text-center px-4 w-full">
           <div className="mb-8 flex justify-center">
@@ -79,7 +70,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Meal Planning — shown first */}
+      {/* Meal Planning */}
       <section className={`snap-start h-screen flex items-center justify-center bg-white relative ${showTopBanner ? 'pt-14' : ''}`}>
         <div className="max-w-4xl mx-auto px-4 md:px-6 text-center">
           <div className="mb-4 md:mb-6 flex justify-center">
@@ -106,7 +97,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Recipes — shown second */}
+      {/* Recipes */}
       <section className={`snap-start h-screen flex items-center justify-center bg-surface relative ${showTopBanner ? 'pt-14' : ''}`}>
         <div className="max-w-4xl mx-auto px-4 md:px-6 text-center">
           <div className="mb-4 md:mb-6 flex justify-center">
@@ -133,47 +124,33 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Get Started / Onboarding CTA */}
+      {/* Get Started CTA */}
       <section className={`snap-start h-screen flex items-center justify-center bg-gradient-to-br from-teal-50 via-emerald-50 to-teal-50 ${showTopBanner ? 'pt-14' : ''}`}>
         <div className="max-w-4xl mx-auto px-4 md:px-6 text-center">
           <h2 className="text-3xl md:text-5xl font-bold text-foreground mb-3 md:mb-6 font-[family-name:var(--font-outfit)]">
-            {settings.preferences.onboardingCompleted
-              ? 'Get the Most Out of PlateMyDay'
-              : 'Ready to Get Started?'}
+            Ready to Plan Your Week?
           </h2>
           <p className="text-sm md:text-lg text-muted mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed">
-            {settings.preferences.onboardingCompleted
-              ? 'Unlock premium features or install the app for the best experience'
-              : 'Tell us about your dietary preferences and goals so we can create the perfect meal plans for you.'}
+            Generate a personalized meal plan in seconds. We&apos;ll ask about your preferences along the way.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center items-center">
-            {!settings.preferences.onboardingCompleted && (
-              <button
-                onClick={() => setShowOnboarding(true)}
-                className="inline-flex items-center gap-2 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white font-semibold px-6 py-3 md:px-8 md:py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
-              >
-                <Sparkles className="w-5 h-5" />
-                Set Up My Preferences
-              </button>
-            )}
+            <Link
+              href="/meal-plan"
+              className="inline-flex items-center gap-2 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white font-semibold px-6 py-3 md:px-8 md:py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
+            >
+              <Sparkles className="w-5 h-5" />
+              Plan Your Week
+            </Link>
             <Link
               href="/upgrade"
-              className={`inline-flex items-center gap-2 ${
-                settings.preferences.onboardingCompleted
-                  ? 'bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white'
-                  : 'bg-white hover:bg-surface text-foreground border-2 border-border'
-              } font-semibold px-6 py-3 md:px-8 md:py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 w-full sm:w-auto justify-center`}
+              className="inline-flex items-center gap-2 bg-white hover:bg-surface text-foreground border-2 border-border font-semibold px-6 py-3 md:px-8 md:py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 w-full sm:w-auto justify-center"
             >
               <Crown className="w-5 h-5" />
               Upgrade to Premium
             </Link>
             <button
               onClick={() => {
-                if ('serviceWorker' in navigator && 'BeforeInstallPromptEvent' in window) {
-                  alert('Install feature coming soon!');
-                } else {
-                  alert('Install feature coming soon!');
-                }
+                alert('Install feature coming soon!');
               }}
               className="inline-flex items-center gap-2 bg-white hover:bg-surface text-foreground font-semibold px-6 py-3 md:px-8 md:py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 border-2 border-border w-full sm:w-auto justify-center"
             >
@@ -213,12 +190,6 @@ export default function HomePage() {
           }
         `}</style>
       </div>
-
-      <OnboardingWizard
-        isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
-        onCompleted={handleOnboardingComplete}
-      />
     </>
   );
 }

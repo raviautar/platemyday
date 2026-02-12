@@ -19,6 +19,7 @@ export interface MealSlot {
   recipeId: string;
   mealType: MealType;
   recipeTitleFallback?: string;
+  estimatedNutrition?: NutritionInfo;
 }
 
 export interface DayPlan {
@@ -60,6 +61,13 @@ export interface AppSettings {
   preferences: UserPreferences;
 }
 
+export interface NutritionInfo {
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+}
+
 export interface SuggestedRecipe {
   title: string;
   description?: string;
@@ -69,4 +77,5 @@ export interface SuggestedRecipe {
   prepTimeMinutes?: number;
   cookTimeMinutes?: number;
   tags: string[];
+  estimatedNutrition?: NutritionInfo;
 }

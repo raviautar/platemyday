@@ -10,33 +10,24 @@ import { WeekView } from '@/components/meal-plan/WeekView';
 import { MealPlanControls } from '@/components/meal-plan/MealPlanControls';
 import { MealPlanHistory } from '@/components/meal-plan/MealPlanHistory';
 import { ShoppingList } from '@/components/meal-plan/ShoppingList';
+import { NutritionSummary } from '@/components/meal-plan/NutritionSummary';
 import { GeneratingAnimation } from '@/components/ui/GeneratingAnimation';
-import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { WeekPlan, SuggestedRecipe } from '@/types';
 import { DAYS_OF_WEEK } from '@/lib/constants';
-import { History, Sparkles, ShoppingCart, Settings2 } from 'lucide-react';
+import { History, ShoppingCart, Settings2 } from 'lucide-react';
 import { MdClose } from 'react-icons/md';
 import Link from 'next/link';
 
 export default function MealPlanPage() {
   const { recipes, addRecipe } = useRecipes();
   const { weekPlan, setWeekPlan, moveMeal, removeMeal, replaceMeal, clearWeekPlan } = useMealPlan();
-  const { settings, updateSettings } = useSettings();
+  const { settings } = useSettings();
   const { userId, anonymousId } = useUserIdentity();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showHint, setShowHint] = useState(false);
   const [showCustomizeHint, setShowCustomizeHint] = useState(false);
-
-  useEffect(() => {
-    setShowHint(
-      !settings.preferences.onboardingCompleted &&
-      !settings.preferences.onboardingDismissed
-    );
-  }, [settings.preferences]);
 
   const suggestedRecipes = useMemo(() => weekPlan?.suggestedRecipes || {}, [weekPlan?.suggestedRecipes]);
 
@@ -76,6 +67,7 @@ export default function MealPlanPage() {
           prepTimeMinutes: recipe.prepTimeMinutes,
           cookTimeMinutes: recipe.cookTimeMinutes,
           tags: recipe.tags || [],
+          estimatedNutrition: recipe.estimatedNutrition,
         };
       });
     }
@@ -92,6 +84,7 @@ export default function MealPlanPage() {
           recipeId: meal.recipeId || '',
           mealType: meal.mealType,
           recipeTitleFallback: meal.recipeId ? undefined : meal.recipeTitle,
+          estimatedNutrition: meal.estimatedNutrition,
         })),
       };
     });
@@ -188,16 +181,6 @@ export default function MealPlanPage() {
     setShowCustomizeHint(false);
   };
 
-  const handleDismissHint = () => {
-    updateSettings({
-      preferences: {
-        ...settings.preferences,
-        onboardingDismissed: true,
-      },
-    });
-    setShowHint(false);
-  };
-
   return (
     <div>
       <div className="flex items-center justify-between gap-4 pb-3 border-b border-border/60 mb-6">
@@ -205,18 +188,21 @@ export default function MealPlanPage() {
           Meal Plan
         </h1>
         <div className="flex items-center gap-2">
-          {weekPlan && (
-            <button
-              type="button"
-              aria-label="Shopping list"
-              title="Shopping List"
-              onClick={() => setShoppingListOpen(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border border-border text-foreground hover:bg-surface-dark shadow-sm shrink-0 transition-colors"
-            >
-              <ShoppingCart className="w-5 h-5" strokeWidth={2} />
-              <span className="text-sm font-medium hidden sm:inline">Shopping List</span>
-            </button>
-          )}
+          <button
+            type="button"
+            aria-label="Shopping list"
+            title="Shopping List"
+            onClick={() => weekPlan && setShoppingListOpen(true)}
+            disabled={!weekPlan}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-sm shrink-0 transition-all ${
+              weekPlan
+                ? 'bg-gradient-to-r from-primary to-emerald-600 text-white hover:from-primary-dark hover:to-emerald-700 shadow-md hover:shadow-lg'
+                : 'bg-surface border border-border text-muted cursor-not-allowed opacity-60'
+            }`}
+          >
+            <ShoppingCart className="w-5 h-5" strokeWidth={2} />
+            <span className="text-sm font-semibold hidden sm:inline">Shopping List</span>
+          </button>
           <button
             type="button"
             aria-label="History of past generations"
@@ -229,29 +215,6 @@ export default function MealPlanPage() {
           </button>
         </div>
       </div>
-
-      {showHint && (
-        <div className="bg-gradient-to-r from-primary/10 to-emerald-50 border border-primary/30 rounded-xl p-4 mb-6 flex items-start justify-between">
-          <div className="flex items-start gap-3 flex-1">
-            <Sparkles className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-            <div>
-              <h3 className="font-semibold text-foreground mb-1">Get Personalized Meal Plans</h3>
-              <p className="text-sm text-muted mb-3">
-                Get balanced meal plans tailored to your diet and nutrition goals.
-              </p>
-              <button
-                onClick={() => setShowOnboarding(true)}
-                className="text-sm font-medium text-primary hover:text-primary-dark underline"
-              >
-                Set up preferences (2 min)
-              </button>
-            </div>
-          </div>
-          <button onClick={handleDismissHint} className="text-muted hover:text-foreground ml-2">
-            <MdClose className="w-5 h-5" />
-          </button>
-        </div>
-      )}
 
       <MealPlanControls
         onGenerate={handleGenerate}
@@ -286,6 +249,9 @@ export default function MealPlanPage() {
                 </button>
               </div>
             )}
+
+            {/* Weekly Nutrition Summary */}
+            <NutritionSummary weekPlan={weekPlan} />
 
             <WeekView
               weekPlan={weekPlan}
@@ -327,8 +293,6 @@ export default function MealPlanPage() {
           suggestedRecipes={suggestedRecipes}
         />
       )}
-
-      <OnboardingWizard isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
     </div>
   );
 }

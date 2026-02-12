@@ -62,7 +62,8 @@ CRITICAL: Provide a COMPLETE recipe with:
 - Full list of ingredients with precise measurements
 - Detailed step-by-step cooking instructions
 - Servings, prep time, cook time
-- Relevant tags`;
+- Relevant tags
+- Estimated nutrition per serving (calories, protein in grams, carbs in grams, fat in grams)`;
 
     const result = await generateText({
       model: google('gemini-2.5-flash-lite'),

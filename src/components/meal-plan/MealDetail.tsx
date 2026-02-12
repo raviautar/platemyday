@@ -1,10 +1,10 @@
 'use client';
 
-import { MealSlot, SuggestedRecipe } from '@/types';
+import { MealSlot, SuggestedRecipe, NutritionInfo } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useRecipes } from '@/contexts/RecipeContext';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Heart } from 'lucide-react';
 
 interface MealDetailProps {
   meal: MealSlot | null;
@@ -64,6 +64,30 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
             </div>
           )}
 
+          {suggestedRecipe.estimatedNutrition && (
+            <div className="bg-surface rounded-lg p-3">
+              <h4 className="font-semibold text-sm mb-2">Estimated Nutrition (per serving)</h4>
+              <div className="grid grid-cols-4 gap-2 text-center">
+                <div>
+                  <p className="text-lg font-bold text-foreground">{suggestedRecipe.estimatedNutrition.calories}</p>
+                  <p className="text-[10px] text-muted">cal</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-blue-600">{suggestedRecipe.estimatedNutrition.protein}g</p>
+                  <p className="text-[10px] text-muted">protein</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-amber-600">{suggestedRecipe.estimatedNutrition.carbs}g</p>
+                  <p className="text-[10px] text-muted">carbs</p>
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-pink-600">{suggestedRecipe.estimatedNutrition.fat}g</p>
+                  <p className="text-[10px] text-muted">fat</p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {suggestedRecipe.tags.length > 0 && (
             <div>
               <h4 className="font-semibold text-sm mb-2">Tags</h4>
@@ -100,12 +124,13 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
           )}
 
           {onAddToLibrary && (
-            <div className="bg-secondary/10 border border-secondary rounded-lg p-4">
+            <div className="bg-accent/5 border border-accent/30 rounded-lg p-4">
               <p className="text-sm text-muted mb-3">
-                Add this recipe to your library to save and use it in future meal plans.
+                Save this recipe to your library to use it in future meal plans.
               </p>
-              <Button onClick={() => { onAddToLibrary(suggestedRecipe); onClose(); }} size="sm">
-                Add to Recipe Library
+              <Button onClick={() => { onAddToLibrary(suggestedRecipe); onClose(); }} size="sm" className="gap-2">
+                <Heart className="w-4 h-4" />
+                Save to Library
               </Button>
             </div>
           )}
@@ -174,6 +199,30 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
           {recipe.prepTimeMinutes > 0 && <span>Prep: {recipe.prepTimeMinutes} min</span>}
           {recipe.cookTimeMinutes > 0 && <span>Cook: {recipe.cookTimeMinutes} min</span>}
         </div>
+
+        {meal.estimatedNutrition && (
+          <div className="bg-surface rounded-lg p-3">
+            <h4 className="font-semibold text-sm mb-2">Estimated Nutrition (per serving)</h4>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <div>
+                <p className="text-lg font-bold text-foreground">{meal.estimatedNutrition.calories}</p>
+                <p className="text-[10px] text-muted">cal</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-blue-600">{meal.estimatedNutrition.protein}g</p>
+                <p className="text-[10px] text-muted">protein</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-amber-600">{meal.estimatedNutrition.carbs}g</p>
+                <p className="text-[10px] text-muted">carbs</p>
+              </div>
+              <div>
+                <p className="text-lg font-bold text-pink-600">{meal.estimatedNutrition.fat}g</p>
+                <p className="text-[10px] text-muted">fat</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {recipe.tags.length > 0 && (
           <div>

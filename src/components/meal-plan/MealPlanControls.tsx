@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal } from '@/components/ui/Modal';
-import { Settings2, Sparkles, X, Plus, ChefHat, Leaf, Flame, Zap, UtensilsCrossed } from 'lucide-react';
-import Link from 'next/link';
+import { useSettings } from '@/contexts/SettingsContext';
+import { Settings2, Sparkles, X, Plus, ChefHat, Leaf, Flame, Zap, UtensilsCrossed, ChevronDown, ChevronUp, Check } from 'lucide-react';
+import { UserPreferences } from '@/types';
 
 export interface AdHocCustomizations {
   pantryIngredients: string[];
@@ -35,6 +36,24 @@ const CUISINE_OPTIONS = [
   'American', 'Japanese', 'Thai', 'Middle Eastern', 'French',
 ];
 
+const DIET_OPTIONS = [
+  { value: 'omnivore', label: 'Omnivore' },
+  { value: 'vegetarian', label: 'Vegetarian' },
+  { value: 'vegan', label: 'Vegan' },
+  { value: 'pescatarian', label: 'Pescatarian' },
+  { value: 'keto', label: 'Keto' },
+  { value: 'paleo', label: 'Paleo' },
+  { value: 'mediterranean', label: 'Mediterranean' },
+  { value: 'low-carb', label: 'Low-Carb' },
+  { value: 'flexitarian', label: 'Flexitarian' },
+  { value: 'gluten-free', label: 'Gluten-Free' },
+] as const;
+
+const ALLERGY_OPTIONS = [
+  'nuts', 'peanuts', 'dairy', 'gluten', 'soy', 'shellfish',
+  'fish', 'eggs', 'sesame', 'corn', 'nightshades', 'red-meat',
+];
+
 interface MealPlanControlsProps {
   onGenerate: (preferences: string, systemPrompt?: string) => Promise<void>;
   onClear: () => void;
@@ -45,9 +64,16 @@ interface MealPlanControlsProps {
 }
 
 export function MealPlanControls({ onGenerate, onClear, hasExistingPlan, loading, onboardingCompleted }: MealPlanControlsProps) {
+  const { settings, updateSettings } = useSettings();
   const [customizations, setCustomizations] = useState<AdHocCustomizations>(EMPTY_CUSTOMIZATIONS);
   const [showCustomize, setShowCustomize] = useState(false);
   const [ingredientInput, setIngredientInput] = useState('');
+  const [prefsExpanded, setPrefsExpanded] = useState(!onboardingCompleted);
+  const [localPrefs, setLocalPrefs] = useState<Pick<UserPreferences, 'dietaryType' | 'allergies'>>({
+    dietaryType: settings.preferences.dietaryType,
+    allergies: settings.preferences.allergies,
+  });
+  const [prefsSaved, setPrefsSaved] = useState(false);
 
   const hasCustomizations =
     customizations.pantryIngredients.length > 0 ||
@@ -112,6 +138,29 @@ export function MealPlanControls({ onGenerate, onClear, hasExistingPlan, loading
     }));
   };
 
+  const toggleAllergy = (allergy: string) => {
+    setLocalPrefs(prev => ({
+      ...prev,
+      allergies: prev.allergies.includes(allergy)
+        ? prev.allergies.filter(a => a !== allergy)
+        : [...prev.allergies, allergy],
+    }));
+    setPrefsSaved(false);
+  };
+
+  const handleSavePreferences = () => {
+    updateSettings({
+      preferences: {
+        ...settings.preferences,
+        dietaryType: localPrefs.dietaryType,
+        allergies: localPrefs.allergies,
+        onboardingCompleted: true,
+      },
+    });
+    setPrefsSaved(true);
+    setTimeout(() => setPrefsExpanded(false), 800);
+  };
+
   return (
     <>
       <div className="bg-white rounded-xl border border-border p-4">
@@ -165,16 +214,81 @@ export function MealPlanControls({ onGenerate, onClear, hasExistingPlan, loading
             </button>
           </div>
 
-          {/* Onboarding Hint */}
+          {/* Inline Dietary Preferences (progressive onboarding) */}
           {!onboardingCompleted && (
-            <div className="bg-gradient-to-r from-primary/10 to-emerald-50 border border-primary/30 rounded-xl p-3">
-              <p className="text-sm text-foreground">
-                Want better recommendations? {' '}
-                <Link href="/customize" className="text-primary font-medium hover:underline" onClick={() => setShowCustomize(false)}>
-                  Set up your meal preferences
-                </Link>
-                {' '} for personalized plans.
-              </p>
+            <div className="bg-gradient-to-r from-primary/5 to-emerald-50 border border-primary/20 rounded-xl overflow-hidden">
+              <button
+                onClick={() => setPrefsExpanded(!prefsExpanded)}
+                className="w-full flex items-center justify-between p-3"
+              >
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-semibold text-foreground">
+                    {prefsSaved ? 'Dietary preferences saved!' : 'Do you have any dietary restrictions?'}
+                  </span>
+                  {prefsSaved && <Check className="w-4 h-4 text-primary" />}
+                </div>
+                {prefsExpanded ? (
+                  <ChevronUp className="w-4 h-4 text-muted" />
+                ) : (
+                  <ChevronDown className="w-4 h-4 text-muted" />
+                )}
+              </button>
+
+              {prefsExpanded && (
+                <div className="px-3 pb-3 space-y-3">
+                  {/* Diet Type */}
+                  <div>
+                    <label className="text-xs font-medium text-muted mb-1.5 block">Diet type</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {DIET_OPTIONS.map(opt => (
+                        <button
+                          key={opt.value}
+                          onClick={() => {
+                            setLocalPrefs(prev => ({
+                              ...prev,
+                              dietaryType: prev.dietaryType === opt.value ? null : opt.value,
+                            }));
+                            setPrefsSaved(false);
+                          }}
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
+                            localPrefs.dietaryType === opt.value
+                              ? 'bg-primary text-white border-primary'
+                              : 'bg-white text-foreground border-border hover:border-primary/50'
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Allergies */}
+                  <div>
+                    <label className="text-xs font-medium text-muted mb-1.5 block">Allergies & restrictions</label>
+                    <div className="flex flex-wrap gap-1.5">
+                      {ALLERGY_OPTIONS.map(allergy => (
+                        <button
+                          key={allergy}
+                          onClick={() => toggleAllergy(allergy)}
+                          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border capitalize ${
+                            localPrefs.allergies.includes(allergy)
+                              ? 'bg-accent text-white border-accent'
+                              : 'bg-white text-foreground border-border hover:border-accent/50'
+                          }`}
+                        >
+                          {allergy}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <Button size="sm" onClick={handleSavePreferences} className="w-full gap-2">
+                    <Check className="w-4 h-4" />
+                    Save Preferences
+                  </Button>
+                </div>
+              )}
             </div>
           )}
 

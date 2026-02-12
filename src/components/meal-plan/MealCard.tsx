@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, memo } from 'react';
-import { MealSlot, MealType, SuggestedRecipe, DayPlan } from '@/types';
+import { MealSlot, MealType, SuggestedRecipe, DayPlan, NutritionInfo } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
-import { Sparkles } from 'lucide-react';
+import { Sparkles, Heart, Flame } from 'lucide-react';
 import { MealDetail } from './MealDetail';
 import { MealOptionsMenu } from './MealOptionsMenu';
 import { ReplaceFromRecipes } from './ReplaceFromRecipes';
@@ -41,9 +41,12 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
   const recipe = meal.recipeId ? getRecipe(meal.recipeId) : null;
 
   const isUnmatched = meal.recipeTitleFallback !== undefined;
+  const isInLibrary = !!meal.recipeId && !!recipe;
   const title = isUnmatched
     ? meal.recipeTitleFallback
     : (recipe?.title || 'Unknown Recipe');
+
+  const nutrition: NutritionInfo | undefined = meal.estimatedNutrition || suggestedRecipe?.estimatedNutrition;
 
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
@@ -59,6 +62,13 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
         recipeTitleFallback: undefined,
       });
       showToast('Meal replaced!');
+    }
+  };
+
+  const handleSaveToLibrary = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (suggestedRecipe && onAddToLibrary) {
+      onAddToLibrary(suggestedRecipe);
     }
   };
 
@@ -99,6 +109,7 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
         recipeId: '',
         mealType: meal.mealType,
         recipeTitleFallback: newRecipeData.title,
+        estimatedNutrition: newRecipeData.estimatedNutrition,
       });
 
       showToast(`Replaced with "${newRecipeData.title}"!`);
@@ -141,21 +152,44 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
             <p className={`text-sm font-medium line-clamp-2 ${isUnmatched ? 'text-muted' : ''}`}>
               {title}
             </p>
+            {nutrition && (
+              <p className="text-[10px] text-muted mt-0.5 flex items-center gap-1">
+                <Flame className="w-2.5 h-2.5" />
+                {nutrition.calories} cal
+              </p>
+            )}
             {isRegenerating && (
               <p className="text-[10px] text-muted mt-0.5">Regenerating...</p>
             )}
           </div>
-          {onRemove && weekDays && currentDayIndex !== undefined && (
-            <MealOptionsMenu
-              weekDays={weekDays}
-              currentDayIndex={currentDayIndex}
-              onMoveTo={(targetDayIndex) => onMoveTo?.(targetDayIndex)}
-              onRemove={onRemove}
-              onReplaceFromLibrary={() => setIsReplaceOpen(true)}
-              onRegenerate={handleRegenerate}
-              isRegenerating={isRegenerating}
-            />
-          )}
+          <div className="flex items-start gap-0.5">
+            {/* Save to library button */}
+            {isUnmatched && suggestedRecipe && onAddToLibrary && (
+              <button
+                onClick={handleSaveToLibrary}
+                className="p-1 rounded-md hover:bg-accent/10 transition-colors"
+                title="Save to recipe library"
+              >
+                <Heart className="w-3.5 h-3.5 text-accent" />
+              </button>
+            )}
+            {isInLibrary && (
+              <div className="p-1" title="In your recipe library">
+                <Heart className="w-3.5 h-3.5 text-accent fill-accent" />
+              </div>
+            )}
+            {onRemove && weekDays && currentDayIndex !== undefined && (
+              <MealOptionsMenu
+                weekDays={weekDays}
+                currentDayIndex={currentDayIndex}
+                onMoveTo={(targetDayIndex) => onMoveTo?.(targetDayIndex)}
+                onRemove={onRemove}
+                onReplaceFromLibrary={() => setIsReplaceOpen(true)}
+                onRegenerate={handleRegenerate}
+                isRegenerating={isRegenerating}
+              />
+            )}
+          </div>
         </div>
       </div>
 
