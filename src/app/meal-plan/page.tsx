@@ -15,7 +15,7 @@ import { GeneratingAnimation } from '@/components/ui/GeneratingAnimation';
 import { StreamingMealView } from '@/components/meal-plan/StreamingMealView';
 import { WeekPlan, SuggestedRecipe } from '@/types';
 import { DAYS_OF_WEEK } from '@/lib/constants';
-import { History, ShoppingCart, AlertTriangle, RefreshCw, Activity, Trash2 } from 'lucide-react';
+import { History, ShoppingCart, AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
 
 interface PartialPlan {
   days?: Array<{
@@ -27,6 +27,39 @@ interface PartialPlan {
       estimatedNutrition?: { calories?: number };
     }>;
   }>;
+}
+
+function PieChartIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <circle cx="12" cy="12" r="10" stroke="currentColor" fill="none" />
+      <path
+        d="M12 2 A10 10 0 0 1 22 12 L12 12 Z"
+        fill="currentColor"
+        fillOpacity="0.3"
+      />
+      <path
+        d="M12 12 L22 12 A10 10 0 0 1 12 22 Z"
+        fill="currentColor"
+        fillOpacity="0.5"
+      />
+      <path
+        d="M12 12 L12 22 A10 10 0 0 1 2 12 Z"
+        fill="currentColor"
+        fillOpacity="0.7"
+      />
+      <path d="M12 2 L12 12 L22 12" stroke="currentColor" fill="none" />
+    </svg>
+  );
 }
 
 export default function MealPlanPage() {
@@ -304,7 +337,7 @@ export default function MealPlanPage() {
               onClick={() => setNutritionOpen(true)}
               className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border border-border text-foreground hover:bg-surface-dark shadow-sm shrink-0 transition-colors"
             >
-              <Activity className="w-5 h-5" strokeWidth={2} />
+              <PieChartIcon className="w-5 h-5" />
               <span className="text-sm font-medium hidden sm:inline">Nutrition</span>
             </button>
           )}

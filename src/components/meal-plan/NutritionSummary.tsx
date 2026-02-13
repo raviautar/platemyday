@@ -18,16 +18,54 @@ function PieChart({ protein, carbs, fat }: { protein: number; carbs: number; fat
   const carbsPct = (carbs / total) * 100;
 
   return (
-    <div
-      className="w-16 h-16 rounded-full shrink-0"
-      style={{
-        background: `conic-gradient(
-          #3B82F6 0% ${proteinPct}%,
-          #F59E0B ${proteinPct}% ${proteinPct + carbsPct}%,
-          #EC4899 ${proteinPct + carbsPct}% 100%
-        )`,
-      }}
-    />
+    <div className="relative w-20 h-20 shrink-0">
+      <div
+        className="w-full h-full rounded-full"
+        style={{
+          background: `conic-gradient(
+            #3B82F6 0% ${proteinPct}%,
+            #F59E0B ${proteinPct}% ${proteinPct + carbsPct}%,
+            #EC4899 ${proteinPct + carbsPct}% 100%
+          )`,
+        }}
+      />
+      <div className="absolute inset-0 flex items-center justify-center">
+        <div className="w-12 h-12 bg-white rounded-full" />
+      </div>
+    </div>
+  );
+}
+
+function StatCard({ 
+  value, 
+  label, 
+  color = 'foreground',
+  bgColor = 'surface'
+}: { 
+  value: string | number; 
+  label: string; 
+  color?: string;
+  bgColor?: string;
+}) {
+  const colorClasses: Record<string, string> = {
+    foreground: 'text-foreground',
+    blue: 'text-blue-600',
+    amber: 'text-amber-600',
+    pink: 'text-pink-600',
+  };
+
+  const bgClasses: Record<string, string> = {
+    surface: 'bg-surface',
+    blue: 'bg-blue-50/60',
+    amber: 'bg-amber-50/60',
+    pink: 'bg-pink-50/60',
+  };
+
+  return (
+    <div className={`${bgClasses[bgColor]} rounded-xl p-3 text-center border border-border/40 shadow-sm hover:shadow-md transition-shadow min-w-0 overflow-hidden h-[86px] flex flex-col justify-center`}>
+      <p className={`text-lg font-bold ${colorClasses[color]} mb-1 whitespace-nowrap truncate`}>{value}</p>
+      <p className="text-[10px] font-medium text-muted uppercase tracking-wide whitespace-nowrap truncate">{label}</p>
+    </div>
   );
 }
 
@@ -64,83 +102,103 @@ export function NutritionSummary({ weekPlan, isOpen, onClose }: NutritionSummary
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Weekly Nutrition">
-      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border/60">
+      <div className="space-y-6">
         {weeklyTotals.dailyAvg && (
-          <PieChart
-            protein={weeklyTotals.dailyAvg.protein}
-            carbs={weeklyTotals.dailyAvg.carbs}
-            fat={weeklyTotals.dailyAvg.fat}
-          />
+          <div className="flex items-center gap-4 pb-6 border-b border-border/40">
+            <PieChart
+              protein={weeklyTotals.dailyAvg.protein}
+              carbs={weeklyTotals.dailyAvg.carbs}
+              fat={weeklyTotals.dailyAvg.fat}
+            />
+            <div className="flex-1">
+              <p className="text-xs font-medium text-muted uppercase tracking-wider mb-1">Daily Average</p>
+              <p className="text-2xl font-bold text-foreground">
+                {weeklyTotals.dailyAvg.calories.toLocaleString()}
+                <span className="text-base font-normal text-muted ml-1">cal</span>
+              </p>
+            </div>
+          </div>
         )}
-        <div className="text-left">
-          <p className="text-sm text-muted">
-            ~{weeklyTotals.dailyAvg?.calories} cal/day avg
-          </p>
-        </div>
-      </div>
 
-        <div className="space-y-4">
-          {/* Daily Average */}
+        <div className="space-y-6">
           {weeklyTotals.dailyAvg && (
             <div>
-              <h4 className="text-sm font-medium text-muted mb-2">Daily Average</h4>
-              <div className="grid grid-cols-4 gap-3">
-                <div className="bg-surface rounded-lg p-2 text-center">
-                  <p className="text-xl font-bold text-foreground">{weeklyTotals.dailyAvg.calories}</p>
-                  <p className="text-[10px] text-muted">calories</p>
-                </div>
-                <div className="bg-blue-50 rounded-lg p-2 text-center">
-                  <p className="text-xl font-bold text-blue-600">{weeklyTotals.dailyAvg.protein}g</p>
-                  <p className="text-[10px] text-muted">protein</p>
-                </div>
-                <div className="bg-amber-50 rounded-lg p-2 text-center">
-                  <p className="text-xl font-bold text-amber-600">{weeklyTotals.dailyAvg.carbs}g</p>
-                  <p className="text-[10px] text-muted">carbs</p>
-                </div>
-                <div className="bg-pink-50 rounded-lg p-2 text-center">
-                  <p className="text-xl font-bold text-pink-600">{weeklyTotals.dailyAvg.fat}g</p>
-                  <p className="text-[10px] text-muted">fat</p>
-                </div>
+              <h3 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">Daily Average</h3>
+              <div className="grid grid-cols-4 gap-2.5">
+                <StatCard 
+                  value={weeklyTotals.dailyAvg.calories.toLocaleString()} 
+                  label="Calories"
+                  color="foreground"
+                  bgColor="surface"
+                />
+                <StatCard 
+                  value={`${weeklyTotals.dailyAvg.protein}g`} 
+                  label="Protein"
+                  color="blue"
+                  bgColor="blue"
+                />
+                <StatCard 
+                  value={`${weeklyTotals.dailyAvg.carbs}g`} 
+                  label="Carbs"
+                  color="amber"
+                  bgColor="amber"
+                />
+                <StatCard 
+                  value={`${weeklyTotals.dailyAvg.fat}g`} 
+                  label="Fat"
+                  color="pink"
+                  bgColor="pink"
+                />
               </div>
             </div>
           )}
 
-          {/* Weekly Total */}
           <div>
-            <h4 className="text-sm font-medium text-muted mb-2">Weekly Total</h4>
-            <div className="grid grid-cols-4 gap-3">
-              <div className="text-center">
-                <p className="text-lg font-semibold text-foreground">{weeklyTotals.calories.toLocaleString()}</p>
-                <p className="text-[10px] text-muted">calories</p>
-              </div>
-              <div className="text-center">
-                <p className="text-lg font-semibold text-blue-600">{weeklyTotals.protein}g</p>
-                <p className="text-[10px] text-muted">protein</p>
-              </div>
-              <div className="text-center">
-                <p className="text-lg font-semibold text-amber-600">{weeklyTotals.carbs}g</p>
-                <p className="text-[10px] text-muted">carbs</p>
-              </div>
-              <div className="text-center">
-                <p className="text-lg font-semibold text-pink-600">{weeklyTotals.fat}g</p>
-                <p className="text-[10px] text-muted">fat</p>
-              </div>
+            <h3 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">Weekly Total</h3>
+            <div className="grid grid-cols-4 gap-2.5">
+              <StatCard 
+                value={weeklyTotals.calories.toLocaleString()} 
+                label="Calories"
+                color="foreground"
+                bgColor="surface"
+              />
+              <StatCard 
+                value={`${weeklyTotals.protein}g`} 
+                label="Protein"
+                color="blue"
+                bgColor="blue"
+              />
+              <StatCard 
+                value={`${weeklyTotals.carbs}g`} 
+                label="Carbs"
+                color="amber"
+                bgColor="amber"
+              />
+              <StatCard 
+                value={`${weeklyTotals.fat}g`} 
+                label="Fat"
+                color="pink"
+                bgColor="pink"
+              />
             </div>
           </div>
 
-          {/* Legend */}
-          <div className="flex items-center justify-center gap-4 text-xs text-muted pt-1">
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-blue-500" /> Protein
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-amber-500" /> Carbs
-            </span>
-            <span className="flex items-center gap-1">
-              <span className="w-2 h-2 rounded-full bg-pink-500" /> Fat
-            </span>
+          <div className="flex items-center justify-center gap-6 pt-2 border-t border-border/40">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-blue-500 shadow-sm" />
+              <span className="text-xs font-medium text-muted">Protein</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-amber-500 shadow-sm" />
+              <span className="text-xs font-medium text-muted">Carbs</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 rounded-full bg-pink-500 shadow-sm" />
+              <span className="text-xs font-medium text-muted">Fat</span>
+            </div>
           </div>
         </div>
+      </div>
     </Modal>
   );
 }
