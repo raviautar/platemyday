@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useRef, useCallback } from 'react';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -12,11 +12,22 @@ import { MealPlanHistory } from '@/components/meal-plan/MealPlanHistory';
 import { ShoppingList } from '@/components/meal-plan/ShoppingList';
 import { NutritionSummary } from '@/components/meal-plan/NutritionSummary';
 import { GeneratingAnimation } from '@/components/ui/GeneratingAnimation';
+import { StreamingMealView } from '@/components/meal-plan/StreamingMealView';
 import { WeekPlan, SuggestedRecipe } from '@/types';
 import { DAYS_OF_WEEK } from '@/lib/constants';
-import { History, ShoppingCart, Settings2 } from 'lucide-react';
-import { MdClose } from 'react-icons/md';
-import Link from 'next/link';
+import { History, ShoppingCart, AlertTriangle, RefreshCw } from 'lucide-react';
+
+interface PartialPlan {
+  days?: Array<{
+    dayOfWeek?: string;
+    meals?: Array<{
+      mealType?: string;
+      recipeTitle?: string;
+      recipeId?: string;
+      estimatedNutrition?: { calories?: number };
+    }>;
+  }>;
+}
 
 export default function MealPlanPage() {
   const { recipes, addRecipe } = useRecipes();
@@ -27,11 +38,13 @@ export default function MealPlanPage() {
   const [loading, setLoading] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
-  const [showCustomizeHint, setShowCustomizeHint] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [partialPlan, setPartialPlan] = useState<PartialPlan | null>(null);
+  const lastPreferencesRef = useRef('');
 
   const suggestedRecipes = useMemo(() => weekPlan?.suggestedRecipes || {}, [weekPlan?.suggestedRecipes]);
 
-  const getWeekStartDate = (weekStartDay: string) => {
+  const getWeekStartDate = useCallback((weekStartDay: string) => {
     const today = new Date();
     const dayMap: { [key: string]: number } = {
       'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
@@ -50,9 +63,9 @@ export default function MealPlanPage() {
     weekStart.setDate(today.getDate() - daysToSubtract);
 
     return weekStart;
-  };
+  }, []);
 
-  const buildWeekPlan = (data: any): WeekPlan => {
+  const buildWeekPlan = useCallback((data: any): WeekPlan => {
     const weekStart = getWeekStartDate(settings.weekStartDay);
 
     const suggestedRecipesMap: Record<string, SuggestedRecipe> = {};
@@ -96,11 +109,13 @@ export default function MealPlanPage() {
       days,
       suggestedRecipes: Object.keys(suggestedRecipesMap).length > 0 ? suggestedRecipesMap : undefined,
     };
-  };
+  }, [getWeekStartDate, settings.weekStartDay]);
 
   const handleGenerate = async (preferences: string, systemPrompt?: string) => {
     setLoading(true);
-    setShowCustomizeHint(false);
+    setGenerationError(null);
+    setPartialPlan(null);
+    lastPreferencesRef.current = preferences;
 
     try {
       const response = await fetch('/api/generate-meal-plan', {
@@ -116,29 +131,81 @@ export default function MealPlanPage() {
         }),
       });
 
+      // Non-streaming errors (validation, rate limit) still return proper HTTP codes
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.error || 'Failed to generate meal plan');
       }
 
-      const data = await response.json();
-      const newWeekPlan = buildWeekPlan(data);
+      // Read NDJSON stream: each line is a partial or final object
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let finalData: any = null;
 
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+
+          if (trimmed.startsWith('ERROR:')) {
+            const errorData = JSON.parse(trimmed.slice(6));
+            throw new Error(errorData.error || 'Generation failed');
+          }
+
+          if (trimmed.startsWith('DONE:')) {
+            finalData = JSON.parse(trimmed.slice(5));
+          } else {
+            // Partial object update — show progressive UI
+            try {
+              const partial = JSON.parse(trimmed);
+              setPartialPlan(partial);
+            } catch {
+              // Ignore malformed partial lines
+            }
+          }
+        }
+      }
+
+      // Process any remaining buffer
+      const remaining = buffer.trim();
+      if (remaining) {
+        if (remaining.startsWith('ERROR:')) {
+          const errorData = JSON.parse(remaining.slice(6));
+          throw new Error(errorData.error || 'Generation failed');
+        }
+        if (remaining.startsWith('DONE:')) {
+          finalData = JSON.parse(remaining.slice(5));
+        }
+      }
+
+      if (!finalData) {
+        throw new Error('Failed to generate meal plan. The AI returned an incomplete response.');
+      }
+
+      const newWeekPlan = buildWeekPlan(finalData);
       const newSuggested = newWeekPlan.suggestedRecipes;
       await setWeekPlan(newWeekPlan, newSuggested);
 
-      const newRecipeCount = data.newRecipes?.length || 0;
+      const newRecipeCount = finalData.newRecipes?.length || 0;
       if (newRecipeCount > 0) {
         showToast(`Meal plan generated with ${newRecipeCount} new recipe${newRecipeCount > 1 ? 's' : ''}!`);
       } else {
         showToast('Meal plan generated!');
       }
-
-      setShowCustomizeHint(true);
     } catch (error) {
-      showToast(error instanceof Error ? error.message : 'Failed to generate meal plan', 'error');
+      const message = error instanceof Error ? error.message : 'Failed to generate meal plan';
+      setGenerationError(message);
     } finally {
       setLoading(false);
+      setPartialPlan(null);
     }
   };
 
@@ -178,8 +245,9 @@ export default function MealPlanPage() {
 
   const handleClearPlan = () => {
     clearWeekPlan();
-    setShowCustomizeHint(false);
   };
+
+  const isStreaming = loading && partialPlan && partialPlan.days && partialPlan.days.length > 0;
 
   return (
     <div>
@@ -227,29 +295,33 @@ export default function MealPlanPage() {
 
       <div className="mt-6">
         {loading ? (
-          <div className="bg-white rounded-xl border border-border">
-            <GeneratingAnimation message="Creating your meal plan..." />
+          <>
+            <div className="bg-white rounded-xl border border-border mb-6">
+              <GeneratingAnimation compact={isStreaming ? true : false} />
+            </div>
+            {isStreaming && (
+              <StreamingMealView partialPlan={partialPlan!} />
+            )}
+          </>
+        ) : generationError ? (
+          <div className="bg-white rounded-xl border border-red-200 p-8 text-center">
+            <div className="max-w-md mx-auto">
+              <div className="w-14 h-14 mx-auto mb-4 bg-red-50 rounded-full flex items-center justify-center">
+                <AlertTriangle className="w-7 h-7 text-red-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">Generation failed</h3>
+              <p className="text-sm text-muted mb-6">{generationError}</p>
+              <button
+                onClick={() => { setGenerationError(null); handleGenerate(lastPreferencesRef.current); }}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-emerald-600 text-white font-medium text-sm hover:from-primary-dark hover:to-emerald-700 shadow-sm hover:shadow-md transition-all"
+              >
+                <RefreshCw className="w-4 h-4" />
+                Try Again
+              </button>
+            </div>
           </div>
         ) : weekPlan ? (
           <>
-            {/* Post-generation customize hint */}
-            {showCustomizeHint && (
-              <div className="bg-gradient-to-r from-teal-50 to-emerald-50 border border-teal-200 rounded-xl p-4 mb-4 flex items-start justify-between">
-                <div className="flex items-start gap-3 flex-1">
-                  <Settings2 className="w-5 h-5 text-teal-600 mt-0.5 shrink-0" />
-                  <p className="text-sm text-foreground">
-                    Want better results? Use the <strong>Customize</strong> button to tell us about ingredients you have, preferred cuisines, and more.
-                    {!settings.preferences.onboardingCompleted && (
-                      <> You can also <Link href="/customize" className="text-primary font-medium hover:underline">set up your meal preferences</Link> for even better recommendations.</>
-                    )}
-                  </p>
-                </div>
-                <button onClick={() => setShowCustomizeHint(false)} className="text-muted hover:text-foreground ml-2">
-                  <MdClose className="w-5 h-5" />
-                </button>
-              </div>
-            )}
-
             {/* Weekly Nutrition Summary */}
             <NutritionSummary weekPlan={weekPlan} />
 

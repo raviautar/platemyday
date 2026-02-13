@@ -1,4 +1,4 @@
-import { generateText, Output } from 'ai';
+import { streamObject } from 'ai';
 import { google } from '@ai-sdk/google';
 import { mealPlanWithDetailsSchema } from '@/lib/ai';
 import { getSettings } from '@/lib/supabase/db';
@@ -84,26 +84,55 @@ ${hasRecipes ? '1. Use existing recipes from the library when appropriate (inclu
 6. Days must be in this exact order: ${orderedDays.join(', ')}
 7. For EVERY meal, include estimatedNutrition with realistic calorie and macro estimates per serving`;
 
-    const result = await generateText({
+    const result = streamObject({
       model: google('gemini-3-flash-preview'),
-      output: Output.object({ schema: mealPlanWithDetailsSchema }),
+      schema: mealPlanWithDetailsSchema,
       system: systemPrompt,
       prompt,
     });
 
-    if (!result.output) {
-      return Response.json(
-        { error: 'Failed to generate meal plan. The AI returned an empty response.' },
-        { status: 500 }
-      );
-    }
+    // Stream partial objects as NDJSON (one JSON object per line).
+    // Each line is the full partial object so far. Throttled to ~500ms intervals.
+    // Final line is prefixed with "DONE:" and contains the validated complete object.
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        let lastSendTime = 0;
 
-    return Response.json(result.output);
+        try {
+          for await (const partial of result.partialObjectStream) {
+            const now = Date.now();
+            if (now - lastSendTime >= 500) {
+              controller.enqueue(encoder.encode(JSON.stringify(partial) + '\n'));
+              lastSendTime = now;
+            }
+          }
+
+          const finalObject = await result.object;
+          controller.enqueue(encoder.encode('DONE:' + JSON.stringify(finalObject) + '\n'));
+          controller.close();
+        } catch (error) {
+          console.error('Meal plan streaming error:', error);
+          controller.enqueue(encoder.encode('ERROR:' + JSON.stringify({
+            error: 'Failed to generate meal plan. Please try again.',
+          }) + '\n'));
+          controller.close();
+        }
+      },
+    });
+
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Transfer-Encoding': 'chunked',
+        'Cache-Control': 'no-cache',
+      },
+    });
   } catch (error) {
     console.error('Meal plan generation error:', error);
     return Response.json(
       { error: 'Failed to generate meal plan. Please check your API key and try again.' },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

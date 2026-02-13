@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import { GiMeat, GiBread, GiWheat } from 'react-icons/gi';
+import { FaFire } from 'react-icons/fa';
 
 interface MacroGoalsStepProps {
   value: {
     protein?: 'low' | 'moderate' | 'high' | number;
     carbs?: 'low' | 'moderate' | 'high' | number;
     fiber?: 'low' | 'moderate' | 'high' | number;
+    calories?: number;
   };
   onChange: (value: MacroGoalsStepProps['value']) => void;
 }
@@ -120,6 +122,34 @@ export function MacroGoalsStep({ value, onChange }: MacroGoalsStepProps) {
             </div>
           );
         })}
+      </div>
+
+      {/* Calories */}
+      <div className="bg-white rounded-xl border border-border p-4">
+        <div className="flex items-center gap-3 mb-3">
+          <FaFire className="w-6 h-6 text-orange-500" />
+          <label className="text-sm font-semibold text-foreground">
+            Calories <span className="text-xs text-muted font-normal">(per day)</span>
+          </label>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            min="0"
+            step="50"
+            placeholder="Enter daily calories"
+            value={value.calories || ''}
+            onChange={(e) => {
+              const numValue = e.target.value === '' ? undefined : Number(e.target.value);
+              onChange({
+                ...value,
+                calories: numValue,
+              });
+            }}
+            className="flex-1 px-3 py-2 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+          />
+          <span className="text-sm text-muted">kcal</span>
+        </div>
       </div>
 
       <p className="text-xs text-center text-muted italic">

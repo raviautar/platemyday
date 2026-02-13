@@ -7,7 +7,8 @@
       "Bash(bun remove:*)",
       "Bash(bun run:*)",
       "Bash(bun run dev:*)",
-      "Bash(bun run build:*)"
+      "Bash(bun run build:*)",
+      "Bash(grep:*)"
     ]
   }
 }

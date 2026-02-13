@@ -10,26 +10,16 @@ import { RecipeForm } from '@/components/recipes/RecipeForm';
 import { RecipeDetail } from '@/components/recipes/RecipeDetail';
 import { AIRecipeGenerator } from '@/components/recipes/AIRecipeGenerator';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
-import { Plus, Sparkles } from 'lucide-react';
-import { MdClose } from 'react-icons/md';
+import { Plus } from 'lucide-react';
 
 export default function RecipesPage() {
   const { recipes, addRecipe, updateRecipe, deleteRecipe } = useRecipes();
-  const { settings, updateSettings } = useSettings();
   const { showToast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [showHint, setShowHint] = useState(false);
-
-  useEffect(() => {
-    setShowHint(
-      !settings.preferences.onboardingCompleted &&
-      !settings.preferences.onboardingDismissed
-    );
-  }, [settings.preferences]);
 
   const handleSave = (data: Omit<Recipe, 'id' | 'createdAt'>) => {
     if (editingRecipe) {
@@ -53,44 +43,11 @@ export default function RecipesPage() {
     showToast('Recipe deleted');
   };
 
-  const handleDismissHint = () => {
-    updateSettings({
-      preferences: {
-        ...settings.preferences,
-        onboardingDismissed: true,
-      },
-    });
-    setShowHint(false);
-  };
-
   return (
     <div>
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-foreground">Recipes</h1>
       </div>
-
-      {showHint && (
-        <div className="bg-gradient-to-r from-primary/10 to-emerald-50 border border-primary/30 rounded-xl p-4 mb-6 flex items-start justify-between">
-          <div className="flex items-start gap-3 flex-1">
-            <Sparkles className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-            <div>
-              <h3 className="font-semibold text-foreground mb-1">Get Personalized Recipes</h3>
-              <p className="text-sm text-muted mb-3">
-                Tell us your dietary preferences and we'll tailor recipe suggestions just for you.
-              </p>
-              <button
-                onClick={() => setShowOnboarding(true)}
-                className="text-sm font-medium text-primary hover:text-primary-dark underline"
-              >
-                Set up preferences (2 min)
-              </button>
-            </div>
-          </div>
-          <button onClick={handleDismissHint} className="text-muted hover:text-foreground ml-2">
-            <MdClose className="w-5 h-5" />
-          </button>
-        </div>
-      )}
 
       <RecipeList recipes={recipes} onSelectRecipe={setSelectedRecipe} onCreateRecipe={() => setShowAI(true)} />
 

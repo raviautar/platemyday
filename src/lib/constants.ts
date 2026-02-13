@@ -67,7 +67,7 @@ export function formatPreferencesPrompt(preferences: UserPreferences): string {
   }
 
   const macros = preferences.macroGoals;
-  if (macros.protein || macros.carbs || macros.fiber) {
+  if (macros.protein || macros.carbs || macros.fiber || macros.calories) {
     const macroDesc = [];
     if (macros.protein) {
       const proteinValue = typeof macros.protein === 'number' ? `${macros.protein}g` : macros.protein;
@@ -80,6 +80,9 @@ export function formatPreferencesPrompt(preferences: UserPreferences): string {
     if (macros.fiber) {
       const fiberValue = typeof macros.fiber === 'number' ? `${macros.fiber}g` : macros.fiber;
       macroDesc.push(`${fiberValue} fiber`);
+    }
+    if (macros.calories) {
+      macroDesc.push(`${macros.calories} calories per day`);
     }
     parts.push(`Macro goals: ${macroDesc.join(', ')}`);
   }

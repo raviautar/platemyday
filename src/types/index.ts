@@ -48,6 +48,7 @@ export interface UserPreferences {
     protein?: 'low' | 'moderate' | 'high' | number;
     carbs?: 'low' | 'moderate' | 'high' | number;
     fiber?: 'low' | 'moderate' | 'high' | number;
+    calories?: number;
   };
   onboardingCompleted: boolean;
   onboardingDismissed: boolean;

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/components/ui/Toast';
 import { UserPreferences } from '@/types';
-import { FaSeedling, FaLeaf, FaDrumstickBite, FaFish, FaAppleAlt } from 'react-icons/fa';
+import { FaSeedling, FaLeaf, FaDrumstickBite, FaFish, FaAppleAlt, FaFire } from 'react-icons/fa';
 import { GiMeat, GiBread, GiWheat, GiOlive, GiFruitBowl } from 'react-icons/gi';
 import { MdOutlineNoFood } from 'react-icons/md';
 
@@ -144,6 +144,16 @@ export function PreferencesSection() {
               </button>
             );
           })}
+          <button
+            onClick={() => handleUpdate({ allergies: [] })}
+            className={`px-3 py-1.5 rounded-full border-2 transition-all text-sm flex items-center gap-1.5 ${
+              prefs.allergies.length === 0
+                ? 'border-accent bg-accent/10 text-accent-dark font-medium'
+                : 'border-border bg-white text-muted hover:border-accent/50'
+            }`}
+          >
+            None
+          </button>
         </div>
         {prefs.allergies.length === 0 && (
           <p className="text-sm text-muted italic">No allergies selected</p>
@@ -261,6 +271,36 @@ export function PreferencesSection() {
             </div>
           );
         })}
+        
+        {/* Calories */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium flex items-center gap-2">
+              <FaFire className="w-5 h-5 text-orange-500" />
+              Calories <span className="text-xs text-muted font-normal">(per day)</span>
+            </label>
+          </div>
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min="0"
+              step="50"
+              placeholder="Enter daily calories"
+              value={prefs.macroGoals.calories || ''}
+              onChange={(e) => {
+                const numValue = e.target.value === '' ? undefined : Number(e.target.value);
+                handleUpdate({
+                  macroGoals: {
+                    ...prefs.macroGoals,
+                    calories: numValue,
+                  },
+                });
+              }}
+              className="flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+            <span className="text-sm text-muted">kcal</span>
+          </div>
+        </div>
         <p className="text-xs text-muted italic">
           These goals help us tailor recipe suggestions to your nutritional needs
         </p>
