@@ -207,15 +207,16 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading, onboard
   return (
     <>
       <div className="bg-white rounded-xl border border-border p-4">
-        <div className="flex gap-3">
+        <div className="flex gap-2 sm:gap-3">
           <button
             onClick={() => setShowCustomize(true)}
-            className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 text-muted hover:text-primary transition-all duration-200"
+            className="flex items-center justify-center gap-2 px-3 sm:px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 text-muted hover:text-primary transition-all duration-200 relative"
+            aria-label="Customize meal plan"
           >
-            <Settings2 className="w-5 h-5" />
-            <span className="font-medium">Customize</span>
+            <Settings2 className="w-5 h-5 shrink-0" />
+            <span className="font-medium hidden sm:inline">Customize</span>
             {hasCustomizations && (
-              <span className="w-2 h-2 rounded-full bg-primary" />
+              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
             )}
           </button>
 
@@ -223,14 +224,18 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading, onboard
             onClick={handleGenerate}
             disabled={loading}
             size="lg"
-            className="flex-1 gap-2"
+            className="flex-1 gap-2 min-w-0"
           >
             {loading ? (
-              <><LoadingSpinner size="sm" /> <span>Generating...</span></>
+              <>
+                <LoadingSpinner size="sm" className="shrink-0" />
+                <span className="truncate hidden sm:inline">Generating...</span>
+                <span className="truncate sm:hidden">...</span>
+              </>
             ) : (
               <>
-                <Sparkles className="w-5 h-5" />
-                {hasExistingPlan ? 'Regenerate' : 'Generate'}
+                <Sparkles className="w-5 h-5 shrink-0" />
+                <span className="truncate">{hasExistingPlan ? 'Regenerate' : 'Generate'}</span>
               </>
             )}
           </Button>
