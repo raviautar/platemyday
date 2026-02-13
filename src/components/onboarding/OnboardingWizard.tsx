@@ -12,6 +12,7 @@ import { DietTypeStep } from './steps/DietTypeStep';
 import { AllergiesStep } from './steps/AllergiesStep';
 import { ServingsStep } from './steps/ServingsStep';
 import { MacroGoalsStep } from './steps/MacroGoalsStep';
+import { MealNotesStep } from './steps/MealNotesStep';
 import { CompletionStep } from './steps/CompletionStep';
 
 interface OnboardingWizardProps {
@@ -25,6 +26,7 @@ const STEPS = [
   { id: 'allergies', title: 'Allergies & Restrictions' },
   { id: 'servings', title: 'Servings' },
   { id: 'macros', title: 'Macro Goals' },
+  { id: 'mealNotes', title: 'Additional Preferences' },
   { id: 'complete', title: 'Complete' },
 ];
 
@@ -108,6 +110,13 @@ export function OnboardingWizard({ isOpen, onClose, onCompleted }: OnboardingWiz
           />
         );
       case 4:
+        return (
+          <MealNotesStep
+            value={preferences.mealNotes}
+            onChange={(v) => setPreferences(p => ({ ...p, mealNotes: v }))}
+          />
+        );
+      case 5:
         return <CompletionStep onComplete={handleComplete} />;
       default:
         return null;

@@ -7,16 +7,18 @@ import { UserPreferences } from '@/types';
 import { FaSeedling, FaLeaf, FaDrumstickBite, FaFish, FaAppleAlt, FaFire } from 'react-icons/fa';
 import { GiMeat, GiBread, GiWheat, GiOlive, GiFruitBowl } from 'react-icons/gi';
 import { MdOutlineNoFood } from 'react-icons/md';
+import { Plus, X } from 'lucide-react';
 
 export function PreferencesSection() {
   const { settings, updateSettings } = useSettings();
   const { showToast } = useToast();
   const prefs = settings.preferences;
   
-  const [macroMode, setMacroMode] = useState<Record<'protein' | 'carbs' | 'fiber', 'preset' | 'custom'>>({
+  const [macroMode, setMacroMode] = useState<Record<'protein' | 'carbs' | 'fiber' | 'calories', 'preset' | 'custom'>>({
     protein: typeof prefs.macroGoals.protein === 'number' ? 'custom' : 'preset',
     carbs: typeof prefs.macroGoals.carbs === 'number' ? 'custom' : 'preset',
     fiber: typeof prefs.macroGoals.fiber === 'number' ? 'custom' : 'preset',
+    calories: typeof prefs.macroGoals.calories === 'number' ? 'custom' : 'preset',
   });
 
   useEffect(() => {
@@ -24,17 +26,20 @@ export function PreferencesSection() {
       protein: typeof prefs.macroGoals.protein === 'number' ? 'custom' : 'preset',
       carbs: typeof prefs.macroGoals.carbs === 'number' ? 'custom' : 'preset',
       fiber: typeof prefs.macroGoals.fiber === 'number' ? 'custom' : 'preset',
+      calories: typeof prefs.macroGoals.calories === 'number' ? 'custom' : 'preset',
     });
   }, [prefs.macroGoals]);
 
-  const handleUpdate = (updates: Partial<UserPreferences>) => {
+  const handleUpdate = (updates: Partial<UserPreferences>, showNotification = true) => {
     updateSettings({
       preferences: {
         ...prefs,
         ...updates,
       },
     });
-    showToast('Preferences updated');
+    if (showNotification) {
+      showToast('Preferences updated');
+    }
   };
 
   const handleServingsChange = (value: number) => {
@@ -192,7 +197,7 @@ export function PreferencesSection() {
 
       {/* Macro Goals */}
       <div className="bg-white rounded-xl border border-border p-4 space-y-4">
-        <h2 className="font-semibold text-lg text-foreground">Macro Goals</h2>
+        <h2 className="font-semibold text-lg text-foreground">Daily Macro Goals</h2>
         {(['protein', 'carbs', 'fiber'] as const).map(macro => {
           const currentValue = prefs.macroGoals[macro];
           const isCustom = macroMode[macro] === 'custom';
@@ -243,7 +248,10 @@ export function PreferencesSection() {
                           ...prefs.macroGoals,
                           [macro]: numValue,
                         },
-                      });
+                      }, false);
+                    }}
+                    onBlur={() => {
+                      showToast('Preferences updated');
                     }}
                     className="flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                   />
@@ -277,33 +285,126 @@ export function PreferencesSection() {
           <div className="flex items-center justify-between">
             <label className="text-sm font-medium flex items-center gap-2">
               <FaFire className="w-5 h-5 text-orange-500" />
-              Calories <span className="text-xs text-muted font-normal">(per day)</span>
+              Calories
             </label>
+            <button
+              onClick={() => {
+                const newMode = macroMode.calories === 'preset' ? 'custom' : 'preset';
+                setMacroMode({ ...macroMode, calories: newMode });
+                if (newMode === 'preset') {
+                  handleUpdate({
+                    macroGoals: {
+                      ...prefs.macroGoals,
+                      calories: undefined,
+                    },
+                  });
+                }
+              }}
+              className="text-xs text-muted hover:text-foreground underline"
+            >
+              {macroMode.calories === 'custom' ? 'Use preset' : 'Custom amount'}
+            </button>
           </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min="0"
-              step="50"
-              placeholder="Enter daily calories"
+          {macroMode.calories === 'custom' ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min="0"
+                step="50"
+                placeholder="Enter daily calories"
+                value={prefs.macroGoals.calories || ''}
+                onChange={(e) => {
+                  const numValue = e.target.value === '' ? undefined : Number(e.target.value);
+                  handleUpdate({
+                    macroGoals: {
+                      ...prefs.macroGoals,
+                      calories: numValue,
+                    },
+                  }, false);
+                }}
+                onBlur={() => {
+                  showToast('Preferences updated');
+                }}
+                className="flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              <span className="text-sm text-muted">kcal</span>
+            </div>
+          ) : (
+            <select
               value={prefs.macroGoals.calories || ''}
-              onChange={(e) => {
-                const numValue = e.target.value === '' ? undefined : Number(e.target.value);
+              onChange={(e) =>
                 handleUpdate({
                   macroGoals: {
                     ...prefs.macroGoals,
-                    calories: numValue,
+                    calories: e.target.value ? Number(e.target.value) : undefined,
                   },
-                });
-              }}
-              className="flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-            <span className="text-sm text-muted">kcal</span>
-          </div>
+                })
+              }
+              className="w-full px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            >
+              <option value="">Not specified</option>
+              <option value="1200">1200 kcal</option>
+              <option value="1500">1500 kcal</option>
+              <option value="2000">2000 kcal</option>
+              <option value="2500">2500 kcal</option>
+            </select>
+          )}
         </div>
         <p className="text-xs text-muted italic">
           These goals help us tailor recipe suggestions to your nutritional needs
         </p>
+      </div>
+
+      {/* Additional Meal Preferences */}
+      <div className="bg-white rounded-xl border border-border p-4 space-y-4">
+        <div>
+          <h2 className="font-semibold text-lg text-foreground mb-1">Additional Meal Preferences</h2>
+          <p className="text-xs text-muted">
+            Anything else you'd like to add?
+          </p>
+        </div>
+        <div className="space-y-2">
+          {(prefs.mealNotes || []).map((note, index) => (
+            <div key={index} className="flex items-center gap-2">
+              <input
+                type="text"
+                value={note}
+                onChange={(e) => {
+                  const updated = [...(prefs.mealNotes || [])];
+                  updated[index] = e.target.value;
+                  handleUpdate({ mealNotes: updated }, false);
+                }}
+                onBlur={() => {
+                  const updated = (prefs.mealNotes || []).filter(n => n.trim() !== '');
+                  if (updated.length !== (prefs.mealNotes || []).length) {
+                    handleUpdate({ mealNotes: updated });
+                  } else {
+                    showToast('Preferences updated');
+                  }
+                }}
+                placeholder="e.g., No cilantro in my dishes"
+                className="flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              />
+              <button
+                onClick={() => {
+                  const updated = (prefs.mealNotes || []).filter((_, i) => i !== index);
+                  handleUpdate({ mealNotes: updated });
+                }}
+                className="p-1.5 text-muted hover:text-foreground transition-colors"
+                aria-label="Remove note"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+          ))}
+          <button
+            onClick={() => handleUpdate({ mealNotes: [...(prefs.mealNotes || []), ''] })}
+            className="w-full px-3 py-2 border-2 border-dashed border-border rounded-lg text-sm text-muted hover:text-foreground hover:border-primary/50 transition-colors flex items-center justify-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add preference
+          </button>
+        </div>
       </div>
     </div>
   );

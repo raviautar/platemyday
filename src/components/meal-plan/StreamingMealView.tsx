@@ -1,6 +1,7 @@
 'use client';
 
 import { MealType } from '@/types';
+import { Loader2 } from 'lucide-react';
 
 interface PartialMeal {
   mealType?: string;
@@ -93,18 +94,26 @@ function StreamingMealCard({ meal }: { meal: PartialMeal }) {
 
   return (
     <div className="bg-white rounded-lg p-2.5 border border-border/50 shadow-sm">
-      {mealType && (
-        <span className={`inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-wide mb-1 ${colorClass}`}>
-          {mealType}
-        </span>
-      )}
-      {meal.recipeTitle ? (
-        <p className="text-xs font-medium text-foreground leading-snug line-clamp-2">
-          {meal.recipeTitle}
-        </p>
-      ) : (
-        <div className="w-full h-3 bg-border/30 rounded animate-pulse mt-1" />
-      )}
+      <div className="flex items-start justify-between gap-1.5">
+        <div className="flex-1 min-w-0">
+          {mealType && (
+            <span className={`inline-block text-[10px] font-semibold px-1.5 py-0.5 rounded-full uppercase tracking-wide mb-1 ${colorClass}`}>
+              {mealType}
+            </span>
+          )}
+          {meal.recipeTitle ? (
+            <p className="text-xs font-medium text-foreground leading-snug line-clamp-2">
+              {meal.recipeTitle}
+            </p>
+          ) : (
+            <div className="w-full h-3 bg-border/30 rounded animate-pulse mt-1" />
+          )}
+        </div>
+        <Loader2
+          className="w-3 h-3 text-primary/40 animate-spin shrink-0 mt-0.5"
+          style={{ animationDuration: '2s' }}
+        />
+      </div>
     </div>
   );
 }

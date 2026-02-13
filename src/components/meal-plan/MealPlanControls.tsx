@@ -341,6 +341,19 @@ export function MealPlanControls({ onGenerate, onClear, hasExistingPlan, loading
             </div>
           )}
 
+          {/* Preferences Button - Always show if onboarding not completed */}
+          {!onboardingCompleted && !currentQuestion && (
+            <div className="flex gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => setShowOnboarding(true)}
+                className="flex items-center gap-2 border border-primary/30 hover:bg-primary/10"
+              >
+                Preferences
+              </Button>
+            </div>
+          )}
+
           {/* Pantry Ingredients */}
           <div>
             <label className="text-sm font-semibold text-foreground mb-2 block">

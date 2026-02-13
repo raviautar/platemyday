@@ -24,6 +24,7 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   allergies: [],
   servings: 2,
   macroGoals: {},
+  mealNotes: [],
   onboardingCompleted: false,
   onboardingDismissed: false,
 };
@@ -85,6 +86,10 @@ export function formatPreferencesPrompt(preferences: UserPreferences): string {
       macroDesc.push(`${macros.calories} calories per day`);
     }
     parts.push(`Macro goals: ${macroDesc.join(', ')}`);
+  }
+
+  if (preferences.mealNotes.length > 0) {
+    parts.push(`Additional meal preferences: ${preferences.mealNotes.join('. ')}`);
   }
 
   return parts.length > 0 ? parts.join('. ') + '.' : '';

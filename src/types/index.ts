@@ -50,6 +50,7 @@ export interface UserPreferences {
     fiber?: 'low' | 'moderate' | 'high' | number;
     calories?: number;
   };
+  mealNotes: string[]; // Additional preferences like "No cilantro", "Mondays no heavy cream", etc.
   onboardingCompleted: boolean;
   onboardingDismissed: boolean;
 }

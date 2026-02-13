@@ -6,14 +6,14 @@ import { useToast } from '@/components/ui/Toast';
 import { PreferencesSection } from '@/components/settings/PreferencesSection';
 import { UnitSystem, WeekStartDay } from '@/types';
 
-type Tab = 'general' | 'preferences';
+type Tab = 'preferences' | 'general';
 
 const WEEK_DAYS: WeekStartDay[] = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 
 export default function CustomizePage() {
   const { settings, updateSettings, updateUnitSystem } = useSettings();
   const { showToast } = useToast();
-  const [activeTab, setActiveTab] = useState<Tab>('general');
+  const [activeTab, setActiveTab] = useState<Tab>('preferences');
 
   const handleUnitSystemChange = (unitSystem: UnitSystem) => {
     updateUnitSystem(unitSystem);
@@ -27,10 +27,20 @@ export default function CustomizePage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-bold text-foreground mb-6">Customize</h1>
+      <h1 className="text-2xl font-bold text-foreground mb-6">Preferences</h1>
 
       {/* Tab Navigation */}
       <div className="flex gap-2 mb-6 border-b border-border">
+        <button
+          onClick={() => setActiveTab('preferences')}
+          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
+            activeTab === 'preferences'
+              ? 'border-primary text-primary'
+              : 'border-transparent text-muted hover:text-foreground'
+          }`}
+        >
+          Meal
+        </button>
         <button
           onClick={() => setActiveTab('general')}
           className={`px-4 py-2 font-medium transition-colors border-b-2 ${
@@ -40,16 +50,6 @@ export default function CustomizePage() {
           }`}
         >
           General
-        </button>
-        <button
-          onClick={() => setActiveTab('preferences')}
-          className={`px-4 py-2 font-medium transition-colors border-b-2 ${
-            activeTab === 'preferences'
-              ? 'border-primary text-primary'
-              : 'border-transparent text-muted hover:text-foreground'
-          }`}
-        >
-          Preferences
         </button>
       </div>
 

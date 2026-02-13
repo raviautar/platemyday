@@ -27,11 +27,20 @@ const LEVEL_OPTIONS: Array<{ value: 'low' | 'moderate' | 'high' | undefined; lab
   { value: 'high', label: 'High' },
 ];
 
+const CALORIE_PRESETS = [
+  { value: undefined, label: 'Not specified' },
+  { value: 1200, label: '1200 kcal' },
+  { value: 1500, label: '1500 kcal' },
+  { value: 2000, label: '2000 kcal' },
+  { value: 2500, label: '2500 kcal' },
+];
+
 export function MacroGoalsStep({ value, onChange }: MacroGoalsStepProps) {
-  const [mode, setMode] = useState<Record<'protein' | 'carbs' | 'fiber', 'preset' | 'custom'>>({
+  const [mode, setMode] = useState<Record<'protein' | 'carbs' | 'fiber' | 'calories', 'preset' | 'custom'>>({
     protein: typeof value.protein === 'number' ? 'custom' : 'preset',
     carbs: typeof value.carbs === 'number' ? 'custom' : 'preset',
     fiber: typeof value.fiber === 'number' ? 'custom' : 'preset',
+    calories: typeof value.calories === 'number' ? 'custom' : 'preset',
   });
 
   const handlePresetChange = (macro: 'protein' | 'carbs' | 'fiber', level: 'low' | 'moderate' | 'high' | undefined) => {
@@ -126,30 +135,65 @@ export function MacroGoalsStep({ value, onChange }: MacroGoalsStepProps) {
 
       {/* Calories */}
       <div className="bg-white rounded-xl border border-border p-4">
-        <div className="flex items-center gap-3 mb-3">
-          <FaFire className="w-6 h-6 text-orange-500" />
-          <label className="text-sm font-semibold text-foreground">
-            Calories <span className="text-xs text-muted font-normal">(per day)</span>
-          </label>
-        </div>
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            min="0"
-            step="50"
-            placeholder="Enter daily calories"
-            value={value.calories || ''}
-            onChange={(e) => {
-              const numValue = e.target.value === '' ? undefined : Number(e.target.value);
-              onChange({
-                ...value,
-                calories: numValue,
-              });
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-3">
+            <FaFire className="w-6 h-6 text-orange-500" />
+            <label className="text-sm font-semibold text-foreground">
+              Calories
+            </label>
+          </div>
+          <button
+            onClick={() => {
+              const newMode = mode.calories === 'preset' ? 'custom' : 'preset';
+              setMode({ ...mode, calories: newMode });
+              if (newMode === 'preset') {
+                onChange({
+                  ...value,
+                  calories: undefined,
+                });
+              }
             }}
-            className="flex-1 px-3 py-2 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-          />
-          <span className="text-sm text-muted">kcal</span>
+            className="text-xs text-muted hover:text-foreground underline"
+          >
+            {mode.calories === 'custom' ? 'Use preset' : 'Custom amount'}
+          </button>
         </div>
+        {mode.calories === 'custom' ? (
+          <div className="flex items-center gap-2">
+            <input
+              type="number"
+              min="0"
+              step="50"
+              placeholder="Enter daily calories"
+              value={value.calories || ''}
+              onChange={(e) => {
+                const numValue = e.target.value === '' ? undefined : Number(e.target.value);
+                onChange({
+                  ...value,
+                  calories: numValue,
+                });
+              }}
+              className="flex-1 px-3 py-2 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+            />
+            <span className="text-sm text-muted">kcal</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-5 gap-2">
+            {CALORIE_PRESETS.map(preset => (
+              <button
+                key={preset.label}
+                onClick={() => onChange({ ...value, calories: preset.value })}
+                className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
+                  value.calories === preset.value
+                    ? 'bg-primary text-white shadow-sm'
+                    : 'bg-surface text-muted hover:bg-surface-dark hover:text-foreground'
+                }`}
+              >
+                {preset.label}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <p className="text-xs text-center text-muted italic">
