@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { AIRecipeOutput } from '@/lib/ai';
-import { Plus, Sparkles, RotateCcw } from 'lucide-react';
+import { Plus, Sparkles, RotateCcw, Clock, Users, ChefHat } from 'lucide-react';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
+import { RecipeIngredientsAndInstructions } from '@/components/recipes/RecipeIngredientsAndInstructions';
 
 interface AIRecipeGeneratorProps {
   isOpen: boolean;
@@ -165,49 +166,69 @@ export function AIRecipeGenerator({ isOpen, onClose, onSave }: AIRecipeGenerator
         )}
 
           {preview && (
-            <div className="bg-surface rounded-lg p-4 space-y-3">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg">{preview.title}</h3>
-                  <p className="text-sm text-muted">{preview.description}</p>
+            <div className="bg-gradient-to-br from-white to-surface/50 rounded-xl border border-border/60 shadow-lg overflow-hidden">
+              <div className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent px-6 py-5 border-b border-border/40">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-xl text-foreground mb-2 leading-tight">{preview.title}</h3>
+                    <p className="text-sm text-muted leading-relaxed">{preview.description}</p>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleChangeRecipe}
+                    className="flex items-center gap-1.5 shrink-0 hover:bg-surface"
+                  >
+                    <RotateCcw className="w-4 h-4" />
+                    Change
+                  </Button>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleChangeRecipe}
-                  className="flex items-center gap-1.5"
-                >
-                  <RotateCcw className="w-4 h-4" />
-                  Change
-                </Button>
               </div>
-              <div className="flex gap-3 text-xs text-muted">
-                <span>Prep: {preview.prepTimeMinutes}m</span>
-                <span>Cook: {preview.cookTimeMinutes}m</span>
-                <span>{preview.servings} servings</span>
-              </div>
-              {preview.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1">
-                  {preview.tags.map(tag => (
-                    <span key={tag} className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">{tag}</span>
-                  ))}
+
+              <div className="px-6 py-4 space-y-5">
+                <div className="flex flex-wrap gap-3">
+                  <div className="flex items-center gap-2 bg-white/80 px-3 py-2 rounded-lg border border-border/40 shadow-sm">
+                    <Clock className="w-4 h-4 text-primary" />
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted leading-none">Prep</span>
+                      <span className="text-sm font-semibold text-foreground">{preview.prepTimeMinutes}m</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/80 px-3 py-2 rounded-lg border border-border/40 shadow-sm">
+                    <ChefHat className="w-4 h-4 text-primary" />
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted leading-none">Cook</span>
+                      <span className="text-sm font-semibold text-foreground">{preview.cookTimeMinutes}m</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 bg-white/80 px-3 py-2 rounded-lg border border-border/40 shadow-sm">
+                    <Users className="w-4 h-4 text-primary" />
+                    <div className="flex flex-col">
+                      <span className="text-xs text-muted leading-none">Serves</span>
+                      <span className="text-sm font-semibold text-foreground">{preview.servings}</span>
+                    </div>
+                  </div>
                 </div>
-              )}
-              <div>
-                <h4 className="font-medium text-sm mb-1">Ingredients</h4>
-                <ul className="list-disc list-inside text-sm space-y-0.5">
-                  {preview.ingredients.map((ing, i) => <li key={i}>{ing}</li>)}
-                </ul>
-              </div>
-              <div>
-                <h4 className="font-medium text-sm mb-1">Instructions</h4>
-                <ol className="list-decimal list-inside text-sm space-y-1">
-                  {preview.instructions.map((step, i) => <li key={i}>{step}</li>)}
-                </ol>
-              </div>
-              <div className="flex gap-2 pt-2">
-                <Button onClick={handleSave}>Save Recipe</Button>
-                <Button variant="ghost" onClick={() => { setPreview(null); setPrompt(''); }}>Discard</Button>
+
+                {preview.tags.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {preview.tags.map(tag => (
+                      <span key={tag} className="inline-flex items-center px-3 py-1 bg-primary/10 text-primary text-xs font-medium rounded-full border border-primary/20">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <RecipeIngredientsAndInstructions 
+                  ingredients={preview.ingredients}
+                  instructions={preview.instructions}
+                />
+
+                <div className="flex gap-3 pt-2 border-t border-border/40">
+                  <Button onClick={handleSave} className="flex-1">Save Recipe</Button>
+                  <Button variant="ghost" onClick={() => { setPreview(null); setPrompt(''); }}>Discard</Button>
+                </div>
               </div>
             </div>
           )}

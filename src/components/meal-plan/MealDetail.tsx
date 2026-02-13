@@ -5,6 +5,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { Sparkles, Heart } from 'lucide-react';
+import { RecipeIngredientsAndInstructions } from '@/components/recipes/RecipeIngredientsAndInstructions';
 
 interface MealDetailProps {
   meal: MealSlot | null;
@@ -101,26 +102,11 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
             </div>
           )}
 
-          {suggestedRecipe.ingredients.length > 0 && (
-            <div>
-              <h4 className="font-semibold mb-2">Ingredients</h4>
-              <ul className="list-disc list-inside space-y-1 text-sm">
-                {suggestedRecipe.ingredients.map((ing, i) => (
-                  <li key={i}>{ing}</li>
-                ))}
-              </ul>
-            </div>
-          )}
-
-          {suggestedRecipe.instructions.length > 0 && (
-            <div>
-              <h4 className="font-semibold mb-2">Instructions</h4>
-              <ol className="list-decimal list-inside space-y-2 text-sm">
-                {suggestedRecipe.instructions.map((step, i) => (
-                  <li key={i}>{step}</li>
-                ))}
-              </ol>
-            </div>
+          {(suggestedRecipe.ingredients.length > 0 || suggestedRecipe.instructions.length > 0) && (
+            <RecipeIngredientsAndInstructions 
+              ingredients={suggestedRecipe.ingredients}
+              instructions={suggestedRecipe.instructions}
+            />
           )}
 
           {onAddToLibrary && (
@@ -237,26 +223,11 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
           </div>
         )}
 
-        {recipe.ingredients.length > 0 && (
-          <div>
-            <h4 className="font-semibold mb-2">Ingredients</h4>
-            <ul className="list-disc list-inside space-y-1 text-sm">
-              {recipe.ingredients.map((ing, i) => (
-                <li key={i}>{ing}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {recipe.instructions.length > 0 && (
-          <div>
-            <h4 className="font-semibold mb-2">Instructions</h4>
-            <ol className="list-decimal list-inside space-y-2 text-sm">
-              {recipe.instructions.map((step, i) => (
-                <li key={i}>{step}</li>
-              ))}
-            </ol>
-          </div>
+        {(recipe.ingredients.length > 0 || recipe.instructions.length > 0) && (
+          <RecipeIngredientsAndInstructions 
+            ingredients={recipe.ingredients}
+            instructions={recipe.instructions}
+          />
         )}
 
         {recipe.ingredients.length === 0 && recipe.instructions.length === 0 && (

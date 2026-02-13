@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { Recipe } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
-import { X, Plus } from 'lucide-react';
+import { X, Plus, Clock, ChefHat, Users } from 'lucide-react';
+import { RecipeIngredientsAndInstructions } from '@/components/recipes/RecipeIngredientsAndInstructions';
 
 interface RecipeDetailProps {
   recipe: Recipe | null;
@@ -68,102 +69,115 @@ export function RecipeDetail({ recipe, isOpen, onClose, onEdit, onDelete }: Reci
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={recipe.title}>
-      <div className="space-y-4">
-        {recipe.isAIGenerated && (
-          <span className="inline-block text-xs bg-accent/20 text-accent-dark px-2 py-0.5 rounded-full">
-            AI Generated
-          </span>
-        )}
-
-        <p className="text-muted">{recipe.description}</p>
-
-        <div className="flex gap-4 text-sm text-muted">
-          {recipe.prepTimeMinutes > 0 && <span>Prep: {recipe.prepTimeMinutes} min</span>}
-          {recipe.cookTimeMinutes > 0 && <span>Cook: {recipe.cookTimeMinutes} min</span>}
+      <div className="bg-gradient-to-br from-white to-surface/50 rounded-xl border border-border/60 shadow-lg overflow-hidden">
+        <div className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent px-6 py-5 border-b border-border/40">
+          <p className="text-sm text-muted leading-relaxed">{recipe.description}</p>
         </div>
 
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <h4 className="font-semibold text-sm">Tags</h4>
-            {!isEditingTags && (
-              <Button variant="ghost" size="sm" onClick={handleStartEditingTags}>
-                Edit Tags
-              </Button>
+        <div className="px-6 py-4 space-y-5">
+          <div className="flex flex-wrap gap-3">
+            {recipe.prepTimeMinutes > 0 && (
+              <div className="flex items-center gap-2 bg-white/80 px-3 py-2 rounded-lg border border-border/40 shadow-sm">
+                <Clock className="w-4 h-4 text-primary" />
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted leading-none">Prep</span>
+                  <span className="text-sm font-semibold text-foreground">{recipe.prepTimeMinutes}m</span>
+                </div>
+              </div>
             )}
-          </div>
-          
-          <div className="flex flex-wrap gap-1">
-            {currentTags.map(tag => (
-              <span
-                key={tag}
-                className={`text-xs px-2 py-1 rounded-full transition-colors ${getTagColor(tag)} ${
-                  isEditingTags ? 'pr-1' : ''
-                }`}
-              >
-                {tag}
-                {isEditingTags && (
-                  <button
-                    onClick={() => handleRemoveTag(tag)}
-                    className="ml-1 inline-flex items-center hover:opacity-70"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                )}
-              </span>
-            ))}
-            {currentTags.length === 0 && !isEditingTags && (
-              <span className="text-xs text-muted">No tags</span>
+            {recipe.cookTimeMinutes > 0 && (
+              <div className="flex items-center gap-2 bg-white/80 px-3 py-2 rounded-lg border border-border/40 shadow-sm">
+                <ChefHat className="w-4 h-4 text-primary" />
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted leading-none">Cook</span>
+                  <span className="text-sm font-semibold text-foreground">{recipe.cookTimeMinutes}m</span>
+                </div>
+              </div>
+            )}
+            {recipe.servings > 0 && (
+              <div className="flex items-center gap-2 bg-white/80 px-3 py-2 rounded-lg border border-border/40 shadow-sm">
+                <Users className="w-4 h-4 text-primary" />
+                <div className="flex flex-col">
+                  <span className="text-xs text-muted leading-none">Serves</span>
+                  <span className="text-sm font-semibold text-foreground">{recipe.servings}</span>
+                </div>
+              </div>
             )}
           </div>
 
-          {isEditingTags && (
-            <div className="mt-2 space-y-2">
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
-                  placeholder="Add a tag..."
-                  className="flex-1 text-sm px-3 py-1.5 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-                <Button size="sm" onClick={handleAddTag}>
-                  <Plus className="w-4 h-4" />
+          <div>
+            <div className="flex items-center justify-between mb-3">
+              <h4 className="font-semibold text-base text-foreground flex items-center gap-2">
+                <div className="w-1 h-5 bg-primary rounded-full"></div>
+                Tags
+              </h4>
+              {!isEditingTags && (
+                <Button variant="ghost" size="sm" onClick={handleStartEditingTags} className="hover:bg-surface">
+                  Edit Tags
                 </Button>
-              </div>
-              <div className="flex gap-2">
-                <Button size="sm" onClick={handleSaveTags}>
-                  Save Tags
-                </Button>
-                <Button size="sm" variant="ghost" onClick={handleCancelEditingTags}>
-                  Cancel
-                </Button>
-              </div>
+              )}
             </div>
-          )}
-        </div>
+            
+            <div className="flex flex-wrap gap-2">
+              {currentTags.map(tag => (
+                <span
+                  key={tag}
+                  className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full transition-colors ${getTagColor(tag)} ${
+                    isEditingTags ? 'pr-2' : ''
+                  }`}
+                >
+                  {tag}
+                  {isEditingTags && (
+                    <button
+                      onClick={() => handleRemoveTag(tag)}
+                      className="inline-flex items-center hover:opacity-70 rounded-full p-0.5 hover:bg-black/10"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </span>
+              ))}
+              {currentTags.length === 0 && !isEditingTags && (
+                <span className="text-xs text-muted">No tags</span>
+              )}
+            </div>
 
-        <div>
-          <h4 className="font-semibold mb-2">Ingredients</h4>
-          <ul className="list-disc list-inside space-y-1 text-sm">
-            {recipe.ingredients.map((ing, i) => (
-              <li key={i}>{ing}</li>
-            ))}
-          </ul>
-        </div>
+            {isEditingTags && (
+              <div className="mt-3 space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleAddTag()}
+                    placeholder="Add a tag..."
+                    className="flex-1 text-sm px-3 py-2 border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                  />
+                  <Button size="sm" onClick={handleAddTag}>
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <Button size="sm" onClick={handleSaveTags}>
+                    Save Tags
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={handleCancelEditingTags}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
 
-        <div>
-          <h4 className="font-semibold mb-2">Instructions</h4>
-          <ol className="list-decimal list-inside space-y-2 text-sm">
-            {recipe.instructions.map((step, i) => (
-              <li key={i}>{step}</li>
-            ))}
-          </ol>
-        </div>
+          <RecipeIngredientsAndInstructions 
+            ingredients={recipe.ingredients}
+            instructions={recipe.instructions}
+          />
 
-        <div className="flex gap-2 pt-2 border-t border-border">
-          <Button variant="ghost" onClick={() => onEdit(recipe)}>Edit</Button>
-          <Button variant="danger" onClick={() => { onDelete(recipe.id); onClose(); }}>Delete</Button>
+          <div className="flex gap-3 pt-2 border-t border-border/40">
+            <Button variant="ghost" onClick={() => onEdit(recipe)} className="flex-1">Edit</Button>
+            <Button variant="danger" onClick={() => { onDelete(recipe.id); onClose(); }} className="flex-1">Delete</Button>
+          </div>
         </div>
       </div>
     </Modal>

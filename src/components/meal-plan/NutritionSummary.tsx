@@ -1,11 +1,13 @@
 'use client';
 
-import { useMemo, useState } from 'react';
-import { WeekPlan, NutritionInfo } from '@/types';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { useMemo } from 'react';
+import { WeekPlan } from '@/types';
+import { Modal } from '@/components/ui/Modal';
 
 interface NutritionSummaryProps {
   weekPlan: WeekPlan;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 function PieChart({ protein, carbs, fat }: { protein: number; carbs: number; fat: number }) {
@@ -29,8 +31,7 @@ function PieChart({ protein, carbs, fat }: { protein: number; carbs: number; fat
   );
 }
 
-export function NutritionSummary({ weekPlan }: NutritionSummaryProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+export function NutritionSummary({ weekPlan, isOpen, onClose }: NutritionSummaryProps) {
 
   const weeklyTotals = useMemo(() => {
     let calories = 0, protein = 0, carbs = 0, fat = 0;
@@ -62,35 +63,23 @@ export function NutritionSummary({ weekPlan }: NutritionSummaryProps) {
   if (weeklyTotals.mealsWithNutrition === 0) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-border p-4 mb-4">
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="w-full flex items-center justify-between"
-      >
-        <div className="flex items-center gap-3">
-          {weeklyTotals.dailyAvg && (
-            <PieChart
-              protein={weeklyTotals.dailyAvg.protein}
-              carbs={weeklyTotals.dailyAvg.carbs}
-              fat={weeklyTotals.dailyAvg.fat}
-            />
-          )}
-          <div className="text-left">
-            <h3 className="font-semibold text-foreground">Weekly Nutrition</h3>
-            <p className="text-sm text-muted">
-              ~{weeklyTotals.dailyAvg?.calories} cal/day avg
-            </p>
-          </div>
-        </div>
-        {isExpanded ? (
-          <ChevronUp className="w-5 h-5 text-muted" />
-        ) : (
-          <ChevronDown className="w-5 h-5 text-muted" />
+    <Modal isOpen={isOpen} onClose={onClose} title="Weekly Nutrition">
+      <div className="flex items-center gap-3 mb-6 pb-4 border-b border-border/60">
+        {weeklyTotals.dailyAvg && (
+          <PieChart
+            protein={weeklyTotals.dailyAvg.protein}
+            carbs={weeklyTotals.dailyAvg.carbs}
+            fat={weeklyTotals.dailyAvg.fat}
+          />
         )}
-      </button>
+        <div className="text-left">
+          <p className="text-sm text-muted">
+            ~{weeklyTotals.dailyAvg?.calories} cal/day avg
+          </p>
+        </div>
+      </div>
 
-      {isExpanded && (
-        <div className="mt-4 space-y-4">
+        <div className="space-y-4">
           {/* Daily Average */}
           {weeklyTotals.dailyAvg && (
             <div>
@@ -152,7 +141,6 @@ export function NutritionSummary({ weekPlan }: NutritionSummaryProps) {
             </span>
           </div>
         </div>
-      )}
-    </div>
+    </Modal>
   );
 }

@@ -57,14 +57,13 @@ const ALLERGY_OPTIONS = [
 
 interface MealPlanControlsProps {
   onGenerate: (preferences: string, systemPrompt?: string) => Promise<void>;
-  onClear: () => void;
   hasExistingPlan: boolean;
   loading: boolean;
   defaultSystemPrompt: string;
   onboardingCompleted: boolean;
 }
 
-export function MealPlanControls({ onGenerate, onClear, hasExistingPlan, loading, onboardingCompleted }: MealPlanControlsProps) {
+export function MealPlanControls({ onGenerate, hasExistingPlan, loading, onboardingCompleted }: MealPlanControlsProps) {
   const { settings, updateSettings } = useSettings();
   const [customizations, setCustomizations] = useState<AdHocCustomizations>(EMPTY_CUSTOMIZATIONS);
   const [showCustomize, setShowCustomize] = useState(false);
@@ -237,11 +236,6 @@ export function MealPlanControls({ onGenerate, onClear, hasExistingPlan, loading
           </Button>
         </div>
 
-        {hasExistingPlan && (
-          <div className="mt-3 flex justify-end">
-            <Button variant="ghost" size="sm" onClick={onClear}>Clear Plan</Button>
-          </div>
-        )}
       </div>
 
       {/* Customize Modal */}

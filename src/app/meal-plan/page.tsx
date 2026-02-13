@@ -15,7 +15,7 @@ import { GeneratingAnimation } from '@/components/ui/GeneratingAnimation';
 import { StreamingMealView } from '@/components/meal-plan/StreamingMealView';
 import { WeekPlan, SuggestedRecipe } from '@/types';
 import { DAYS_OF_WEEK } from '@/lib/constants';
-import { History, ShoppingCart, AlertTriangle, RefreshCw } from 'lucide-react';
+import { History, ShoppingCart, AlertTriangle, RefreshCw, Activity, Trash2 } from 'lucide-react';
 
 interface PartialPlan {
   days?: Array<{
@@ -38,6 +38,7 @@ export default function MealPlanPage() {
   const [loading, setLoading] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
+  const [nutritionOpen, setNutritionOpen] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [partialPlan, setPartialPlan] = useState<PartialPlan | null>(null);
   const lastPreferencesRef = useRef('');
@@ -252,9 +253,33 @@ export default function MealPlanPage() {
   return (
     <div>
       <div className="flex items-center justify-between gap-4 pb-3 border-b border-border/60 mb-6">
-        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark font-[family-name:var(--font-outfit)]">
-          Meal Plan
-        </h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark font-[family-name:var(--font-outfit)]">
+            Meal Plan
+          </h1>
+          <button
+            type="button"
+            aria-label="History of past generations"
+            title="History"
+            onClick={() => setHistoryOpen(true)}
+            className="p-1.5 hover:bg-surface rounded-lg transition-colors text-muted hover:text-foreground"
+          >
+            <History className="w-5 h-5" strokeWidth={2} />
+          </button>
+          {weekPlan && (
+            <>
+              <button
+                type="button"
+                aria-label="Clear meal plan"
+                title="Clear Plan"
+                onClick={handleClearPlan}
+                className="p-1.5 hover:bg-surface rounded-lg transition-colors text-muted hover:text-red-600"
+              >
+                <Trash2 className="w-5 h-5" strokeWidth={2} />
+              </button>
+            </>
+          )}
+        </div>
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -271,22 +296,23 @@ export default function MealPlanPage() {
             <ShoppingCart className="w-5 h-5" strokeWidth={2} />
             <span className="text-sm font-semibold hidden sm:inline">Shopping List</span>
           </button>
-          <button
-            type="button"
-            aria-label="History of past generations"
-            title="History"
-            onClick={() => setHistoryOpen(true)}
-            className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border border-border text-foreground hover:bg-surface-dark shadow-sm shrink-0 transition-colors"
-          >
-            <History className="w-5 h-5" strokeWidth={2} />
-            <span className="text-sm font-medium hidden sm:inline">History</span>
-          </button>
+          {weekPlan && (
+            <button
+              type="button"
+              aria-label="View nutrition summary"
+              title="Nutrition Summary"
+              onClick={() => setNutritionOpen(true)}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border border-border text-foreground hover:bg-surface-dark shadow-sm shrink-0 transition-colors"
+            >
+              <Activity className="w-5 h-5" strokeWidth={2} />
+              <span className="text-sm font-medium hidden sm:inline">Nutrition</span>
+            </button>
+          )}
         </div>
       </div>
 
       <MealPlanControls
         onGenerate={handleGenerate}
-        onClear={handleClearPlan}
         hasExistingPlan={!!weekPlan}
         loading={loading}
         defaultSystemPrompt={settings.mealPlanSystemPrompt}
@@ -322,9 +348,6 @@ export default function MealPlanPage() {
           </div>
         ) : weekPlan ? (
           <>
-            {/* Weekly Nutrition Summary */}
-            <NutritionSummary weekPlan={weekPlan} />
-
             <WeekView
               weekPlan={weekPlan}
               onMoveMeal={moveMeal}
@@ -357,13 +380,20 @@ export default function MealPlanPage() {
       />
 
       {weekPlan && (
-        <ShoppingList
-          isOpen={shoppingListOpen}
-          onClose={() => setShoppingListOpen(false)}
-          weekPlan={weekPlan}
-          recipes={recipes}
-          suggestedRecipes={suggestedRecipes}
-        />
+        <>
+          <NutritionSummary
+            weekPlan={weekPlan}
+            isOpen={nutritionOpen}
+            onClose={() => setNutritionOpen(false)}
+          />
+          <ShoppingList
+            isOpen={shoppingListOpen}
+            onClose={() => setShoppingListOpen(false)}
+            weekPlan={weekPlan}
+            recipes={recipes}
+            suggestedRecipes={suggestedRecipes}
+          />
+        </>
       )}
     </div>
   );
