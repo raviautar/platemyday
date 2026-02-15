@@ -4,22 +4,41 @@ import { useState, useEffect } from 'react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/components/ui/Toast';
 import { UserPreferences } from '@/types';
+import { DIET_OPTIONS, ALLERGY_OPTIONS, CUISINE_OPTIONS } from '@/lib/constants';
 import { FaSeedling, FaLeaf, FaDrumstickBite, FaFish, FaAppleAlt, FaFire } from 'react-icons/fa';
 import { GiMeat, GiBread, GiWheat, GiOlive, GiFruitBowl } from 'react-icons/gi';
 import { MdOutlineNoFood } from 'react-icons/md';
 import { Plus, X } from 'lucide-react';
 
+const DIET_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
+  omnivore: FaDrumstickBite,
+  vegetarian: FaSeedling,
+  vegan: FaLeaf,
+  pescatarian: FaFish,
+  keto: GiMeat,
+  paleo: FaFish,
+  primal: GiMeat,
+  mediterranean: GiOlive,
+  'low-carb': FaAppleAlt,
+  flexitarian: GiFruitBowl,
+  whole30: MdOutlineNoFood,
+  'gluten-free': GiBread,
+};
+
 export function PreferencesSection() {
   const { settings, updateSettings } = useSettings();
   const { showToast } = useToast();
   const prefs = settings.preferences;
-  
+
   const [macroMode, setMacroMode] = useState<Record<'protein' | 'carbs' | 'fiber' | 'calories', 'preset' | 'custom'>>({
     protein: typeof prefs.macroGoals.protein === 'number' ? 'custom' : 'preset',
     carbs: typeof prefs.macroGoals.carbs === 'number' ? 'custom' : 'preset',
     fiber: typeof prefs.macroGoals.fiber === 'number' ? 'custom' : 'preset',
     calories: typeof prefs.macroGoals.calories === 'number' ? 'custom' : 'preset',
   });
+
+  const [customAllergyInput, setCustomAllergyInput] = useState('');
+  const [customCuisineInput, setCustomCuisineInput] = useState('');
 
   useEffect(() => {
     setMacroMode({
@@ -55,37 +74,23 @@ export function PreferencesSection() {
     showToast('Preferences updated');
   };
 
-  const DIET_OPTIONS = [
-    { value: 'omnivore', label: 'Omnivore', icon: FaDrumstickBite },
-    { value: 'vegetarian', label: 'Vegetarian', icon: FaSeedling },
-    { value: 'vegan', label: 'Vegan', icon: FaLeaf },
-    { value: 'pescatarian', label: 'Pescatarian', icon: FaFish },
-    { value: 'keto', label: 'Keto', icon: GiMeat },
-    { value: 'paleo', label: 'Paleo', icon: FaFish },
-    { value: 'primal', label: 'Primal', icon: GiMeat },
-    { value: 'mediterranean', label: 'Mediterranean', icon: GiOlive },
-    { value: 'low-carb', label: 'Low-Carb', icon: FaAppleAlt },
-    { value: 'flexitarian', label: 'Flexitarian', icon: GiFruitBowl },
-    { value: 'whole30', label: 'Whole30', icon: MdOutlineNoFood },
-    { value: 'gluten-free', label: 'Gluten-Free', icon: GiBread },
-  ];
+  const isCustomDiet = prefs.dietaryType && !DIET_OPTIONS.some(o => o.value === prefs.dietaryType);
 
-  const ALLERGY_OPTIONS = [
-    { value: 'nuts', label: 'Nuts', icon: '🥜' },
-    { value: 'peanuts', label: 'Peanuts', icon: '🥜' },
-    { value: 'dairy', label: 'Dairy', icon: '🥛' },
-    { value: 'gluten', label: 'Gluten', icon: '🌾' },
-    { value: 'soy', label: 'Soy', icon: '🫘' },
-    { value: 'shellfish', label: 'Shellfish', icon: '🦐' },
-    { value: 'fish', label: 'Fish', icon: '🐟' },
-    { value: 'eggs', label: 'Eggs', icon: '🥚' },
-    { value: 'sesame', label: 'Sesame', icon: '🫘' },
-    { value: 'corn', label: 'Corn', icon: '🌽' },
-    { value: 'nightshades', label: 'Nightshades', icon: '🍅' },
-    { value: 'red-meat', label: 'Red Meat', icon: '🥩' },
-    { value: 'poultry', label: 'Poultry', icon: '🍗' },
-    { value: 'alcohol', label: 'Alcohol', icon: '🍷' },
-  ];
+  const addCustomAllergy = () => {
+    const trimmed = customAllergyInput.trim().toLowerCase();
+    if (trimmed && !prefs.allergies.includes(trimmed)) {
+      handleUpdate({ allergies: [...prefs.allergies, trimmed] });
+      setCustomAllergyInput('');
+    }
+  };
+
+  const addCustomCuisine = () => {
+    const trimmed = customCuisineInput.trim();
+    if (trimmed && !(prefs.cuisinePreferences || []).includes(trimmed)) {
+      handleUpdate({ cuisinePreferences: [...(prefs.cuisinePreferences || []), trimmed] });
+      setCustomCuisineInput('');
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -94,18 +99,18 @@ export function PreferencesSection() {
         <h2 className="font-semibold text-lg text-foreground">Dietary Preference</h2>
         <div className="grid grid-cols-3 gap-2">
           {DIET_OPTIONS.map(option => {
-            const Icon = option.icon;
+            const Icon = DIET_ICON_MAP[option.value];
             return (
               <button
                 key={option.value}
-                onClick={() => handleUpdate({ dietaryType: option.value as any })}
+                onClick={() => handleUpdate({ dietaryType: option.value })}
                 className={`px-3 py-2 rounded-lg border-2 transition-all text-sm flex items-center justify-center gap-2 ${
                   prefs.dietaryType === option.value
                     ? 'border-primary bg-primary/5 text-primary font-medium'
                     : 'border-border bg-white text-muted hover:border-primary/50'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                {Icon && <Icon className="w-4 h-4" />}
                 {option.label}
               </button>
             );
@@ -119,8 +124,20 @@ export function PreferencesSection() {
               : 'border-border bg-white text-muted hover:border-primary/50'
           }`}
         >
-          I don't care
+          I don&apos;t care
         </button>
+        <div className="flex items-center gap-2">
+          <input
+            type="text"
+            placeholder="Or type a custom diet..."
+            value={isCustomDiet ? (prefs.dietaryType ?? '') : ''}
+            onChange={(e) => handleUpdate({ dietaryType: e.target.value || null }, false)}
+            onBlur={() => {
+              if (isCustomDiet) showToast('Preferences updated');
+            }}
+            className="flex-1 px-3 py-2 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+          />
+        </div>
       </div>
 
       {/* Allergies */}
@@ -149,6 +166,21 @@ export function PreferencesSection() {
               </button>
             );
           })}
+          {/* Custom allergies */}
+          {prefs.allergies
+            .filter(a => !ALLERGY_OPTIONS.some(o => o.value === a))
+            .map(customAllergy => (
+              <span
+                key={customAllergy}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border-2 border-accent bg-accent/10 text-accent-dark font-medium text-sm capitalize"
+              >
+                {customAllergy}
+                <button onClick={() => handleUpdate({ allergies: prefs.allergies.filter(a => a !== customAllergy) })}>
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))
+          }
           <button
             onClick={() => handleUpdate({ allergies: [] })}
             className={`px-3 py-1.5 rounded-full border-2 transition-all text-sm flex items-center gap-1.5 ${
@@ -160,9 +192,100 @@ export function PreferencesSection() {
             None
           </button>
         </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Add custom allergy..."
+            value={customAllergyInput}
+            onChange={(e) => setCustomAllergyInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addCustomAllergy();
+              }
+            }}
+            className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50 text-sm"
+          />
+          <button
+            onClick={addCustomAllergy}
+            className="px-3 py-1.5 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
         {prefs.allergies.length === 0 && (
           <p className="text-sm text-muted italic">No allergies selected</p>
         )}
+      </div>
+
+      {/* Cuisine Preferences */}
+      <div className="bg-white rounded-xl border border-border p-4 space-y-4">
+        <div>
+          <h2 className="font-semibold text-lg text-foreground mb-1">Cuisine Preferences</h2>
+          <p className="text-xs text-muted">
+            Select cuisines you enjoy. We&apos;ll include more of these but still mix in variety.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {CUISINE_OPTIONS.map(cuisine => {
+            const isSelected = (prefs.cuisinePreferences || []).includes(cuisine);
+            return (
+              <button
+                key={cuisine}
+                onClick={() => {
+                  const current = prefs.cuisinePreferences || [];
+                  const updated = isSelected
+                    ? current.filter(c => c !== cuisine)
+                    : [...current, cuisine];
+                  handleUpdate({ cuisinePreferences: updated });
+                }}
+                className={`px-3 py-1.5 rounded-full border-2 transition-all text-sm ${
+                  isSelected
+                    ? 'border-teal-500 bg-teal-50 text-teal-700 font-medium'
+                    : 'border-border bg-white text-muted hover:border-teal-300'
+                }`}
+              >
+                {cuisine}
+              </button>
+            );
+          })}
+          {/* Custom cuisines */}
+          {(prefs.cuisinePreferences || [])
+            .filter(c => !CUISINE_OPTIONS.includes(c as typeof CUISINE_OPTIONS[number]))
+            .map(customCuisine => (
+              <span
+                key={customCuisine}
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border-2 border-teal-500 bg-teal-50 text-teal-700 font-medium text-sm"
+              >
+                {customCuisine}
+                <button onClick={() => handleUpdate({ cuisinePreferences: (prefs.cuisinePreferences || []).filter(c => c !== customCuisine) })}>
+                  <X className="w-3 h-3" />
+                </button>
+              </span>
+            ))
+          }
+        </div>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            placeholder="Add custom cuisine..."
+            value={customCuisineInput}
+            onChange={(e) => setCustomCuisineInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addCustomCuisine();
+              }
+            }}
+            className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-teal-300 text-sm"
+          />
+          <button
+            onClick={addCustomCuisine}
+            className="px-3 py-1.5 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {/* Servings */}
@@ -279,7 +402,7 @@ export function PreferencesSection() {
             </div>
           );
         })}
-        
+
         {/* Calories */}
         <div className="space-y-2">
           <div className="flex items-center justify-between">
@@ -360,7 +483,7 @@ export function PreferencesSection() {
         <div>
           <h2 className="font-semibold text-lg text-foreground mb-1">Additional Meal Preferences</h2>
           <p className="text-xs text-muted">
-            Anything else you'd like to add?
+            Anything else you&apos;d like to add?
           </p>
         </div>
         <div className="space-y-2">

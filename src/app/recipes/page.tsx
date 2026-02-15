@@ -1,16 +1,17 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Recipe } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
-import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/components/ui/Toast';
 import { RecipeList } from '@/components/recipes/RecipeList';
 import { RecipeForm } from '@/components/recipes/RecipeForm';
 import { RecipeDetail } from '@/components/recipes/RecipeDetail';
 import { AIRecipeGenerator } from '@/components/recipes/AIRecipeGenerator';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
-import { Plus } from 'lucide-react';
+import { Input } from '@/components/ui/Input';
+import { RecipeFilters } from '@/types';
+import { Plus, Search, SlidersHorizontal } from 'lucide-react';
 
 export default function RecipesPage() {
   const { recipes, addRecipe, updateRecipe, deleteRecipe } = useRecipes();
@@ -20,6 +21,28 @@ export default function RecipesPage() {
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [filters, setFilters] = useState<RecipeFilters>({ tags: [], maxPrepTimeMinutes: null });
+  const filterRef = useRef<HTMLDivElement>(null);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  const allTags = Array.from(new Set(recipes.flatMap(r => r.tags))).sort();
+
+  useEffect(() => {
+    if (searchOpen) searchInputRef.current?.focus();
+  }, [searchOpen]);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false);
+    }
+    if (filterOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [filterOpen]);
 
   const handleSave = (data: Omit<Recipe, 'id' | 'createdAt'>) => {
     if (editingRecipe) {
@@ -43,13 +66,110 @@ export default function RecipesPage() {
     showToast('Recipe deleted');
   };
 
+  const toggleTag = (tag: string) => {
+    setFilters(prev => ({
+      ...prev,
+      tags: prev.tags.includes(tag) ? prev.tags.filter(t => t !== tag) : [...prev.tags, tag],
+    }));
+  };
+
+  const activeFilterCount = (filters.tags.length > 0 ? 1 : 0) + (filters.maxPrepTimeMinutes != null ? 1 : 0);
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-foreground">Recipes</h1>
+      <div className="flex flex-col gap-4 mb-6">
+        <div className="flex items-center justify-between">
+          <h1 className="text-2xl font-bold text-foreground">Recipes</h1>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => { setSearchOpen(prev => !prev); if (!searchOpen) setSearchQuery(''); }}
+              className="p-2 rounded-lg border border-border bg-white text-foreground hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary"
+              aria-label="Search recipes"
+            >
+              <Search className="w-5 h-5" strokeWidth={2} />
+            </button>
+            <div className="relative" ref={filterRef}>
+              <button
+                type="button"
+                onClick={() => setFilterOpen(prev => !prev)}
+                className={`p-2 rounded-lg border bg-white text-foreground hover:bg-surface focus:outline-none focus:ring-2 focus:ring-primary flex items-center gap-1 ${activeFilterCount > 0 ? 'border-primary ring-1 ring-primary/30' : 'border-border'}`}
+                aria-label="Filter recipes"
+              >
+                <SlidersHorizontal className="w-5 h-5" strokeWidth={2} />
+                {activeFilterCount > 0 && (
+                  <span className="min-w-[18px] h-[18px] rounded-full bg-primary text-white text-xs flex items-center justify-center">{activeFilterCount}</span>
+                )}
+              </button>
+              {filterOpen && (
+                <div className="absolute right-0 top-full mt-2 w-72 rounded-xl border border-border bg-white shadow-xl z-50 p-4 flex flex-col gap-4">
+                  <div>
+                    <p className="text-sm font-medium text-foreground mb-2">Tags</p>
+                    <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                      {allTags.length === 0 ? (
+                        <p className="text-sm text-muted">No tags in recipes yet.</p>
+                      ) : (
+                        allTags.map(tag => (
+                          <button
+                            key={tag}
+                            type="button"
+                            onClick={() => toggleTag(tag)}
+                            className={`px-2.5 py-1 rounded-full text-sm ${filters.tags.includes(tag) ? 'bg-primary text-white' : 'bg-surface text-foreground hover:bg-surface-dark'}`}
+                          >
+                            {tag}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-foreground mb-2">Max prep time</p>
+                    <select
+                      value={filters.maxPrepTimeMinutes ?? ''}
+                      onChange={e => setFilters(prev => ({ ...prev, maxPrepTimeMinutes: e.target.value === '' ? null : Number(e.target.value) }))}
+                      className="w-full px-3 py-2 rounded-lg border border-border bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                    >
+                      <option value="">Any</option>
+                      <option value="15">15 min or less</option>
+                      <option value="30">30 min or less</option>
+                      <option value="45">45 min or less</option>
+                      <option value="60">60 min or less</option>
+                      <option value="90">90 min or less</option>
+                    </select>
+                  </div>
+                  {(filters.tags.length > 0 || filters.maxPrepTimeMinutes != null) && (
+                    <button
+                      type="button"
+                      onClick={() => setFilters({ tags: [], maxPrepTimeMinutes: null })}
+                      className="text-sm text-primary hover:underline"
+                    >
+                      Clear filters
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        {searchOpen && (
+          <div className="flex flex-col gap-1">
+            <Input
+              ref={searchInputRef}
+              placeholder="Search recipes..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+            />
+          </div>
+        )}
       </div>
 
-      <RecipeList recipes={recipes} onSelectRecipe={setSelectedRecipe} onCreateRecipe={() => setShowAI(true)} />
+      <RecipeList
+        recipes={recipes}
+        searchQuery={searchQuery}
+        filters={filters}
+        onSelectRecipe={setSelectedRecipe}
+        onCreateRecipe={() => setShowAI(true)}
+      />
 
       <button
         onClick={() => setShowAI(true)}

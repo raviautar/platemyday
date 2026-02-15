@@ -78,8 +78,8 @@ ${hasRecipes ? '1. Use existing recipes from the library when appropriate (inclu
    - Servings, prep time, cook time
    - Relevant tags (e.g., "vegetarian", "quick", "italian")
    - Estimated nutrition per serving (calories, protein in grams, carbs in grams, fat in grams)
-3. Each day should have breakfast, lunch, and dinner at minimum
-4. Add snacks where appropriate for variety
+3. Each day MUST have breakfast, lunch, dinner, AND at least one snack — no exceptions
+4. Snacks should be varied and nutritious (e.g., yogurt parfait, hummus with veggies, trail mix, fruit smoothie, etc.)
 5. Make sure recipe titles in meals exactly match titles in newRecipes array
 6. Days must be in this exact order: ${orderedDays.join(', ')}
 7. For EVERY meal, include estimatedNutrition with realistic calorie and macro estimates per serving`;

@@ -1,10 +1,10 @@
 import { AppSettings, UnitSystem, UserPreferences } from '@/types';
 
 export const getRecipeSystemPrompt = (unitSystem: UnitSystem): string => {
-  const unitGuidance = unitSystem === 'metric' 
+  const unitGuidance = unitSystem === 'metric'
     ? 'Use metric units (grams, kilograms, milliliters, liters, Celsius) for all measurements and temperatures.'
     : 'Use imperial units (cups, tablespoons, teaspoons, ounces, pounds, Fahrenheit) for all measurements and temperatures.';
-  
+
   return `You are a creative chef assistant. Generate detailed, practical recipes based on the user's request. ${unitGuidance} Include precise measurements, clear instructions, and helpful tips. Keep recipes accessible for home cooks.`;
 };
 
@@ -12,16 +12,54 @@ export const getMealPlanSystemPrompt = (unitSystem: UnitSystem): string => {
   const unitGuidance = unitSystem === 'metric'
     ? 'When suggesting recipes, use metric measurements.'
     : 'When suggesting recipes, use imperial measurements.';
-  
+
   return `You are a meal planning assistant. Create balanced, varied weekly meal plans. ${unitGuidance} Consider nutrition, variety, and practical cooking schedules. Mix quick meals with more involved recipes throughout the week.`;
 };
 
 export const DEFAULT_RECIPE_SYSTEM_PROMPT = getRecipeSystemPrompt('metric');
 export const DEFAULT_MEAL_PLAN_SYSTEM_PROMPT = getMealPlanSystemPrompt('metric');
 
+export const DIET_OPTIONS = [
+  { value: 'omnivore', label: 'Omnivore', desc: 'No restrictions' },
+  { value: 'vegetarian', label: 'Vegetarian', desc: 'No meat or fish' },
+  { value: 'vegan', label: 'Vegan', desc: 'No animal products' },
+  { value: 'pescatarian', label: 'Pescatarian', desc: 'Fish but no meat' },
+  { value: 'keto', label: 'Keto', desc: 'Low-carb, high-fat' },
+  { value: 'paleo', label: 'Paleo', desc: 'Whole foods, no grains' },
+  { value: 'primal', label: 'Primal', desc: 'Like paleo, includes dairy' },
+  { value: 'mediterranean', label: 'Mediterranean', desc: 'Olive oil, fish, vegetables' },
+  { value: 'low-carb', label: 'Low-Carb', desc: 'Reduced carbohydrates' },
+  { value: 'flexitarian', label: 'Flexitarian', desc: 'Mostly plant-based' },
+  { value: 'whole30', label: 'Whole30', desc: '30-day reset program' },
+  { value: 'gluten-free', label: 'Gluten-Free', desc: 'No gluten-containing foods' },
+] as const;
+
+export const ALLERGY_OPTIONS = [
+  { value: 'nuts', label: 'Nuts', icon: '🥜' },
+  { value: 'peanuts', label: 'Peanuts', icon: '🥜' },
+  { value: 'dairy', label: 'Dairy', icon: '🥛' },
+  { value: 'gluten', label: 'Gluten', icon: '🌾' },
+  { value: 'soy', label: 'Soy', icon: '🫘' },
+  { value: 'shellfish', label: 'Shellfish', icon: '🦐' },
+  { value: 'fish', label: 'Fish', icon: '🐟' },
+  { value: 'eggs', label: 'Eggs', icon: '🥚' },
+  { value: 'sesame', label: 'Sesame', icon: '🫘' },
+  { value: 'corn', label: 'Corn', icon: '🌽' },
+  { value: 'nightshades', label: 'Nightshades', icon: '🍅' },
+  { value: 'red-meat', label: 'Red Meat', icon: '🥩' },
+  { value: 'poultry', label: 'Poultry', icon: '🍗' },
+  { value: 'alcohol', label: 'Alcohol', icon: '🍷' },
+] as const;
+
+export const CUISINE_OPTIONS = [
+  'Italian', 'Mexican', 'Asian', 'Mediterranean', 'Indian',
+  'American', 'Japanese', 'Thai', 'Middle Eastern', 'French',
+] as const;
+
 export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   dietaryType: null,
   allergies: [],
+  cuisinePreferences: [],
   servings: 2,
   macroGoals: {},
   mealNotes: [],
@@ -61,6 +99,12 @@ export function formatPreferencesPrompt(preferences: UserPreferences): string {
 
   if (preferences.allergies.length > 0) {
     parts.push(`Allergies/Restrictions: Avoid ${preferences.allergies.join(', ')}`);
+  }
+
+  if (preferences.cuisinePreferences && preferences.cuisinePreferences.length > 0) {
+    parts.push(
+      `Preferred cuisines include ${preferences.cuisinePreferences.join(', ')}, but still include variety from other cuisines for a well-rounded meal plan`
+    );
   }
 
   if (preferences.servings !== 2) {

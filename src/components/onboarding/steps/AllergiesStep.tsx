@@ -1,30 +1,17 @@
 'use client';
 
-import { MdClose } from 'react-icons/md';
+import { useState } from 'react';
+import { Plus, X } from 'lucide-react';
+import { ALLERGY_OPTIONS } from '@/lib/constants';
 
 interface AllergiesStepProps {
   value: string[];
   onChange: (value: string[]) => void;
 }
 
-const ALLERGY_OPTIONS = [
-  { value: 'nuts', label: 'Nuts', icon: '🥜' },
-  { value: 'peanuts', label: 'Peanuts', icon: '🥜' },
-  { value: 'dairy', label: 'Dairy', icon: '🥛' },
-  { value: 'gluten', label: 'Gluten', icon: '🌾' },
-  { value: 'soy', label: 'Soy', icon: '🫘' },
-  { value: 'shellfish', label: 'Shellfish', icon: '🦐' },
-  { value: 'fish', label: 'Fish', icon: '🐟' },
-  { value: 'eggs', label: 'Eggs', icon: '🥚' },
-  { value: 'sesame', label: 'Sesame', icon: '🫘' },
-  { value: 'corn', label: 'Corn', icon: '🌽' },
-  { value: 'nightshades', label: 'Nightshades', icon: '🍅' },
-  { value: 'red-meat', label: 'Red Meat', icon: '🥩' },
-  { value: 'poultry', label: 'Poultry', icon: '🍗' },
-  { value: 'alcohol', label: 'Alcohol', icon: '🍷' },
-];
-
 export function AllergiesStep({ value, onChange }: AllergiesStepProps) {
+  const [customInput, setCustomInput] = useState('');
+
   const toggleAllergy = (allergy: string) => {
     if (value.includes(allergy)) {
       onChange(value.filter(a => a !== allergy));
@@ -32,6 +19,16 @@ export function AllergiesStep({ value, onChange }: AllergiesStepProps) {
       onChange([...value, allergy]);
     }
   };
+
+  const addCustomAllergy = () => {
+    const trimmed = customInput.trim().toLowerCase();
+    if (trimmed && !value.includes(trimmed)) {
+      onChange([...value, trimmed]);
+      setCustomInput('');
+    }
+  };
+
+  const customAllergies = value.filter(a => !ALLERGY_OPTIONS.some(o => o.value === a));
 
   return (
     <div className="space-y-4">
@@ -62,6 +59,45 @@ export function AllergiesStep({ value, onChange }: AllergiesStepProps) {
             </button>
           );
         })}
+      </div>
+
+      {/* Custom allergies */}
+      {customAllergies.length > 0 && (
+        <div className="flex flex-wrap gap-2">
+          {customAllergies.map(allergy => (
+            <span
+              key={allergy}
+              className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border-2 border-accent bg-accent/10 text-accent-dark font-medium text-sm capitalize"
+            >
+              {allergy}
+              <button onClick={() => onChange(value.filter(a => a !== allergy))}>
+                <X className="w-3 h-3" />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
+      <div className="flex gap-2">
+        <input
+          type="text"
+          placeholder="Add custom allergy..."
+          value={customInput}
+          onChange={(e) => setCustomInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              addCustomAllergy();
+            }
+          }}
+          className="flex-1 px-3 py-2 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50 text-sm"
+        />
+        <button
+          onClick={addCustomAllergy}
+          className="px-3 py-2 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+        </button>
       </div>
 
       {value.length === 0 && (

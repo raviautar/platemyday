@@ -12,6 +12,11 @@ export interface Recipe {
   isAIGenerated: boolean;
 }
 
+export interface RecipeFilters {
+  tags: string[];
+  maxPrepTimeMinutes: number | null;
+}
+
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
 export interface MealSlot {
@@ -41,8 +46,9 @@ export type UnitSystem = 'metric' | 'imperial';
 export type WeekStartDay = 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
 
 export interface UserPreferences {
-  dietaryType: 'omnivore' | 'vegetarian' | 'vegan' | 'pescatarian' | 'keto' | 'paleo' | 'primal' | 'mediterranean' | 'low-carb' | 'flexitarian' | 'whole30' | 'gluten-free' | null;
-  allergies: string[]; // Common: 'nuts', 'peanuts', 'dairy', 'gluten', 'soy', 'shellfish', 'fish', 'eggs', 'sesame', 'corn', 'nightshades', 'red-meat', 'poultry', 'alcohol'
+  dietaryType: string | null;
+  allergies: string[];
+  cuisinePreferences: string[];
   servings: number; // Default: 2
   macroGoals: {
     protein?: 'low' | 'moderate' | 'high' | number;
@@ -50,7 +56,7 @@ export interface UserPreferences {
     fiber?: 'low' | 'moderate' | 'high' | number;
     calories?: number;
   };
-  mealNotes: string[]; // Additional preferences like "No cilantro", "Mondays no heavy cream", etc.
+  mealNotes: string[];
   onboardingCompleted: boolean;
   onboardingDismissed: boolean;
 }

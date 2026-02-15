@@ -1,36 +1,32 @@
 'use client';
 
-import { useState } from 'react';
-import { Recipe } from '@/types';
+import { Recipe, RecipeFilters } from '@/types';
 import { RecipeCard } from './RecipeCard';
-import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Sparkles, ChefHat } from 'lucide-react';
 
 interface RecipeListProps {
   recipes: Recipe[];
+  searchQuery: string;
+  filters: RecipeFilters;
   onSelectRecipe: (recipe: Recipe) => void;
   onCreateRecipe: () => void;
 }
 
-export function RecipeList({ recipes, onSelectRecipe, onCreateRecipe }: RecipeListProps) {
-  const [search, setSearch] = useState('');
-
-  const filtered = recipes.filter(r =>
-    r.title.toLowerCase().includes(search.toLowerCase()) ||
-    r.tags.some(t => t.toLowerCase().includes(search.toLowerCase()))
-  );
+export function RecipeList({ recipes, searchQuery, filters, onSelectRecipe, onCreateRecipe }: RecipeListProps) {
+  const filtered = recipes.filter(r => {
+    const matchesSearch =
+      !searchQuery.trim() ||
+      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      r.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
+    const matchesTags = filters.tags.length === 0 || filters.tags.some(tag => r.tags.includes(tag));
+    const matchesPrepTime =
+      filters.maxPrepTimeMinutes == null || r.prepTimeMinutes <= filters.maxPrepTimeMinutes;
+    return matchesSearch && matchesTags && matchesPrepTime;
+  });
 
   return (
     <div className="space-y-4">
-      {recipes.length > 0 && (
-        <Input
-          placeholder="Search recipes..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-        />
-      )}
-
       {filtered.length === 0 && recipes.length > 0 && (
         <p className="text-center text-muted py-8">No recipes match your search.</p>
       )}

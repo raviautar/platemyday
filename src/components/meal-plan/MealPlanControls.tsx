@@ -8,6 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { useSettings } from '@/contexts/SettingsContext';
 import { Settings2, Sparkles, X, Plus, ChefHat, Leaf, Flame, Zap, UtensilsCrossed, Check } from 'lucide-react';
 import { UserPreferences } from '@/types';
+import { DIET_OPTIONS, ALLERGY_OPTIONS, CUISINE_OPTIONS } from '@/lib/constants';
 import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 
 export interface AdHocCustomizations {
@@ -30,29 +31,6 @@ const MEAL_TYPE_OPTIONS = [
   { label: 'Light & Healthy', icon: Leaf },
   { label: 'One-Pot Meals', icon: ChefHat },
   { label: 'Meal Prep Friendly', icon: UtensilsCrossed },
-];
-
-const CUISINE_OPTIONS = [
-  'Italian', 'Mexican', 'Asian', 'Mediterranean', 'Indian',
-  'American', 'Japanese', 'Thai', 'Middle Eastern', 'French',
-];
-
-const DIET_OPTIONS = [
-  { value: 'omnivore', label: 'Omnivore' },
-  { value: 'vegetarian', label: 'Vegetarian' },
-  { value: 'vegan', label: 'Vegan' },
-  { value: 'pescatarian', label: 'Pescatarian' },
-  { value: 'keto', label: 'Keto' },
-  { value: 'paleo', label: 'Paleo' },
-  { value: 'mediterranean', label: 'Mediterranean' },
-  { value: 'low-carb', label: 'Low-Carb' },
-  { value: 'flexitarian', label: 'Flexitarian' },
-  { value: 'gluten-free', label: 'Gluten-Free' },
-] as const;
-
-const ALLERGY_OPTIONS = [
-  'nuts', 'peanuts', 'dairy', 'gluten', 'soy', 'shellfish',
-  'fish', 'eggs', 'sesame', 'corn', 'nightshades', 'red-meat',
 ];
 
 interface MealPlanControlsProps {
@@ -289,17 +267,17 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading, onboard
 
                       {currentQuestion === 'allergies' && (
                         <div className="flex flex-wrap gap-1.5 mb-3">
-                          {ALLERGY_OPTIONS.map(allergy => (
+                          {ALLERGY_OPTIONS.map(option => (
                             <button
-                              key={allergy}
-                              onClick={() => toggleAllergy(allergy)}
+                              key={option.value}
+                              onClick={() => toggleAllergy(option.value)}
                               className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border capitalize ${
-                                localPrefs.allergies.includes(allergy)
+                                localPrefs.allergies.includes(option.value)
                                   ? 'bg-accent text-white border-accent'
                                   : 'bg-white text-foreground border-border hover:border-accent/50'
                               }`}
                             >
-                              {allergy}
+                              {option.label}
                             </button>
                           ))}
                         </div>
