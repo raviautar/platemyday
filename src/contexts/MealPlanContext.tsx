@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import React, { createContext, useContext, useCallback, useState, useEffect, useRef } from 'react';
 import { WeekPlan, MealSlot, SuggestedRecipe } from '@/types';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
+import { useRecipes } from '@/contexts/RecipeContext';
 import {
   getActiveMealPlan,
   getMealPlans,
@@ -10,6 +11,11 @@ import {
   restoreMealPlanDb,
   deleteMealPlanDb,
 } from '@/lib/supabase/db';
+
+export interface ConsolidatedCategory {
+  name: string;
+  items: string[];
+}
 
 interface MealPlanContextType {
   weekPlan: WeekPlan | null;
@@ -25,16 +31,44 @@ interface MealPlanContextType {
   deleteMealPlan: (planId: string) => Promise<void>;
   historyLoading: boolean;
   loading: boolean;
+  shoppingList: ConsolidatedCategory[] | null;
+  shoppingListLoading: boolean;
 }
 
 const MealPlanContext = createContext<MealPlanContextType | null>(null);
 
+function collectIngredients(
+  weekPlan: WeekPlan,
+  recipesMap: Map<string, string[]>,
+  suggestedRecipes?: Record<string, SuggestedRecipe>,
+): string[] {
+  const allIngredients: string[] = [];
+
+  for (const day of weekPlan.days) {
+    for (const meal of day.meals) {
+      if (meal.recipeId) {
+        const ingredients = recipesMap.get(meal.recipeId);
+        if (ingredients) allIngredients.push(...ingredients);
+      } else if (meal.recipeTitleFallback) {
+        const suggested = suggestedRecipes?.[meal.recipeTitleFallback];
+        if (suggested) allIngredients.push(...suggested.ingredients);
+      }
+    }
+  }
+
+  return allIngredients.filter(i => i.trim());
+}
+
 export function MealPlanProvider({ children }: { children: React.ReactNode }) {
   const { userId, anonymousId, isLoaded } = useUserIdentity();
+  const { recipes } = useRecipes();
   const [weekPlan, setWeekPlanState] = useState<WeekPlan | null>(null);
   const [mealPlanHistory, setMealPlanHistory] = useState<WeekPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [shoppingList, setShoppingList] = useState<ConsolidatedCategory[] | null>(null);
+  const [shoppingListLoading, setShoppingListLoading] = useState(false);
+  const consolidationAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
     if (!isLoaded || !anonymousId) return;
@@ -53,6 +87,61 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
 
     return () => { cancelled = true; };
   }, [userId, anonymousId, isLoaded]);
+
+  // Auto-consolidate shopping list whenever weekPlan changes
+  useEffect(() => {
+    if (!weekPlan) {
+      setShoppingList(null);
+      return;
+    }
+
+    const recipesMap = new Map(recipes.map(r => [r.id, r.ingredients]));
+    const ingredients = collectIngredients(weekPlan, recipesMap, weekPlan.suggestedRecipes);
+
+    if (ingredients.length === 0) {
+      setShoppingList(null);
+      return;
+    }
+
+    consolidationAbortRef.current?.abort();
+    const abortController = new AbortController();
+    consolidationAbortRef.current = abortController;
+
+    const timer = setTimeout(async () => {
+      setShoppingListLoading(true);
+      try {
+        const response = await fetch('/api/consolidate-shopping-list', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ingredients,
+            userId,
+            anonymousId,
+          }),
+          signal: abortController.signal,
+        });
+
+        if (!response.ok) throw new Error('Failed to consolidate');
+
+        const data = await response.json();
+        if (!abortController.signal.aborted) {
+          setShoppingList(data.categories);
+        }
+      } catch (error) {
+        if (error instanceof DOMException && error.name === 'AbortError') return;
+        console.error('Shopping list consolidation error:', error);
+      } finally {
+        if (!abortController.signal.aborted) {
+          setShoppingListLoading(false);
+        }
+      }
+    }, 500);
+
+    return () => {
+      clearTimeout(timer);
+      abortController.abort();
+    };
+  }, [weekPlan, recipes, userId, anonymousId]);
 
   const setWeekPlan = useCallback(async (plan: WeekPlan, suggestedRecipes?: Record<string, SuggestedRecipe>) => {
     setWeekPlanState(plan);
@@ -169,6 +258,8 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       deleteMealPlan,
       historyLoading,
       loading,
+      shoppingList,
+      shoppingListLoading,
     }}>
       {children}
     </MealPlanContext.Provider>

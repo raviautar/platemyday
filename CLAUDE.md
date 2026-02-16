@@ -36,7 +36,7 @@ src/
 │       ├── generate-recipe/        # Single recipe generation (Gemini 3 Flash)
 │       ├── generate-meal-plan/     # Full meal plan generation (Gemini 3 Flash, streaming)
 │       ├── regenerate-meal/        # Single meal replacement (Gemini 2.5 Flash Lite)
-│       └── consolidate-shopping-list/ # Shopping list consolidation (Gemini 2.5 Flash Lite)
+│       └── consolidate-shopping-list/ # Shopping list consolidation (Gemini 2.5 Flash, auto-triggered on plan changes)
 ├── components/
 │   ├── layout/                     # AppShell, Sidebar, BottomNav, TopBanner
 │   ├── recipes/                    # RecipeForm, RecipeList, RecipeCard, RecipeDetail, AIRecipeGenerator

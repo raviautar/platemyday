@@ -31,6 +31,7 @@ export const EVENTS = {
   // ── Metric 4: Feature Depth ───────────────────────────────────────
   SHOPPING_LIST_VIEWED: 'shopping_list_viewed',
   SHOPPING_LIST_CONSOLIDATED: 'shopping_list_consolidated',
+  SHOPPING_LIST_AUTO_CONSOLIDATED: 'shopping_list_auto_consolidated',
   SHOPPING_LIST_COPIED: 'shopping_list_copied',
   NUTRITION_SUMMARY_VIEWED: 'nutrition_summary_viewed',
   MEAL_PLAN_HISTORY_VIEWED: 'meal_plan_history_viewed',

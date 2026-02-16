@@ -17,7 +17,7 @@ import { History, ShoppingCart, AlertTriangle, RefreshCw, Trash2 } from 'lucide-
 
 export default function MealPlanPage() {
   const { recipes } = useRecipes();
-  const { weekPlan, moveMeal, removeMeal, replaceMeal } = useMealPlan();
+  const { weekPlan, moveMeal, removeMeal, replaceMeal, shoppingList, shoppingListLoading } = useMealPlan();
   const { settings } = useSettings();
   const {
     loading,
@@ -69,13 +69,12 @@ export default function MealPlanPage() {
             type="button"
             aria-label="Shopping list"
             title="Shopping List"
-            onClick={() => weekPlan && setShoppingListOpen(true)}
-            disabled={!weekPlan}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-sm shrink-0 transition-all ${
-              weekPlan
+            onClick={() => (weekPlan || shoppingListLoading) && setShoppingListOpen(true)}
+            disabled={!weekPlan && !shoppingListLoading}
+            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-sm shrink-0 transition-all ${weekPlan
                 ? 'bg-gradient-to-r from-primary to-emerald-600 text-white hover:from-primary-dark hover:to-emerald-700 shadow-md hover:shadow-lg'
                 : 'bg-surface border border-border text-muted cursor-not-allowed opacity-60'
-            }`}
+              }`}
           >
             <ShoppingCart className="w-5 h-5" strokeWidth={2} />
             <span className="text-sm font-semibold hidden sm:inline">Shopping List</span>
@@ -174,6 +173,8 @@ export default function MealPlanPage() {
             weekPlan={weekPlan}
             recipes={recipes}
             suggestedRecipes={suggestedRecipes}
+            shoppingList={shoppingList}
+            shoppingListLoading={shoppingListLoading}
           />
         </>
       )}

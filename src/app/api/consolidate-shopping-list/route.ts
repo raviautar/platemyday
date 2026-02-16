@@ -36,7 +36,7 @@ Rules:
 5. Sort items alphabetically within each category`;
 
     const result = await generateText({
-      model: google('gemini-2.5-flash-lite'),
+      model: google('gemini-2.5-flash'),
       output: Output.object({ schema: consolidatedShoppingListSchema }),
       system: 'You are a helpful kitchen assistant that organizes shopping lists efficiently.',
       prompt,
