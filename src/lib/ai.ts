@@ -44,9 +44,10 @@ export const mealPlanWithDetailsSchema = z.object({
 
 export const consolidatedShoppingListSchema = z.object({
   categories: z.array(z.object({
-    name: z.string().describe('Category name (e.g., Produce, Dairy, Proteins, Pantry, Grains, Spices & Seasonings, Other)'),
-    items: z.array(z.string()).describe('Consolidated ingredient items with quantities combined'),
-  })).describe('Shopping list items organized by grocery store section'),
+    name: z.string().describe('Category name (e.g., Produce, Dairy & Eggs, Proteins, Grains & Bread, Spices & Seasonings, Oils & Condiments, Other)'),
+    items: z.array(z.string()).describe('Consolidated ingredient items with practical buying quantities'),
+  })).describe('Items to buy, organized by grocery store section. Do NOT include common pantry staples here.'),
+  pantryItems: z.array(z.string()).describe('Common staples the cook likely already has at home (e.g. salt, pepper, olive oil, rice, flour, sugar, soy sauce, butter). List with approximate total quantities needed.'),
 });
 
 export type AIRecipeOutput = z.infer<typeof recipeSchema>;

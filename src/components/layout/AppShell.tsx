@@ -45,8 +45,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <SettingsProvider>
       <RecipeProvider>
-        <MealPlanProvider>
-          <ToastProvider>
+        <ToastProvider>
+          <MealPlanProvider>
             <AnonymousMigration />
             <div className="min-h-screen bg-background">
               {!isHomePage && <TopBanner />}
@@ -62,8 +62,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 )}
               </main>
             </div>
-          </ToastProvider>
-        </MealPlanProvider>
+          </MealPlanProvider>
+        </ToastProvider>
       </RecipeProvider>
     </SettingsProvider>
   );

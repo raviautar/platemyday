@@ -23,22 +23,26 @@ export async function POST(req: Request) {
 
     const ingredientList = ingredients.map((ing, i) => `${i + 1}. ${ing}`).join('\n');
 
-    const prompt = `Consolidate this shopping list by combining duplicate ingredients, normalizing quantities, and organizing by grocery store section.
+    const prompt = `Consolidate this shopping list into a practical grocery run. Combine duplicate ingredients and convert to real-world buying quantities.
 
 Raw ingredient list:
 ${ingredientList}
 
 Rules:
-1. Combine duplicates (e.g., "2 cups flour" + "1 cup flour" = "3 cups flour")
-2. Keep ingredient descriptions clear and concise
-3. Organize into categories: Produce, Proteins, Dairy & Eggs, Pantry & Grains, Spices & Seasonings, Oils & Condiments, Other
-4. Only include categories that have items
-5. Sort items alphabetically within each category`;
+1. Combine duplicates and sum quantities (e.g., "2 cups flour" + "1 cup flour" = "Flour: 375g")
+2. Convert recipe-speak into practical buying quantities a shopper can act on:
+   - BAD: "grated ginger", "minced garlic", "diced onion"
+   - GOOD: "Ginger: ~50g (small piece)", "Garlic: 1 head", "Onions: 3 medium"
+3. Use metric weights/volumes where practical. Round to sensible buying amounts.
+4. Organize into store sections: Produce, Proteins, Dairy & Eggs, Grains & Bread, Spices & Seasonings, Oils & Condiments, Other
+5. Only include categories that have items
+6. Sort items alphabetically within each category
+7. Separate common pantry staples the cook likely already has at home (salt, pepper, cooking oil, rice, flour, sugar, butter, soy sauce, vinegar, etc.) into the pantryItems list. Still include their approximate quantities needed.`;
 
     const result = await generateText({
       model: google('gemini-2.5-flash'),
       output: Output.object({ schema: consolidatedShoppingListSchema }),
-      system: 'You are a helpful kitchen assistant that organizes shopping lists efficiently.',
+      system: 'You are a practical kitchen assistant that creates grocery shopping lists optimized for a real store trip. Always express items as buyable quantities, never as recipe preparation terms.',
       prompt,
     });
 

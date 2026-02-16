@@ -17,6 +17,7 @@ interface ShoppingListProps {
   recipes: Recipe[];
   suggestedRecipes: Record<string, SuggestedRecipe>;
   shoppingList: ConsolidatedCategory[] | null;
+  shoppingPantryItems: string[];
   shoppingListLoading: boolean;
 }
 
@@ -33,7 +34,7 @@ function getRandomLoadingMessage() {
   return LOADING_MESSAGES[Math.floor(Math.random() * LOADING_MESSAGES.length)];
 }
 
-export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedRecipes, shoppingList, shoppingListLoading }: ShoppingListProps) {
+export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedRecipes, shoppingList, shoppingPantryItems, shoppingListLoading }: ShoppingListProps) {
   const [consolidatedChecked, setConsolidatedChecked] = useState<Set<string>>(new Set());
   const [loadingMessage] = useState(getRandomLoadingMessage);
   const { track } = useAnalytics();
@@ -68,6 +69,14 @@ export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedReci
         const key = `${category.name}:${item}`;
         const checked = consolidatedChecked.has(key);
         text += `  ${checked ? '[x]' : '[ ]'} ${item}\n`;
+      }
+      text += '\n';
+    }
+
+    if (shoppingPantryItems.length > 0) {
+      text += `Probably in Your Pantry\n`;
+      for (const item of shoppingPantryItems) {
+        text += `  - ${item}\n`;
       }
       text += '\n';
     }
@@ -170,6 +179,20 @@ export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedReci
                 </div>
               </div>
             ))}
+
+            {/* Pantry staples (non-checkable) */}
+            {shoppingPantryItems.length > 0 && (
+              <div className="mt-2 pt-3 border-t border-border/60">
+                <h3 className="text-sm font-semibold text-muted mb-1.5 px-1">🏠 Probably in Your Pantry</h3>
+                <div className="space-y-0.5">
+                  {shoppingPantryItems.map(item => (
+                    <div key={item} className="flex items-center gap-3 p-2.5 rounded-lg">
+                      <span className="text-sm text-muted">{item}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <div className="text-center py-8">

@@ -1,9 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useCallback, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { WeekPlan, MealSlot, SuggestedRecipe } from '@/types';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
 import { useRecipes } from '@/contexts/RecipeContext';
+import { useSettings } from '@/contexts/SettingsContext';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { useToast } from '@/components/ui/Toast';
+import { EVENTS } from '@/lib/analytics/events';
+import { DAYS_OF_WEEK } from '@/lib/constants';
 import {
   getActiveMealPlan,
   getMealPlans,
@@ -11,6 +16,18 @@ import {
   restoreMealPlanDb,
   deleteMealPlanDb,
 } from '@/lib/supabase/db';
+
+export interface PartialPlan {
+  days?: Array<{
+    dayOfWeek?: string;
+    meals?: Array<{
+      mealType?: string;
+      recipeTitle?: string;
+      recipeId?: string;
+      estimatedNutrition?: { calories?: number };
+    }>;
+  }>;
+}
 
 export interface ConsolidatedCategory {
   name: string;
@@ -32,7 +49,16 @@ interface MealPlanContextType {
   historyLoading: boolean;
   loading: boolean;
   shoppingList: ConsolidatedCategory[] | null;
+  shoppingPantryItems: string[];
   shoppingListLoading: boolean;
+  // Generation state
+  generating: boolean;
+  generationError: string | null;
+  partialPlan: PartialPlan | null;
+  isStreaming: boolean;
+  startGeneration: (preferences: string, systemPrompt?: string) => void;
+  retryGeneration: () => void;
+  clearGenerationError: () => void;
 }
 
 const MealPlanContext = createContext<MealPlanContextType | null>(null);
@@ -62,13 +88,26 @@ function collectIngredients(
 export function MealPlanProvider({ children }: { children: React.ReactNode }) {
   const { userId, anonymousId, isLoaded } = useUserIdentity();
   const { recipes } = useRecipes();
+  const { settings } = useSettings();
+  const { track } = useAnalytics();
+  const { showToast } = useToast();
+
   const [weekPlan, setWeekPlanState] = useState<WeekPlan | null>(null);
   const [mealPlanHistory, setMealPlanHistory] = useState<WeekPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [shoppingList, setShoppingList] = useState<ConsolidatedCategory[] | null>(null);
+  const [shoppingPantryItems, setShoppingPantryItems] = useState<string[]>([]);
   const [shoppingListLoading, setShoppingListLoading] = useState(false);
   const consolidationAbortRef = useRef<AbortController | null>(null);
+
+  // Generation state
+  const [generating, setGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [partialPlan, setPartialPlan] = useState<PartialPlan | null>(null);
+  const lastPreferencesRef = useRef('');
+
+  const isStreaming = generating && !!partialPlan && !!partialPlan.days && partialPlan.days.length > 0;
 
   useEffect(() => {
     if (!isLoaded || !anonymousId) return;
@@ -92,6 +131,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!weekPlan) {
       setShoppingList(null);
+      setShoppingPantryItems([]);
       return;
     }
 
@@ -126,6 +166,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
         const data = await response.json();
         if (!abortController.signal.aborted) {
           setShoppingList(data.categories);
+          setShoppingPantryItems(data.pantryItems || []);
         }
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return;
@@ -243,24 +284,235 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     }
   }, [weekPlan?.id]);
 
+  // --- Generation logic ---
+
+  const getWeekStartDate = useCallback((weekStartDay: string) => {
+    const today = new Date();
+    const dayMap: { [key: string]: number } = {
+      'Sunday': 0, 'Monday': 1, 'Tuesday': 2, 'Wednesday': 3,
+      'Thursday': 4, 'Friday': 5, 'Saturday': 6
+    };
+
+    const targetDay = dayMap[weekStartDay];
+    const currentDay = today.getDay();
+
+    let daysToSubtract = currentDay - targetDay;
+    if (daysToSubtract < 0) {
+      daysToSubtract += 7;
+    }
+
+    const weekStart = new Date(today);
+    weekStart.setDate(today.getDate() - daysToSubtract);
+
+    return weekStart;
+  }, []);
+
+  const buildWeekPlan = useCallback((data: any): WeekPlan => {
+    const weekStart = getWeekStartDate(settings.weekStartDay);
+
+    const suggestedRecipesMap: Record<string, SuggestedRecipe> = {};
+    if (data.newRecipes) {
+      data.newRecipes.forEach((recipe: any) => {
+        suggestedRecipesMap[recipe.title] = {
+          title: recipe.title,
+          description: recipe.description,
+          ingredients: recipe.ingredients || [],
+          instructions: recipe.instructions || [],
+          servings: recipe.servings,
+          prepTimeMinutes: recipe.prepTimeMinutes,
+          cookTimeMinutes: recipe.cookTimeMinutes,
+          tags: recipe.tags || [],
+          estimatedNutrition: recipe.estimatedNutrition,
+        };
+      });
+    }
+
+    const days = data.days.map((day: any, index: number) => {
+      const date = new Date(weekStart);
+      date.setDate(weekStart.getDate() + index);
+
+      return {
+        date: date.toISOString().split('T')[0],
+        dayOfWeek: day.dayOfWeek || DAYS_OF_WEEK[index],
+        meals: (day.meals || []).map((meal: any) => ({
+          id: crypto.randomUUID(),
+          recipeId: meal.recipeId || '',
+          mealType: meal.mealType,
+          recipeTitleFallback: meal.recipeId ? undefined : meal.recipeTitle,
+          estimatedNutrition: meal.estimatedNutrition,
+        })),
+      };
+    });
+
+    return {
+      id: crypto.randomUUID(),
+      weekStartDate: weekStart.toISOString().split('T')[0],
+      createdAt: new Date().toISOString(),
+      days,
+      suggestedRecipes: Object.keys(suggestedRecipesMap).length > 0 ? suggestedRecipesMap : undefined,
+    };
+  }, [getWeekStartDate, settings.weekStartDay]);
+
+  const startGeneration = useCallback((preferences: string, systemPrompt?: string) => {
+    setGenerating(true);
+    setGenerationError(null);
+    setPartialPlan(null);
+    lastPreferencesRef.current = preferences;
+    const isFirstPlan = !weekPlan;
+    const generationStartTime = Date.now();
+
+    track(EVENTS.MEAL_PLAN_GENERATION_STARTED, {
+      has_existing_plan: !!weekPlan,
+      has_preferences: !!preferences,
+      recipe_library_size: recipes.length,
+    });
+
+    (async () => {
+      try {
+        const response = await fetch('/api/generate-meal-plan', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipes: recipes.map(r => ({ id: r.id, title: r.title, tags: r.tags })),
+            systemPrompt: systemPrompt || settings.mealPlanSystemPrompt,
+            preferences,
+            weekStartDay: settings.weekStartDay,
+            userId,
+            anonymousId,
+          }),
+        });
+
+        if (!response.ok) {
+          const data = await response.json();
+          throw new Error(data.error || 'Failed to generate meal plan');
+        }
+
+        const reader = response.body!.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let finalData: any = null;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            if (trimmed.startsWith('ERROR:')) {
+              const errorData = JSON.parse(trimmed.slice(6));
+              throw new Error(errorData.error || 'Generation failed');
+            }
+
+            if (trimmed.startsWith('DONE:')) {
+              finalData = JSON.parse(trimmed.slice(5));
+            } else {
+              try {
+                const partial = JSON.parse(trimmed);
+                setPartialPlan(partial);
+              } catch {
+                // Ignore malformed partial lines
+              }
+            }
+          }
+        }
+
+        const remaining = buffer.trim();
+        if (remaining) {
+          if (remaining.startsWith('ERROR:')) {
+            const errorData = JSON.parse(remaining.slice(6));
+            throw new Error(errorData.error || 'Generation failed');
+          }
+          if (remaining.startsWith('DONE:')) {
+            finalData = JSON.parse(remaining.slice(5));
+          }
+        }
+
+        if (!finalData) {
+          throw new Error('Failed to generate meal plan. The AI returned an incomplete response.');
+        }
+
+        const newWeekPlan = buildWeekPlan(finalData);
+        const newSuggested = newWeekPlan.suggestedRecipes;
+        await setWeekPlan(newWeekPlan, newSuggested);
+
+        const newRecipeCount = finalData.newRecipes?.length || 0;
+        const generationTime = Date.now() - generationStartTime;
+
+        track(EVENTS.MEAL_PLAN_GENERATION_COMPLETED, {
+          new_recipe_count: newRecipeCount,
+          generation_time_ms: generationTime,
+          total_meals: finalData.days?.reduce((sum: number, d: { meals?: unknown[] }) => sum + (d.meals?.length || 0), 0) || 0,
+        });
+
+        if (isFirstPlan) {
+          track(EVENTS.FIRST_MEAL_PLAN_GENERATED);
+        }
+
+        if (newRecipeCount > 0) {
+          showToast(`Meal plan generated with ${newRecipeCount} new recipe${newRecipeCount > 1 ? 's' : ''}!`);
+        } else {
+          showToast('Meal plan generated!');
+        }
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Failed to generate meal plan';
+        track(EVENTS.MEAL_PLAN_GENERATION_FAILED, { error_message: message });
+        setGenerationError(message);
+      } finally {
+        setGenerating(false);
+        setPartialPlan(null);
+      }
+    })();
+  }, [weekPlan, recipes, settings, userId, anonymousId, track, showToast, buildWeekPlan, setWeekPlan]);
+
+  const retryGeneration = useCallback(() => {
+    setGenerationError(null);
+    startGeneration(lastPreferencesRef.current);
+  }, [startGeneration]);
+
+  const clearGenerationError = useCallback(() => {
+    setGenerationError(null);
+  }, []);
+
+  const value = useMemo(() => ({
+    weekPlan,
+    setWeekPlan,
+    moveMeal,
+    removeMeal,
+    addMealToDay,
+    clearWeekPlan,
+    replaceMeal,
+    mealPlanHistory,
+    loadHistory,
+    restoreMealPlan,
+    deleteMealPlan,
+    historyLoading,
+    loading,
+    shoppingList,
+    shoppingPantryItems,
+    shoppingListLoading,
+    generating,
+    generationError,
+    partialPlan,
+    isStreaming,
+    startGeneration,
+    retryGeneration,
+    clearGenerationError,
+  }), [
+    weekPlan, setWeekPlan, moveMeal, removeMeal, addMealToDay, clearWeekPlan,
+    replaceMeal, mealPlanHistory, loadHistory, restoreMealPlan, deleteMealPlan,
+    historyLoading, loading, shoppingList, shoppingPantryItems, shoppingListLoading,
+    generating, generationError, partialPlan, isStreaming,
+    startGeneration, retryGeneration, clearGenerationError,
+  ]);
+
   return (
-    <MealPlanContext.Provider value={{
-      weekPlan,
-      setWeekPlan,
-      moveMeal,
-      removeMeal,
-      addMealToDay,
-      clearWeekPlan,
-      replaceMeal,
-      mealPlanHistory,
-      loadHistory,
-      restoreMealPlan,
-      deleteMealPlan,
-      historyLoading,
-      loading,
-      shoppingList,
-      shoppingListLoading,
-    }}>
+    <MealPlanContext.Provider value={value}>
       {children}
     </MealPlanContext.Provider>
   );
