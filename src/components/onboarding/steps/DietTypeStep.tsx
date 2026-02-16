@@ -1,28 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { FaSeedling, FaLeaf, FaDrumstickBite, FaFish, FaAppleAlt } from 'react-icons/fa';
-import { GiMeat, GiOlive, GiFruitBowl, GiBread } from 'react-icons/gi';
-import { MdOutlineNoFood } from 'react-icons/md';
 import { UserPreferences } from '@/types';
 import { DIET_OPTIONS } from '@/lib/constants';
+import { DIET_ICON_MAP } from '@/lib/diet-icons';
 
 type DietaryType = UserPreferences['dietaryType'];
-
-const DIET_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  omnivore: FaDrumstickBite,
-  vegetarian: FaSeedling,
-  vegan: FaLeaf,
-  pescatarian: FaFish,
-  keto: GiMeat,
-  paleo: FaFish,
-  primal: GiMeat,
-  mediterranean: GiOlive,
-  'low-carb': FaAppleAlt,
-  flexitarian: GiFruitBowl,
-  whole30: MdOutlineNoFood,
-  'gluten-free': GiBread,
-};
 
 interface DietTypeStepProps {
   value: DietaryType;

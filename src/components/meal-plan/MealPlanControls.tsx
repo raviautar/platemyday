@@ -286,7 +286,7 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
                 );
               })}
               {customizations.cuisines
-                .filter(c => !CUISINE_OPTIONS.includes(c))
+                .filter(c => !(CUISINE_OPTIONS as readonly string[]).includes(c))
                 .map(cuisine => (
                   <span
                     key={cuisine}

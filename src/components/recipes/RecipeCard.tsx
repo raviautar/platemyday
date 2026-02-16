@@ -1,26 +1,11 @@
 'use client';
 
 import { Recipe } from '@/types';
+import { getTagDotColor } from '@/lib/tag-colors';
 
 interface RecipeCardProps {
   recipe: Recipe;
   onClick: () => void;
-}
-
-const tagColors = [
-  'bg-blue-500',
-  'bg-green-500',
-  'bg-purple-500',
-  'bg-orange-500',
-  'bg-pink-500',
-  'bg-yellow-500',
-  'bg-red-500',
-  'bg-indigo-500',
-];
-
-function getTagColor(tag: string): string {
-  const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return tagColors[hash % tagColors.length];
 }
 
 export function RecipeCard({ recipe, onClick }: RecipeCardProps) {
@@ -42,7 +27,7 @@ export function RecipeCard({ recipe, onClick }: RecipeCardProps) {
           {recipe.tags.map(tag => (
             <span
               key={tag}
-              className={`w-2 h-2 rounded-full ${getTagColor(tag)}`}
+              className={`w-2 h-2 rounded-full ${getTagDotColor(tag)}`}
               title={tag}
               aria-label={tag}
             />

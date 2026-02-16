@@ -87,6 +87,13 @@ export const DAYS_OF_WEEK = [
 
 export const MEAL_TYPES = ['breakfast', 'lunch', 'dinner', 'snack'] as const;
 
+export const MEAL_TYPE_COLORS: Record<string, string> = {
+  breakfast: 'bg-secondary/30 text-yellow-800',
+  lunch: 'bg-primary/20 text-primary-dark',
+  dinner: 'bg-accent/20 text-accent-dark',
+  snack: 'bg-surface-dark text-muted',
+};
+
 /**
  * Formats user preferences into a string for AI prompts
  */

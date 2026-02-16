@@ -1,49 +1,25 @@
 import { generateText, Output } from 'ai';
 import { google } from '@ai-sdk/google';
 import { consolidatedShoppingListSchema } from '@/lib/ai';
-import { z } from 'zod';
 import {
-  consumeRateLimit,
-  parseJsonBody,
-  rateLimitResponse,
+  consolidateShoppingListRequestSchema,
+  validateAndRateLimit,
 } from '@/lib/ai-guardrails';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
 
-const requestSchema = z.object({
-  ingredients: z.array(z.string().trim().min(1).max(500)).min(1).max(500),
-  userId: z.string().max(128).optional(),
-  anonymousId: z.string().max(128).optional(),
-});
-
 export async function POST(req: Request) {
   try {
-    const body = await parseJsonBody(req);
-    if (body === null) {
-      return Response.json({ error: 'Invalid JSON request body.' }, { status: 400 });
-    }
-
-    const parsed = requestSchema.safeParse(body);
-    if (!parsed.success) {
-      return Response.json({ error: 'Invalid request.' }, { status: 400 });
-    }
-
-    const { ingredients, userId, anonymousId } = parsed.data;
-
-    const rateLimit = consumeRateLimit({
-      request: req,
+    const validation = await validateAndRateLimit(req, consolidateShoppingListRequestSchema, {
       key: 'consolidate-shopping',
       limit: 10,
       windowMs: 10 * 60 * 1000,
-      userId,
-      anonymousId,
     });
+    if (validation instanceof Response) return validation;
 
-    if (!rateLimit.allowed) {
-      return rateLimitResponse('shopping list consolidation', rateLimit.retryAfterSeconds);
-    }
+    const { ingredients } = validation.data;
 
     const ingredientList = ingredients.map((ing, i) => `${i + 1}. ${ing}`).join('\n');
 

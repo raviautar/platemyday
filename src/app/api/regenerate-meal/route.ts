@@ -1,16 +1,12 @@
 import { generateText, Output } from 'ai';
 import { google } from '@ai-sdk/google';
 import { recipeSchema } from '@/lib/ai';
-import { getSettings } from '@/lib/supabase/db';
-import { formatPreferencesPrompt } from '@/lib/constants';
 import { trackServerEvent } from '@/lib/analytics/posthog-server';
 import { EVENTS } from '@/lib/analytics/events';
 import {
-  consumeRateLimit,
-  parseJsonBody,
-  rateLimitResponse,
   regenerateMealRequestSchema,
-  validationErrorResponse,
+  validateAndRateLimit,
+  getUserPreferencesPrompt,
 } from '@/lib/ai-guardrails';
 
 export const runtime = 'nodejs';
@@ -19,36 +15,16 @@ export const maxDuration = 30;
 
 export async function POST(req: Request) {
   try {
-    const body = await parseJsonBody(req);
-    if (body === null) {
-      return Response.json({ error: 'Invalid JSON request body.' }, { status: 400 });
-    }
-
-    const parsed = regenerateMealRequestSchema.safeParse(body);
-    if (!parsed.success) {
-      return validationErrorResponse(parsed.error);
-    }
-
-    const { mealType, dayOfWeek, currentMeals, systemPrompt, userId, anonymousId } = parsed.data;
-
-    const rateLimit = consumeRateLimit({
-      request: req,
+    const validation = await validateAndRateLimit(req, regenerateMealRequestSchema, {
       key: 'regenerate-meal',
       limit: 25,
       windowMs: 10 * 60 * 1000,
-      userId,
-      anonymousId,
     });
+    if (validation instanceof Response) return validation;
 
-    if (!rateLimit.allowed) {
-      return rateLimitResponse('meal regeneration', rateLimit.retryAfterSeconds);
-    }
+    const { mealType, dayOfWeek, currentMeals, systemPrompt, userId, anonymousId } = validation.data;
 
-    // Fetch user settings to get preferences
-    const settings = userId || anonymousId
-      ? await getSettings(userId ?? null, anonymousId ?? '')
-      : null;
-    const prefsPrompt = settings ? formatPreferencesPrompt(settings.preferences) : '';
+    const prefsPrompt = await getUserPreferencesPrompt(userId, anonymousId);
 
     const currentMealsList = (currentMeals || [])
       .map((m: { title: string; mealType: string }) => `- ${m.mealType}: ${m.title}`)

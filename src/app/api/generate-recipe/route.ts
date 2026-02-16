@@ -1,16 +1,12 @@
 import { generateText, Output } from 'ai';
 import { google } from '@ai-sdk/google';
 import { recipeSchema } from '@/lib/ai';
-import { getSettings } from '@/lib/supabase/db';
-import { formatPreferencesPrompt } from '@/lib/constants';
 import { trackServerEvent } from '@/lib/analytics/posthog-server';
 import { EVENTS } from '@/lib/analytics/events';
 import {
-  consumeRateLimit,
   generateRecipeRequestSchema,
-  parseJsonBody,
-  rateLimitResponse,
-  validationErrorResponse,
+  validateAndRateLimit,
+  getUserPreferencesPrompt,
 } from '@/lib/ai-guardrails';
 
 export const runtime = 'nodejs';
@@ -25,36 +21,20 @@ const foodKeywords = [
 
 function isFoodRelated(prompt: string): boolean {
   const lowerPrompt = prompt.toLowerCase();
-  return foodKeywords.some(keyword => lowerPrompt.includes(keyword)) || 
+  return foodKeywords.some(keyword => lowerPrompt.includes(keyword)) ||
          lowerPrompt.length > 10;
 }
 
 export async function POST(req: Request) {
   try {
-    const body = await parseJsonBody(req);
-    if (body === null) {
-      return Response.json({ error: 'Invalid JSON request body.' }, { status: 400 });
-    }
-
-    const parsed = generateRecipeRequestSchema.safeParse(body);
-    if (!parsed.success) {
-      return validationErrorResponse(parsed.error);
-    }
-
-    const { prompt, systemPrompt, userId, anonymousId } = parsed.data;
-
-    const rateLimit = consumeRateLimit({
-      request: req,
+    const validation = await validateAndRateLimit(req, generateRecipeRequestSchema, {
       key: 'generate-recipe',
       limit: 20,
       windowMs: 10 * 60 * 1000,
-      userId,
-      anonymousId,
     });
+    if (validation instanceof Response) return validation;
 
-    if (!rateLimit.allowed) {
-      return rateLimitResponse('recipe generation', rateLimit.retryAfterSeconds);
-    }
+    const { prompt, systemPrompt, userId, anonymousId } = validation.data;
 
     if (!isFoodRelated(prompt)) {
       return Response.json(
@@ -63,12 +43,7 @@ export async function POST(req: Request) {
       );
     }
 
-    // Fetch user settings to get preferences
-    const settings = userId || anonymousId
-      ? await getSettings(userId ?? null, anonymousId ?? '')
-      : null;
-    const prefsPrompt = settings ? formatPreferencesPrompt(settings.preferences) : '';
-
+    const prefsPrompt = await getUserPreferencesPrompt(userId, anonymousId);
     const enhancedPrompt = prefsPrompt
       ? `${prompt}\n\nUser preferences: ${prefsPrompt}`
       : prompt;

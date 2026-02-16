@@ -1,16 +1,12 @@
 import { streamObject } from 'ai';
 import { google } from '@ai-sdk/google';
 import { mealPlanWithDetailsSchema } from '@/lib/ai';
-import { getSettings } from '@/lib/supabase/db';
-import { formatPreferencesPrompt } from '@/lib/constants';
 import { trackServerEvent } from '@/lib/analytics/posthog-server';
 import { EVENTS } from '@/lib/analytics/events';
 import {
-  consumeRateLimit,
   generateMealPlanRequestSchema,
-  parseJsonBody,
-  rateLimitResponse,
-  validationErrorResponse,
+  validateAndRateLimit,
+  getUserPreferencesPrompt,
 } from '@/lib/ai-guardrails';
 
 export const runtime = 'nodejs';
@@ -19,36 +15,16 @@ export const maxDuration = 60;
 
 export async function POST(req: Request) {
   try {
-    const body = await parseJsonBody(req);
-    if (body === null) {
-      return Response.json({ error: 'Invalid JSON request body.' }, { status: 400 });
-    }
-
-    const parsed = generateMealPlanRequestSchema.safeParse(body);
-    if (!parsed.success) {
-      return validationErrorResponse(parsed.error);
-    }
-
-    const { recipes, systemPrompt, preferences, weekStartDay, userId, anonymousId } = parsed.data;
-
-    const rateLimit = consumeRateLimit({
-      request: req,
+    const validation = await validateAndRateLimit(req, generateMealPlanRequestSchema, {
       key: 'generate-meal-plan',
       limit: 5,
       windowMs: 15 * 60 * 1000,
-      userId,
-      anonymousId,
     });
+    if (validation instanceof Response) return validation;
 
-    if (!rateLimit.allowed) {
-      return rateLimitResponse('meal plan generation', rateLimit.retryAfterSeconds);
-    }
+    const { recipes, systemPrompt, preferences, weekStartDay, userId, anonymousId } = validation.data;
 
-    // Fetch user settings to get structured preferences
-    const settings = userId || anonymousId
-      ? await getSettings(userId ?? null, anonymousId ?? '')
-      : null;
-    const prefsPrompt = settings ? formatPreferencesPrompt(settings.preferences) : preferences || '';
+    const prefsPrompt = await getUserPreferencesPrompt(userId, anonymousId) || preferences || '';
 
     const recipesForPrompt = recipes.slice(0, 200);
     const hasRecipes = recipesForPrompt.length > 0;

@@ -22,11 +22,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isLoaded || !anonymousId) return;
 
+    let cancelled = false;
+
     fetchSettings(userId, anonymousId)
       .then((data) => {
-        if (data) setSettings(data);
+        if (!cancelled && data) setSettings(data);
       })
       .catch((err) => console.error('Failed to load settings:', err));
+
+    return () => { cancelled = true; };
   }, [userId, anonymousId, isLoaded]);
 
   const persistSettings = useCallback((newSettings: AppSettings) => {

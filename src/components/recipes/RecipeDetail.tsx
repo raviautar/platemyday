@@ -6,6 +6,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { X, Plus, Clock, ChefHat, Users } from 'lucide-react';
 import { RecipeIngredientsAndInstructions } from '@/components/recipes/RecipeIngredientsAndInstructions';
+import { getTagBadgeColor } from '@/lib/tag-colors';
 
 interface RecipeDetailProps {
   recipe: Recipe | null;
@@ -13,22 +14,6 @@ interface RecipeDetailProps {
   onClose: () => void;
   onEdit: (recipe: Recipe) => void;
   onDelete: (id: string) => void;
-}
-
-const tagColors = [
-  'bg-blue-100 text-blue-700 hover:bg-blue-200',
-  'bg-green-100 text-green-700 hover:bg-green-200',
-  'bg-purple-100 text-purple-700 hover:bg-purple-200',
-  'bg-orange-100 text-orange-700 hover:bg-orange-200',
-  'bg-pink-100 text-pink-700 hover:bg-pink-200',
-  'bg-yellow-100 text-yellow-700 hover:bg-yellow-200',
-  'bg-red-100 text-red-700 hover:bg-red-200',
-  'bg-indigo-100 text-indigo-700 hover:bg-indigo-200',
-];
-
-function getTagColor(tag: string): string {
-  const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return tagColors[hash % tagColors.length];
 }
 
 export function RecipeDetail({ recipe, isOpen, onClose, onEdit, onDelete }: RecipeDetailProps) {
@@ -122,7 +107,7 @@ export function RecipeDetail({ recipe, isOpen, onClose, onEdit, onDelete }: Reci
               {currentTags.map(tag => (
                 <span
                   key={tag}
-                  className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full transition-colors ${getTagColor(tag)} ${
+                  className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full transition-colors ${getTagBadgeColor(tag)} ${
                     isEditingTags ? 'pr-2' : ''
                   }`}
                 >

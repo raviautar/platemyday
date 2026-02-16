@@ -5,25 +5,10 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/components/ui/Toast';
 import { UserPreferences } from '@/types';
 import { DIET_OPTIONS, ALLERGY_OPTIONS, CUISINE_OPTIONS } from '@/lib/constants';
-import { FaSeedling, FaLeaf, FaDrumstickBite, FaFish, FaAppleAlt, FaFire } from 'react-icons/fa';
-import { GiMeat, GiBread, GiWheat, GiOlive, GiFruitBowl } from 'react-icons/gi';
-import { MdOutlineNoFood } from 'react-icons/md';
+import { DIET_ICON_MAP } from '@/lib/diet-icons';
+import { FaFire } from 'react-icons/fa';
+import { GiMeat, GiBread, GiWheat } from 'react-icons/gi';
 import { Plus, X } from 'lucide-react';
-
-const DIET_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  omnivore: FaDrumstickBite,
-  vegetarian: FaSeedling,
-  vegan: FaLeaf,
-  pescatarian: FaFish,
-  keto: GiMeat,
-  paleo: FaFish,
-  primal: GiMeat,
-  mediterranean: GiOlive,
-  'low-carb': FaAppleAlt,
-  flexitarian: GiFruitBowl,
-  whole30: MdOutlineNoFood,
-  'gluten-free': GiBread,
-};
 
 export function PreferencesSection() {
   const { settings, updateSettings } = useSettings();

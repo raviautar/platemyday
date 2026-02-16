@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { DAYS_OF_WEEK, MEAL_TYPES } from '@/lib/constants';
+import { DAYS_OF_WEEK, MEAL_TYPES, formatPreferencesPrompt } from '@/lib/constants';
+import { getSettings } from '@/lib/supabase/db';
 
 const optionalActorIdSchema = z.preprocess(
   (value) => {
@@ -220,4 +221,58 @@ export async function parseJsonBody(request: Request): Promise<unknown | null> {
   } catch {
     return null;
   }
+}
+
+export const consolidateShoppingListRequestSchema = z.object({
+  ingredients: z.array(z.string().trim().min(1).max(500)).min(1).max(500),
+  userId: optionalActorIdSchema,
+  anonymousId: optionalActorIdSchema,
+});
+
+/**
+ * Combines JSON parsing, Zod validation, and rate limiting into a single call.
+ * Returns either the validated data or an error Response to return early.
+ */
+export async function validateAndRateLimit<T>(
+  req: Request,
+  schema: z.ZodSchema<T>,
+  rateLimitConfig: { key: string; limit: number; windowMs: number }
+): Promise<{ data: T } | Response> {
+  const body = await parseJsonBody(req);
+  if (body === null) {
+    return Response.json({ error: 'Invalid JSON request body.' }, { status: 400 });
+  }
+
+  const parsed = schema.safeParse(body);
+  if (!parsed.success) {
+    return validationErrorResponse(parsed.error);
+  }
+
+  const data = parsed.data as T & { userId?: string; anonymousId?: string };
+  const rateLimit = consumeRateLimit({
+    request: req,
+    key: rateLimitConfig.key,
+    limit: rateLimitConfig.limit,
+    windowMs: rateLimitConfig.windowMs,
+    userId: data.userId,
+    anonymousId: data.anonymousId,
+  });
+
+  if (!rateLimit.allowed) {
+    return rateLimitResponse(rateLimitConfig.key.replace(/-/g, ' '), rateLimit.retryAfterSeconds);
+  }
+
+  return { data: parsed.data };
+}
+
+/**
+ * Fetches user preferences and formats them as a prompt string.
+ */
+export async function getUserPreferencesPrompt(
+  userId?: string,
+  anonymousId?: string
+): Promise<string> {
+  if (!userId && !anonymousId) return '';
+  const settings = await getSettings(userId ?? null, anonymousId ?? '');
+  return settings ? formatPreferencesPrompt(settings.preferences) : '';
 }

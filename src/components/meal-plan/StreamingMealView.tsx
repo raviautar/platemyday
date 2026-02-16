@@ -1,6 +1,7 @@
 'use client';
 
 import { MealType } from '@/types';
+import { MEAL_TYPE_COLORS } from '@/lib/constants';
 import { Loader2 } from 'lucide-react';
 
 interface PartialMeal {
@@ -23,13 +24,6 @@ interface StreamingMealViewProps {
   partialPlan: PartialPlan;
   totalDays?: number;
 }
-
-const mealTypeColors: Record<string, string> = {
-  breakfast: 'bg-secondary/30 text-yellow-800',
-  lunch: 'bg-primary/20 text-primary-dark',
-  dinner: 'bg-accent/20 text-accent-dark',
-  snack: 'bg-surface-dark text-muted',
-};
 
 export function StreamingMealView({ partialPlan, totalDays = 7 }: StreamingMealViewProps) {
   const streamedDays = partialPlan.days || [];
@@ -90,7 +84,7 @@ export function StreamingMealView({ partialPlan, totalDays = 7 }: StreamingMealV
 
 function StreamingMealCard({ meal }: { meal: PartialMeal }) {
   const mealType = meal.mealType as MealType | undefined;
-  const colorClass = mealType ? mealTypeColors[mealType] || mealTypeColors.snack : 'bg-border/30 text-muted';
+  const colorClass = mealType ? MEAL_TYPE_COLORS[mealType] || MEAL_TYPE_COLORS.snack : 'bg-border/30 text-muted';
 
   return (
     <div className="bg-white rounded-lg p-2.5 border border-border/50 shadow-sm">

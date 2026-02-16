@@ -1,11 +1,13 @@
 'use client';
 
-import { MealSlot, SuggestedRecipe, NutritionInfo } from '@/types';
+import { MealSlot, SuggestedRecipe } from '@/types';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
+import { NutritionGrid } from '@/components/ui/NutritionGrid';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { Sparkles, Heart } from 'lucide-react';
 import { RecipeIngredientsAndInstructions } from '@/components/recipes/RecipeIngredientsAndInstructions';
+import { getTagBadgeColor } from '@/lib/tag-colors';
 
 interface MealDetailProps {
   meal: MealSlot | null;
@@ -13,22 +15,6 @@ interface MealDetailProps {
   onClose: () => void;
   suggestedRecipe?: SuggestedRecipe;
   onAddToLibrary?: (recipe: SuggestedRecipe) => void;
-}
-
-const tagColors = [
-  'bg-blue-100 text-blue-700',
-  'bg-green-100 text-green-700',
-  'bg-purple-100 text-purple-700',
-  'bg-orange-100 text-orange-700',
-  'bg-pink-100 text-pink-700',
-  'bg-yellow-100 text-yellow-700',
-  'bg-red-100 text-red-700',
-  'bg-indigo-100 text-indigo-700',
-];
-
-function getTagColor(tag: string): string {
-  const hash = tag.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  return tagColors[hash % tagColors.length];
 }
 
 export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibrary }: MealDetailProps) {
@@ -66,27 +52,7 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
           )}
 
           {suggestedRecipe.estimatedNutrition && (
-            <div className="bg-surface rounded-lg p-3">
-              <h4 className="font-semibold text-sm mb-2">Estimated Nutrition (per serving)</h4>
-              <div className="grid grid-cols-4 gap-2 text-center">
-                <div>
-                  <p className="text-lg font-bold text-foreground">{suggestedRecipe.estimatedNutrition.calories}</p>
-                  <p className="text-[10px] text-muted">cal</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-blue-600">{suggestedRecipe.estimatedNutrition.protein}g</p>
-                  <p className="text-[10px] text-muted">protein</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-amber-600">{suggestedRecipe.estimatedNutrition.carbs}g</p>
-                  <p className="text-[10px] text-muted">carbs</p>
-                </div>
-                <div>
-                  <p className="text-lg font-bold text-pink-600">{suggestedRecipe.estimatedNutrition.fat}g</p>
-                  <p className="text-[10px] text-muted">fat</p>
-                </div>
-              </div>
-            </div>
+            <NutritionGrid nutrition={suggestedRecipe.estimatedNutrition} />
           )}
 
           {suggestedRecipe.tags.length > 0 && (
@@ -94,7 +60,7 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
               <h4 className="font-semibold text-sm mb-2">Tags</h4>
               <div className="flex flex-wrap gap-1">
                 {suggestedRecipe.tags.map(tag => (
-                  <span key={tag} className={`text-xs px-2 py-1 rounded-full ${getTagColor(tag)}`}>
+                  <span key={tag} className={`text-xs px-2 py-1 rounded-full ${getTagBadgeColor(tag)}`}>
                     {tag}
                   </span>
                 ))}
@@ -187,27 +153,7 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
         </div>
 
         {meal.estimatedNutrition && (
-          <div className="bg-surface rounded-lg p-3">
-            <h4 className="font-semibold text-sm mb-2">Estimated Nutrition (per serving)</h4>
-            <div className="grid grid-cols-4 gap-2 text-center">
-              <div>
-                <p className="text-lg font-bold text-foreground">{meal.estimatedNutrition.calories}</p>
-                <p className="text-[10px] text-muted">cal</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold text-blue-600">{meal.estimatedNutrition.protein}g</p>
-                <p className="text-[10px] text-muted">protein</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold text-amber-600">{meal.estimatedNutrition.carbs}g</p>
-                <p className="text-[10px] text-muted">carbs</p>
-              </div>
-              <div>
-                <p className="text-lg font-bold text-pink-600">{meal.estimatedNutrition.fat}g</p>
-                <p className="text-[10px] text-muted">fat</p>
-              </div>
-            </div>
-          </div>
+          <NutritionGrid nutrition={meal.estimatedNutrition} />
         )}
 
         {recipe.tags.length > 0 && (
@@ -215,7 +161,7 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
             <h4 className="font-semibold text-sm mb-2">Tags</h4>
             <div className="flex flex-wrap gap-1">
               {recipe.tags.map(tag => (
-                <span key={tag} className={`text-xs px-2 py-1 rounded-full ${getTagColor(tag)}`}>
+                <span key={tag} className={`text-xs px-2 py-1 rounded-full ${getTagBadgeColor(tag)}`}>
                   {tag}
                 </span>
               ))}

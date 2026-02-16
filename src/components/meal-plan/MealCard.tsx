@@ -7,6 +7,7 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
+import { MEAL_TYPE_COLORS } from '@/lib/constants';
 import { Sparkles, Heart, Flame } from 'lucide-react';
 import { MealDetail } from './MealDetail';
 import { MealOptionsMenu } from './MealOptionsMenu';
@@ -24,13 +25,6 @@ interface MealCardProps {
   suggestedRecipe?: SuggestedRecipe;
   onAddToLibrary?: (recipe: SuggestedRecipe) => void;
 }
-
-const mealTypeColors: Record<MealType, string> = {
-  breakfast: 'bg-secondary/30 text-yellow-800',
-  lunch: 'bg-primary/20 text-primary-dark',
-  dinner: 'bg-accent/20 text-accent-dark',
-  snack: 'bg-surface-dark text-muted',
-};
 
 const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, onReplaceMeal, suggestedRecipe, onAddToLibrary }: MealCardProps) => {
   const { getRecipe } = useRecipes();
@@ -149,7 +143,7 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
         <div className="flex items-start justify-between gap-1">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1 mb-1 flex-wrap">
-              <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full ${mealTypeColors[meal.mealType]}`}>
+              <span className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded-full ${MEAL_TYPE_COLORS[meal.mealType]}`}>
                 {meal.mealType}
               </span>
               {isUnmatched && (

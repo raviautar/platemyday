@@ -34,23 +34,28 @@ src/
 │   ├── upgrade/page.tsx            # Premium features
 │   └── api/
 │       ├── generate-recipe/        # Single recipe generation (Gemini 3 Flash)
-│       ├── generate-meal-plan/     # Full meal plan generation (Gemini 3 Flash)
-│       └── regenerate-meal/        # Single meal replacement (Gemini 2.5 Flash Lite)
+│       ├── generate-meal-plan/     # Full meal plan generation (Gemini 3 Flash, streaming)
+│       ├── regenerate-meal/        # Single meal replacement (Gemini 2.5 Flash Lite)
+│       └── consolidate-shopping-list/ # Shopping list consolidation (Gemini 2.5 Flash Lite)
 ├── components/
 │   ├── layout/                     # AppShell, Sidebar, BottomNav, TopBanner
 │   ├── recipes/                    # RecipeForm, RecipeList, RecipeCard, RecipeDetail, AIRecipeGenerator
 │   ├── meal-plan/                  # WeekView, DayColumn, MealCard, MealDetail, MealPlanHistory, etc.
-│   └── ui/                         # Modal, Button, Input, Textarea, Toast, LoadingSpinner, GeneratingAnimation
+│   └── ui/                         # Modal, Button, Input, Textarea, Toast, LoadingSpinner, GeneratingAnimation, NutritionGrid, PieChartIcon
 ├── contexts/
 │   ├── RecipeContext.tsx            # Recipes CRUD (Supabase-backed)
 │   ├── MealPlanContext.tsx          # Meal plan state + history (Supabase-backed)
 │   └── SettingsContext.tsx          # User settings (Supabase-backed)
 ├── hooks/
 │   ├── useUserIdentity.ts          # Clerk user + anonymous ID resolution
-│   └── useAnalytics.ts             # PostHog tracking hook with identity enrichment
+│   ├── useAnalytics.ts             # PostHog tracking hook with identity enrichment
+│   └── useMealPlanGeneration.ts    # Meal plan generation logic (streaming, parsing, state)
 ├── lib/
 │   ├── ai.ts                       # Zod schemas for AI output
-│   ├── constants.ts                # Default settings, day/meal constants
+│   ├── ai-guardrails.ts            # Request validation, rate limiting, API route helpers
+│   ├── constants.ts                # Default settings, day/meal constants, MEAL_TYPE_COLORS
+│   ├── tag-colors.ts               # Tag color utilities (getTagDotColor, getTagBadgeColor)
+│   ├── diet-icons.ts               # DIET_ICON_MAP for dietary type icons
 │   ├── anonymous-id.ts             # Anonymous user ID management
 │   ├── analytics/
 │   │   ├── events.ts               # All PostHog event name constants
@@ -70,7 +75,7 @@ supabase/
 
 - **Tailwind v4:** Custom colors defined via `@theme inline` in `globals.css` (not tailwind.config)
 - **Color palette:** primary=#4CAF50, secondary=#FFD54F, accent=#F48FB1, bg=#FAFFF5
-- **AI routes:** Use `generateText()` with `Output.object({ schema })` for structured output
+- **AI routes:** Use `generateText()` with `Output.object({ schema })` for structured output. All routes use `validateAndRateLimit()` from `ai-guardrails.ts` for request parsing, validation, and rate limiting
 - **Models:** Main generation uses `gemini-3-flash-preview`, single meal regen uses `gemini-2.5-flash-lite`
 - **Auth flow:** Anonymous users get a UUID stored in localStorage. On Clerk sign-in, anonymous data migrates to the authenticated user via `migrateAnonymousData()`
 - **Persistence:** All data stored in Supabase. Contexts fetch on mount using `useUserIdentity()` hook
