@@ -1,15 +1,13 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal } from '@/components/ui/Modal';
-import { useSettings } from '@/contexts/SettingsContext';
-import { Settings2, Sparkles, X, Plus, ChefHat, Leaf, Flame, Zap, UtensilsCrossed, Check } from 'lucide-react';
-import { UserPreferences } from '@/types';
-import { DIET_OPTIONS, ALLERGY_OPTIONS, CUISINE_OPTIONS } from '@/lib/constants';
-import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
+import { Settings2, Sparkles, X, Plus, ChefHat, Leaf, Flame, Zap, UtensilsCrossed, ChevronDown, ChevronRight } from 'lucide-react';
+import { CUISINE_OPTIONS } from '@/lib/constants';
+import { PreferencesSection } from '@/components/settings/PreferencesSection';
 
 export interface AdHocCustomizations {
   pantryIngredients: string[];
@@ -38,42 +36,15 @@ interface MealPlanControlsProps {
   hasExistingPlan: boolean;
   loading: boolean;
   defaultSystemPrompt: string;
-  onboardingCompleted: boolean;
+  onboardingCompleted?: boolean;
 }
 
-export function MealPlanControls({ onGenerate, hasExistingPlan, loading, onboardingCompleted }: MealPlanControlsProps) {
-  const { settings, updateSettings } = useSettings();
+export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealPlanControlsProps) {
   const [customizations, setCustomizations] = useState<AdHocCustomizations>(EMPTY_CUSTOMIZATIONS);
   const [showCustomize, setShowCustomize] = useState(false);
   const [ingredientInput, setIngredientInput] = useState('');
-  const [currentQuestion, setCurrentQuestion] = useState<'diet' | 'allergies' | null>(null);
-  const [localPrefs, setLocalPrefs] = useState<Pick<UserPreferences, 'dietaryType' | 'allergies'>>({
-    dietaryType: settings.preferences.dietaryType,
-    allergies: settings.preferences.allergies,
-  });
-  const [showOnboarding, setShowOnboarding] = useState(false);
-
-  useEffect(() => {
-    if (onboardingCompleted || settings.preferences.onboardingDismissed) {
-      setCurrentQuestion(null);
-      return;
-    }
-
-    if (!settings.preferences.dietaryType) {
-      setCurrentQuestion('diet');
-    } else if (settings.preferences.dietaryType && settings.preferences.allergies.length === 0) {
-      setCurrentQuestion('allergies');
-    } else {
-      setCurrentQuestion(null);
-    }
-  }, [onboardingCompleted, settings.preferences]);
-
-  useEffect(() => {
-    setLocalPrefs({
-      dietaryType: settings.preferences.dietaryType,
-      allergies: settings.preferences.allergies,
-    });
-  }, [settings.preferences.dietaryType, settings.preferences.allergies]);
+  const [cuisineInput, setCuisineInput] = useState('');
+  const [savedPrefsOpen, setSavedPrefsOpen] = useState(false);
 
   const hasCustomizations =
     customizations.pantryIngredients.length > 0 ||
@@ -138,48 +109,22 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading, onboard
     }));
   };
 
-  const toggleAllergy = (allergy: string) => {
-    const updated = {
-      ...localPrefs,
-      allergies: localPrefs.allergies.includes(allergy)
-        ? localPrefs.allergies.filter(a => a !== allergy)
-        : [...localPrefs.allergies, allergy],
-    };
-    setLocalPrefs(updated);
-    updateSettings({
-      preferences: {
-        ...settings.preferences,
-        ...updated,
-      },
-    });
-  };
-
-  const handleDietChange = (dietType: UserPreferences['dietaryType']) => {
-    const updated = {
-      ...localPrefs,
-      dietaryType: dietType,
-    };
-    setLocalPrefs(updated);
-    updateSettings({
-      preferences: {
-        ...settings.preferences,
-        ...updated,
-      },
-    });
-  };
-
-  const handleDismissQuestion = () => {
-    if (currentQuestion === 'diet') {
-      setCurrentQuestion('allergies');
-    } else {
-      setCurrentQuestion(null);
-      updateSettings({
-        preferences: {
-          ...settings.preferences,
-          onboardingDismissed: true,
-        },
-      });
+  const addCuisine = () => {
+    const trimmed = cuisineInput.trim();
+    if (trimmed && !customizations.cuisines.includes(trimmed)) {
+      setCustomizations(prev => ({
+        ...prev,
+        cuisines: [...prev.cuisines, trimmed],
+      }));
+      setCuisineInput('');
     }
+  };
+
+  const removeCuisine = (cuisine: string) => {
+    setCustomizations(prev => ({
+      ...prev,
+      cuisines: prev.cuisines.filter(c => c !== cuisine),
+    }));
   };
 
   return (
@@ -224,7 +169,6 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading, onboard
       {/* Customize Modal */}
       <Modal isOpen={showCustomize} onClose={() => setShowCustomize(false)}>
         <div className="space-y-6">
-          {/* Header */}
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-foreground">Customize This Week</h2>
@@ -235,102 +179,25 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading, onboard
             </button>
           </div>
 
-          {/* Progressive Dietary Preferences (one question at a time) */}
-          {!onboardingCompleted && currentQuestion && (
-            <div className="bg-gradient-to-r from-primary/5 to-emerald-50 border border-primary/20 rounded-xl overflow-hidden">
-              <div className="p-3">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-start gap-2 flex-1">
-                    <Sparkles className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                    <div className="flex-1">
-                      <h3 className="text-sm font-semibold text-foreground mb-2">
-                        {currentQuestion === 'diet' ? 'What\'s your dietary preference?' : 'Any allergies or restrictions?'}
-                      </h3>
-                      
-                      {currentQuestion === 'diet' && (
-                        <div className="flex flex-wrap gap-1.5 mb-3">
-                          {DIET_OPTIONS.map(opt => (
-                            <button
-                              key={opt.value}
-                              onClick={() => handleDietChange(localPrefs.dietaryType === opt.value ? null : opt.value)}
-                              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border ${
-                                localPrefs.dietaryType === opt.value
-                                  ? 'bg-primary text-white border-primary'
-                                  : 'bg-white text-foreground border-border hover:border-primary/50'
-                              }`}
-                            >
-                              {opt.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {currentQuestion === 'allergies' && (
-                        <div className="flex flex-wrap gap-1.5 mb-3">
-                          {ALLERGY_OPTIONS.map(option => (
-                            <button
-                              key={option.value}
-                              onClick={() => toggleAllergy(option.value)}
-                              className={`px-2.5 py-1 rounded-full text-xs font-medium transition-all border capitalize ${
-                                localPrefs.allergies.includes(option.value)
-                                  ? 'bg-accent text-white border-accent'
-                                  : 'bg-white text-foreground border-border hover:border-accent/50'
-                              }`}
-                            >
-                              {option.label}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-2 text-xs mt-3">
-                        <button
-                          onClick={() => setShowOnboarding(true)}
-                          className="text-primary hover:text-primary-dark underline font-medium"
-                        >
-                          Start full onboarding
-                        </button>
-                        <span className="text-muted">or continue answering questions</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-2 ml-2">
-                    {currentQuestion === 'allergies' && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleDismissQuestion}
-                        className="text-xs"
-                      >
-                        Skip
-                      </Button>
-                    )}
-                    <button
-                      onClick={handleDismissQuestion}
-                      className="text-muted hover:text-foreground p-1"
-                      aria-label="Dismiss"
-                    >
-                      <X className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
+          <div className="border border-border rounded-xl overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setSavedPrefsOpen(o => !o)}
+              className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-surface hover:bg-surface/80 text-left transition-colors"
+            >
+              <span className="font-semibold text-foreground">Saved preferences</span>
+              {savedPrefsOpen ? <ChevronDown className="w-4 h-4 shrink-0" /> : <ChevronRight className="w-4 h-4 shrink-0" />}
+            </button>
+            {savedPrefsOpen && (
+              <div className="border-t border-border p-4 bg-white max-h-[60vh] overflow-y-auto">
+                <PreferencesSection />
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Preferences Button - Always show if onboarding not completed */}
-          {!onboardingCompleted && !currentQuestion && (
-            <div className="flex gap-2">
-              <Button
-                variant="ghost"
-                onClick={() => setShowOnboarding(true)}
-                className="flex items-center gap-2 border border-primary/30 hover:bg-primary/10"
-              >
-                Preferences
-              </Button>
-            </div>
-          )}
-
+          <div>
+            <h3 className="text-base font-bold text-foreground tracking-tight mb-4">Options for this week&apos;s plan</h3>
+            <div className="space-y-6">
           {/* Pantry Ingredients */}
           <div>
             <label className="text-sm font-semibold text-foreground mb-2 block">
@@ -418,6 +285,41 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading, onboard
                   </button>
                 );
               })}
+              {customizations.cuisines
+                .filter(c => !CUISINE_OPTIONS.includes(c))
+                .map(cuisine => (
+                  <span
+                    key={cuisine}
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-teal-50 text-teal-700 text-sm border border-teal-200 font-medium"
+                  >
+                    {cuisine}
+                    <button
+                      type="button"
+                      onClick={() => removeCuisine(cuisine)}
+                      className="hover:text-teal-900"
+                      aria-label={`Remove ${cuisine}`}
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </span>
+                ))}
+            </div>
+            <div className="flex gap-2 min-w-0 mt-2">
+              <input
+                type="text"
+                value={cuisineInput}
+                onChange={e => setCuisineInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCuisine())}
+                placeholder="Add custom cuisine..."
+                className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-teal-300 text-sm"
+              />
+              <button
+                type="button"
+                onClick={addCuisine}
+                className="px-3 py-1.5 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 transition-colors shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
             </div>
           </div>
 
@@ -429,6 +331,8 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading, onboard
             placeholder="e.g., No red meat this week, extra protein, kid-friendly meals, birthday dinner on Friday..."
             rows={3}
           />
+            </div>
+          </div>
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">
@@ -438,6 +342,7 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading, onboard
               onClick={() => {
                 setCustomizations(EMPTY_CUSTOMIZATIONS);
                 setIngredientInput('');
+                setCuisineInput('');
               }}
             >
               Clear All
@@ -451,15 +356,6 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading, onboard
           </div>
         </div>
       </Modal>
-
-      <OnboardingWizard 
-        isOpen={showOnboarding} 
-        onClose={() => setShowOnboarding(false)}
-        onCompleted={() => {
-          setShowOnboarding(false);
-          setCurrentQuestion(null);
-        }}
-      />
     </>
   );
 }

@@ -64,9 +64,9 @@ function StatCard({
   };
 
   return (
-    <div className={`${bgClasses[bgColor]} rounded-xl p-3 text-center border border-border/40 shadow-sm hover:shadow-md transition-shadow min-w-0 overflow-hidden h-[86px] flex flex-col justify-center`}>
-      <p className={`text-lg font-bold ${colorClasses[color]} mb-1 whitespace-nowrap truncate`}>{value}</p>
-      <p className="text-[10px] font-medium text-muted uppercase tracking-wide whitespace-nowrap truncate">{label}</p>
+    <div className={`${bgClasses[bgColor]} rounded-xl p-2 sm:p-3 text-center border border-border/40 shadow-sm hover:shadow-md transition-shadow min-w-0 overflow-visible flex flex-col justify-center`}>
+      <p className={`text-sm sm:text-base font-bold ${colorClasses[color]} mb-0.5 break-words`}>{value}</p>
+      <p className="text-[9px] sm:text-[10px] font-medium text-muted uppercase tracking-wide break-words">{label}</p>
     </div>
   );
 }
@@ -116,17 +116,17 @@ export function NutritionSummary({ weekPlan, isOpen, onClose }: NutritionSummary
     <Modal isOpen={isOpen} onClose={onClose} title="Weekly Nutrition">
       <div className="space-y-6">
         {weeklyTotals.dailyAvg && (
-          <div className="flex items-center gap-4 pb-6 border-b border-border/40">
+          <div className="flex items-center gap-3 sm:gap-4 pb-6 border-b border-border/40 min-w-0">
             <PieChart
               protein={weeklyTotals.dailyAvg.protein}
               carbs={weeklyTotals.dailyAvg.carbs}
               fat={weeklyTotals.dailyAvg.fat}
             />
-            <div className="flex-1">
-              <p className="text-xs font-medium text-muted uppercase tracking-wider mb-1">Daily Average</p>
-              <p className="text-2xl font-bold text-foreground">
+            <div className="flex-1 min-w-0">
+              <p className="text-[10px] sm:text-xs font-medium text-muted uppercase tracking-wider mb-0.5 sm:mb-1">Daily Average</p>
+              <p className="text-lg sm:text-2xl font-bold text-foreground break-words">
                 {weeklyTotals.dailyAvg.calories.toLocaleString()}
-                <span className="text-base font-normal text-muted ml-1">cal</span>
+                <span className="text-sm sm:text-base font-normal text-muted ml-1">cal</span>
               </p>
             </div>
           </div>
@@ -135,8 +135,8 @@ export function NutritionSummary({ weekPlan, isOpen, onClose }: NutritionSummary
         <div className="space-y-6">
           {weeklyTotals.dailyAvg && (
             <div>
-              <h3 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">Daily Average</h3>
-              <div className="grid grid-cols-4 gap-2.5">
+              <h3 className="text-xs sm:text-sm font-semibold text-foreground mb-2 sm:mb-3 uppercase tracking-wide">Daily Average</h3>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
                 <StatCard 
                   value={weeklyTotals.dailyAvg.calories.toLocaleString()} 
                   label="Calories"
@@ -166,8 +166,8 @@ export function NutritionSummary({ weekPlan, isOpen, onClose }: NutritionSummary
           )}
 
           <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3 uppercase tracking-wide">Weekly Total</h3>
-            <div className="grid grid-cols-4 gap-2.5">
+            <h3 className="text-xs sm:text-sm font-semibold text-foreground mb-2 sm:mb-3 uppercase tracking-wide">Weekly Total</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5">
               <StatCard 
                 value={weeklyTotals.calories.toLocaleString()} 
                 label="Calories"

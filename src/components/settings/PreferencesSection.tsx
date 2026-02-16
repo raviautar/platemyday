@@ -97,21 +97,21 @@ export function PreferencesSection() {
       {/* Dietary Type */}
       <div className="bg-white rounded-xl border border-border p-4 space-y-4">
         <h2 className="font-semibold text-lg text-foreground">Dietary Preference</h2>
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
           {DIET_OPTIONS.map(option => {
             const Icon = DIET_ICON_MAP[option.value];
             return (
               <button
                 key={option.value}
                 onClick={() => handleUpdate({ dietaryType: option.value })}
-                className={`px-3 py-2 rounded-lg border-2 transition-all text-sm flex items-center justify-center gap-2 ${
+                className={`min-w-0 px-2 sm:px-3 py-2 rounded-lg border-2 transition-all text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 ${
                   prefs.dietaryType === option.value
                     ? 'border-primary bg-primary/5 text-primary font-medium'
                     : 'border-border bg-white text-muted hover:border-primary/50'
                 }`}
               >
-                {Icon && <Icon className="w-4 h-4" />}
-                {option.label}
+                {Icon && <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />}
+                <span className="break-words text-center line-clamp-2">{option.label}</span>
               </button>
             );
           })}
@@ -126,7 +126,7 @@ export function PreferencesSection() {
         >
           I don&apos;t care
         </button>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 min-w-0">
           <input
             type="text"
             placeholder="Or type a custom diet..."
@@ -135,7 +135,7 @@ export function PreferencesSection() {
             onBlur={() => {
               if (isCustomDiet) showToast('Preferences updated');
             }}
-            className="flex-1 px-3 py-2 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+            className="min-w-0 flex-1 px-3 py-2 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
           />
         </div>
       </div>
@@ -192,7 +192,7 @@ export function PreferencesSection() {
             None
           </button>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 min-w-0">
           <input
             type="text"
             placeholder="Add custom allergy..."
@@ -204,7 +204,7 @@ export function PreferencesSection() {
                 addCustomAllergy();
               }
             }}
-            className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50 text-sm"
+            className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50 text-sm"
           />
           <button
             onClick={addCustomAllergy}
@@ -265,7 +265,7 @@ export function PreferencesSection() {
             ))
           }
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 min-w-0">
           <input
             type="text"
             placeholder="Add custom cuisine..."
@@ -277,7 +277,7 @@ export function PreferencesSection() {
                 addCustomCuisine();
               }
             }}
-            className="flex-1 px-3 py-1.5 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-teal-300 text-sm"
+            className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-teal-300 text-sm"
           />
           <button
             onClick={addCustomCuisine}
@@ -291,7 +291,7 @@ export function PreferencesSection() {
       {/* Servings */}
       <div className="bg-white rounded-xl border border-border p-4 space-y-4">
         <h2 className="font-semibold text-lg text-foreground">Number of People</h2>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 min-w-0">
           <input
             type="range"
             min="1"
@@ -300,7 +300,7 @@ export function PreferencesSection() {
             onChange={(e) => handleServingsChange(Number(e.target.value))}
             onMouseUp={handleServingsEnd}
             onTouchEnd={handleServingsEnd}
-            className="flex-1 h-3 bg-border rounded-lg appearance-none cursor-pointer accent-primary"
+            className="min-w-0 flex-1 h-3 bg-border rounded-lg appearance-none cursor-pointer accent-primary"
             style={{
               background: `linear-gradient(to right, var(--color-primary) 0%, var(--color-primary) ${((prefs.servings - 1) / 9) * 100}%, var(--color-border) ${((prefs.servings - 1) / 9) * 100}%, var(--color-border) 100%)`
             }}
@@ -357,7 +357,7 @@ export function PreferencesSection() {
                 </button>
               </div>
               {isCustom ? (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 min-w-0">
                   <input
                     type="number"
                     min="0"
@@ -376,7 +376,7 @@ export function PreferencesSection() {
                     onBlur={() => {
                       showToast('Preferences updated');
                     }}
-                    className="flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="min-w-0 flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
                   />
                   <span className="text-sm text-muted">{macroConfig.unit}</span>
                 </div>
@@ -429,7 +429,7 @@ export function PreferencesSection() {
             </button>
           </div>
           {macroMode.calories === 'custom' ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 min-w-0">
               <input
                 type="number"
                 min="0"
@@ -448,7 +448,7 @@ export function PreferencesSection() {
                 onBlur={() => {
                   showToast('Preferences updated');
                 }}
-                className="flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="min-w-0 flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
               <span className="text-sm text-muted">kcal</span>
             </div>
@@ -488,7 +488,7 @@ export function PreferencesSection() {
         </div>
         <div className="space-y-2">
           {(prefs.mealNotes || []).map((note, index) => (
-            <div key={index} className="flex items-center gap-2">
+            <div key={index} className="flex items-center gap-2 min-w-0">
               <input
                 type="text"
                 value={note}
@@ -506,7 +506,7 @@ export function PreferencesSection() {
                   }
                 }}
                 placeholder="e.g., No cilantro in my dishes"
-                className="flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                className="min-w-0 flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
               />
               <button
                 onClick={() => {
