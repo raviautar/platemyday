@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { useSettings } from '@/contexts/SettingsContext';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 import { UserPreferences } from '@/types';
 import { MdClose, MdArrowForward, MdArrowBack } from 'react-icons/md';
 import Image from 'next/image';
@@ -32,8 +34,16 @@ const STEPS = [
 
 export function OnboardingWizard({ isOpen, onClose, onCompleted }: OnboardingWizardProps) {
   const { settings, updateSettings } = useSettings();
+  const { track } = useAnalytics();
   const [currentStep, setCurrentStep] = useState(0);
   const [preferences, setPreferences] = useState<UserPreferences>(settings.preferences);
+
+  // Track onboarding started
+  useEffect(() => {
+    if (isOpen && currentStep === 0) {
+      track(EVENTS.ONBOARDING_STARTED);
+    }
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-save on each step completion
   useEffect(() => {
@@ -44,6 +54,10 @@ export function OnboardingWizard({ isOpen, onClose, onCompleted }: OnboardingWiz
 
   const handleNext = () => {
     if (currentStep < STEPS.length - 1) {
+      track(EVENTS.ONBOARDING_STEP_COMPLETED, {
+        step_name: STEPS[currentStep].id,
+        step_index: currentStep,
+      });
       setCurrentStep(prev => prev + 1);
     }
   };
@@ -55,6 +69,7 @@ export function OnboardingWizard({ isOpen, onClose, onCompleted }: OnboardingWiz
   };
 
   const handleSkip = () => {
+    track(EVENTS.ONBOARDING_SKIPPED, { last_step: currentStep, last_step_name: STEPS[currentStep].id });
     // Save partial progress and mark as dismissed
     updateSettings({
       preferences: {
@@ -66,6 +81,12 @@ export function OnboardingWizard({ isOpen, onClose, onCompleted }: OnboardingWiz
   };
 
   const handleComplete = () => {
+    track(EVENTS.ONBOARDING_COMPLETED, {
+      dietary_type: preferences.dietaryType,
+      allergies_count: preferences.allergies.length,
+      servings: preferences.servings,
+    });
+    track(EVENTS.PREFERENCES_COMPLETED);
     updateSettings({
       preferences: {
         ...preferences,

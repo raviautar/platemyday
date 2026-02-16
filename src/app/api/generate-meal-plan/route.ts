@@ -3,6 +3,8 @@ import { google } from '@ai-sdk/google';
 import { mealPlanWithDetailsSchema } from '@/lib/ai';
 import { getSettings } from '@/lib/supabase/db';
 import { formatPreferencesPrompt } from '@/lib/constants';
+import { trackServerEvent } from '@/lib/analytics/posthog-server';
+import { EVENTS } from '@/lib/analytics/events';
 import {
   consumeRateLimit,
   generateMealPlanRequestSchema,
@@ -84,6 +86,8 @@ ${hasRecipes ? '1. Use existing recipes from the library when appropriate (inclu
 6. Days must be in this exact order: ${orderedDays.join(', ')}
 7. For EVERY meal, include estimatedNutrition with realistic calorie and macro estimates per serving`;
 
+    const generationStart = Date.now();
+
     const result = streamObject({
       model: google('gemini-3-flash-preview'),
       schema: mealPlanWithDetailsSchema,
@@ -111,12 +115,21 @@ ${hasRecipes ? '1. Use existing recipes from the library when appropriate (inclu
           const finalObject = await result.object;
           controller.enqueue(encoder.encode('DONE:' + JSON.stringify(finalObject) + '\n'));
           controller.close();
+
+          trackServerEvent(EVENTS.MEAL_PLAN_GENERATION_COMPLETED, userId ?? null, anonymousId ?? '', {
+            generation_time_ms: Date.now() - generationStart,
+            new_recipe_count: finalObject.newRecipes?.length || 0,
+          });
         } catch (error) {
           console.error('Meal plan streaming error:', error);
           controller.enqueue(encoder.encode('ERROR:' + JSON.stringify({
             error: 'Failed to generate meal plan. Please try again.',
           }) + '\n'));
           controller.close();
+
+          trackServerEvent(EVENTS.MEAL_PLAN_GENERATION_FAILED, userId ?? null, anonymousId ?? '', {
+            error_type: 'streaming_error',
+          });
         }
       },
     });

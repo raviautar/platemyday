@@ -3,6 +3,8 @@ import { google } from '@ai-sdk/google';
 import { recipeSchema } from '@/lib/ai';
 import { getSettings } from '@/lib/supabase/db';
 import { formatPreferencesPrompt } from '@/lib/constants';
+import { trackServerEvent } from '@/lib/analytics/posthog-server';
+import { EVENTS } from '@/lib/analytics/events';
 import {
   consumeRateLimit,
   parseJsonBody,
@@ -73,11 +75,21 @@ CRITICAL: Provide a COMPLETE recipe with:
     });
 
     if (!result.output) {
+      trackServerEvent(EVENTS.MEAL_PLAN_GENERATION_FAILED, userId ?? null, anonymousId ?? '', {
+        error_type: 'empty_output',
+        meal_type: mealType,
+      });
       return Response.json(
         { error: 'Failed to generate a meal suggestion.' },
         { status: 500 }
       );
     }
+
+    trackServerEvent(EVENTS.MEAL_REGENERATION_COMPLETED, userId ?? null, anonymousId ?? '', {
+      meal_type: mealType,
+      day_of_week: dayOfWeek,
+      recipe_title: result.output.title,
+    });
 
     return Response.json(result.output);
   } catch (error) {

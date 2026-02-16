@@ -11,6 +11,7 @@ AI-powered meal planning app built with Next.js 16.
 - **Drag & Drop:** `@hello-pangea/dnd`
 - **Schema Validation:** Zod
 - **Icons:** `lucide-react`
+- **Analytics:** PostHog (`posthog-js` client, `posthog-node` server)
 
 ## Dev Commands
 
@@ -45,11 +46,16 @@ src/
 │   ├── MealPlanContext.tsx          # Meal plan state + history (Supabase-backed)
 │   └── SettingsContext.tsx          # User settings (Supabase-backed)
 ├── hooks/
-│   └── useUserIdentity.ts          # Clerk user + anonymous ID resolution
+│   ├── useUserIdentity.ts          # Clerk user + anonymous ID resolution
+│   └── useAnalytics.ts             # PostHog tracking hook with identity enrichment
 ├── lib/
 │   ├── ai.ts                       # Zod schemas for AI output
 │   ├── constants.ts                # Default settings, day/meal constants
 │   ├── anonymous-id.ts             # Anonymous user ID management
+│   ├── analytics/
+│   │   ├── events.ts               # All PostHog event name constants
+│   │   ├── posthog-client.ts       # Client-side PostHog init
+│   │   └── posthog-server.ts       # Server-side PostHog for API routes
 │   └── supabase/
 │       ├── client.ts               # Browser Supabase client
 │       ├── server.ts               # Server Supabase client
@@ -70,6 +76,29 @@ supabase/
 - **Persistence:** All data stored in Supabase. Contexts fetch on mount using `useUserIdentity()` hook
 - **Meal plan history:** All generated plans are saved. Users can view and restore past plans
 
+## Analytics (PostHog)
+
+PostHog tracks 5 high-level product metrics. **When adding new features or modifying existing user flows, always consider whether analytics events need to be added or updated.**
+
+### How to add tracking
+- **Client-side:** Use the `useAnalytics()` hook → `const { track } = useAnalytics()` then `track(EVENTS.EVENT_NAME, { properties })`
+- **Server-side (API routes):** Use `trackServerEvent(eventName, userId, anonymousId, properties)` from `@/lib/analytics/posthog-server`
+- **Event names:** Add new constants to `src/lib/analytics/events.ts` — never use raw strings
+
+### The 5 metrics and when to add events
+1. **AI Generation Success Rate** — Any new AI-powered feature needs started/completed/failed events
+2. **User Activation Rate** — Any change to onboarding or "first time" flows needs tracking
+3. **Weekly Active Engagement** — New content creation or viewing actions should be tracked
+4. **Feature Depth** — New secondary features (tools, views, interactions) need usage events
+5. **Conversion Funnel** — Changes to auth, upgrade, or signup flows need tracking
+
+### Checklist for new features
+- [ ] Does this feature have a user action worth tracking? Add a client-side event
+- [ ] Does this feature call an API route? Add server-side tracking for success/failure
+- [ ] Is this a new AI generation feature? Track started/completed/failed
+- [ ] Does this change onboarding or activation? Update activation events
+- [ ] Add the event constant to `src/lib/analytics/events.ts`
+
 ## Environment Variables
 
 ```
@@ -78,4 +107,6 @@ NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
 CLERK_SECRET_KEY=
 GOOGLE_GENERATIVE_AI_API_KEY=
+NEXT_PUBLIC_POSTHOG_KEY=
+NEXT_PUBLIC_POSTHOG_HOST=
 ```

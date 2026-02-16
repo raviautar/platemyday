@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Recipe } from '@/types';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
@@ -37,6 +39,7 @@ const ingredientSuggestions = [
 export function AIRecipeGenerator({ isOpen, onClose, onSave }: AIRecipeGeneratorProps) {
   const { settings } = useSettings();
   const { userId, anonymousId } = useUserIdentity();
+  const { track } = useAnalytics();
   const [prompt, setPrompt] = useState('');
   const [loading, setLoading] = useState(false);
   const [preview, setPreview] = useState<AIRecipeOutput | null>(null);
@@ -60,6 +63,9 @@ export function AIRecipeGenerator({ isOpen, onClose, onSave }: AIRecipeGenerator
     setError('');
     setPreview(null);
 
+    const startTime = Date.now();
+    track(EVENTS.RECIPE_GENERATION_STARTED, { prompt_length: prompt.trim().length });
+
     try {
       const res = await fetch('/api/generate-recipe', {
         method: 'POST',
@@ -79,8 +85,14 @@ export function AIRecipeGenerator({ isOpen, onClose, onSave }: AIRecipeGenerator
 
       const recipe = await res.json();
       setPreview(recipe);
+      track(EVENTS.RECIPE_GENERATION_COMPLETED, {
+        recipe_title: recipe.title,
+        generation_time_ms: Date.now() - startTime,
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      const message = err instanceof Error ? err.message : 'Something went wrong';
+      track(EVENTS.RECIPE_GENERATION_FAILED, { error_message: message });
+      setError(message);
     } finally {
       setLoading(false);
     }
@@ -88,6 +100,7 @@ export function AIRecipeGenerator({ isOpen, onClose, onSave }: AIRecipeGenerator
 
   const handleSave = () => {
     if (!preview) return;
+    track(EVENTS.AI_RECIPE_SAVED, { recipe_title: preview.title });
     onSave({ ...preview, isAIGenerated: true });
     setPreview(null);
     setPrompt('');
@@ -227,7 +240,7 @@ export function AIRecipeGenerator({ isOpen, onClose, onSave }: AIRecipeGenerator
 
                 <div className="flex gap-3 pt-2 border-t border-border/40">
                   <Button onClick={handleSave} className="flex-1">Save Recipe</Button>
-                  <Button variant="ghost" onClick={() => { setPreview(null); setPrompt(''); }}>Discard</Button>
+                  <Button variant="ghost" onClick={() => { track(EVENTS.AI_RECIPE_DISCARDED, { recipe_title: preview?.title }); setPreview(null); setPrompt(''); }}>Discard</Button>
                 </div>
               </div>
             </div>

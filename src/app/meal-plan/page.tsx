@@ -5,6 +5,8 @@ import { useRecipes } from '@/contexts/RecipeContext';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 import { useToast } from '@/components/ui/Toast';
 import { WeekView } from '@/components/meal-plan/WeekView';
 import { MealPlanControls } from '@/components/meal-plan/MealPlanControls';
@@ -67,6 +69,7 @@ export default function MealPlanPage() {
   const { weekPlan, setWeekPlan, moveMeal, removeMeal, replaceMeal, clearWeekPlan } = useMealPlan();
   const { settings } = useSettings();
   const { userId, anonymousId } = useUserIdentity();
+  const { track } = useAnalytics();
   const { showToast } = useToast();
   const [loading, setLoading] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
@@ -150,6 +153,14 @@ export default function MealPlanPage() {
     setGenerationError(null);
     setPartialPlan(null);
     lastPreferencesRef.current = preferences;
+    const isFirstPlan = !weekPlan;
+    const generationStartTime = Date.now();
+
+    track(EVENTS.MEAL_PLAN_GENERATION_STARTED, {
+      has_existing_plan: !!weekPlan,
+      has_preferences: !!preferences,
+      recipe_library_size: recipes.length,
+    });
 
     try {
       const response = await fetch('/api/generate-meal-plan', {
@@ -229,6 +240,18 @@ export default function MealPlanPage() {
       await setWeekPlan(newWeekPlan, newSuggested);
 
       const newRecipeCount = finalData.newRecipes?.length || 0;
+      const generationTime = Date.now() - generationStartTime;
+
+      track(EVENTS.MEAL_PLAN_GENERATION_COMPLETED, {
+        new_recipe_count: newRecipeCount,
+        generation_time_ms: generationTime,
+        total_meals: finalData.days?.reduce((sum: number, d: { meals?: unknown[] }) => sum + (d.meals?.length || 0), 0) || 0,
+      });
+
+      if (isFirstPlan) {
+        track(EVENTS.FIRST_MEAL_PLAN_GENERATED);
+      }
+
       if (newRecipeCount > 0) {
         showToast(`Meal plan generated with ${newRecipeCount} new recipe${newRecipeCount > 1 ? 's' : ''}!`);
       } else {
@@ -236,6 +259,7 @@ export default function MealPlanPage() {
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to generate meal plan';
+      track(EVENTS.MEAL_PLAN_GENERATION_FAILED, { error_message: message });
       setGenerationError(message);
     } finally {
       setLoading(false);
@@ -257,6 +281,7 @@ export default function MealPlanPage() {
     });
 
     handleRecipeAdded(suggestedRecipe.title, recipe.id);
+    track(EVENTS.SUGGESTED_RECIPE_SAVED, { recipe_title: suggestedRecipe.title });
     showToast(`${suggestedRecipe.title} added to your library!`);
   };
 

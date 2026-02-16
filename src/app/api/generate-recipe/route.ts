@@ -3,6 +3,8 @@ import { google } from '@ai-sdk/google';
 import { recipeSchema } from '@/lib/ai';
 import { getSettings } from '@/lib/supabase/db';
 import { formatPreferencesPrompt } from '@/lib/constants';
+import { trackServerEvent } from '@/lib/analytics/posthog-server';
+import { EVENTS } from '@/lib/analytics/events';
 import {
   consumeRateLimit,
   generateRecipeRequestSchema,
@@ -79,11 +81,19 @@ export async function POST(req: Request) {
     });
 
     if (!result.output || !result.output.title) {
+      trackServerEvent(EVENTS.RECIPE_GENERATION_FAILED, userId ?? null, anonymousId ?? '', {
+        error_type: 'empty_output',
+      });
       return Response.json(
         { error: "We couldn't create a recipe from that description. Please try describing a specific dish or meal!" },
         { status: 400 }
       );
     }
+
+    trackServerEvent(EVENTS.RECIPE_GENERATION_COMPLETED, userId ?? null, anonymousId ?? '', {
+      recipe_title: result.output.title,
+      tags: result.output.tags,
+    });
 
     return Response.json(result.output);
   } catch (error) {

@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { WeekPlan, Recipe, SuggestedRecipe } from '@/types';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 import { useToast } from '@/components/ui/Toast';
 import { Check, ShoppingCart, Sparkles, Copy, ArrowLeft } from 'lucide-react';
 
@@ -33,7 +35,14 @@ export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedReci
   const [consolidated, setConsolidated] = useState<ConsolidatedCategory[] | null>(null);
   const [consolidatedChecked, setConsolidatedChecked] = useState<Set<string>>(new Set());
   const { userId, anonymousId } = useUserIdentity();
+  const { track } = useAnalytics();
   const { showToast } = useToast();
+
+  useEffect(() => {
+    if (isOpen) {
+      track(EVENTS.SHOPPING_LIST_VIEWED, { ingredient_count: items.length });
+    }
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const items = useMemo(() => {
     const ingredientMap = new Map<string, Set<string>>();
@@ -122,6 +131,10 @@ export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedReci
       const data = await response.json();
       setConsolidated(data.categories);
       setConsolidatedChecked(new Set());
+      track(EVENTS.SHOPPING_LIST_CONSOLIDATED, {
+        original_count: items.length,
+        category_count: data.categories.length,
+      });
     } catch (error) {
       showToast(error instanceof Error ? error.message : 'Failed to consolidate shopping list', 'error');
     } finally {
@@ -152,6 +165,7 @@ export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedReci
 
     try {
       await navigator.clipboard.writeText(text.trim());
+      track(EVENTS.SHOPPING_LIST_COPIED, { is_consolidated: !!consolidated, item_count: totalCount });
       showToast('Shopping list copied to clipboard!');
     } catch {
       showToast('Failed to copy to clipboard', 'error');

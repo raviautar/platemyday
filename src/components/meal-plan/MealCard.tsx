@@ -5,6 +5,8 @@ import { MealSlot, MealType, SuggestedRecipe, DayPlan, NutritionInfo } from '@/t
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 import { Sparkles, Heart, Flame } from 'lucide-react';
 import { MealDetail } from './MealDetail';
 import { MealOptionsMenu } from './MealOptionsMenu';
@@ -34,6 +36,7 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
   const { getRecipe } = useRecipes();
   const { settings } = useSettings();
   const { userId, anonymousId } = useUserIdentity();
+  const { track } = useAnalytics();
   const { showToast } = useToast();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isReplaceOpen, setIsReplaceOpen] = useState(false);
@@ -61,6 +64,7 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
         recipeId,
         recipeTitleFallback: undefined,
       });
+      track(EVENTS.MEAL_REPLACED_FROM_LIBRARY, { meal_type: meal.mealType });
       showToast('Meal replaced!');
     }
   };
@@ -110,6 +114,12 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
         mealType: meal.mealType,
         recipeTitleFallback: newRecipeData.title,
         estimatedNutrition: newRecipeData.estimatedNutrition,
+      });
+
+      track(EVENTS.MEAL_REGENERATED, {
+        meal_type: meal.mealType,
+        day_of_week: weekDays?.[currentDayIndex!]?.dayOfWeek,
+        new_recipe_title: newRecipeData.title,
       });
 
       showToast(`Replaced with "${newRecipeData.title}"!`);

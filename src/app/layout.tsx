@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
+import { PostHogProvider } from "@/components/providers/PostHogProvider";
 import { ClerkProvider } from "@clerk/nextjs";
 
 const geistSans = Geist({
@@ -54,7 +55,9 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
         >
-          <AppShell>{children}</AppShell>
+          <PostHogProvider>
+            <AppShell>{children}</AppShell>
+          </PostHogProvider>
         </body>
       </html>
     </ClerkProvider>

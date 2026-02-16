@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Recipe } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 import { useToast } from '@/components/ui/Toast';
 import { RecipeList } from '@/components/recipes/RecipeList';
 import { RecipeForm } from '@/components/recipes/RecipeForm';
@@ -15,6 +17,7 @@ import { Plus, Search, SlidersHorizontal } from 'lucide-react';
 
 export default function RecipesPage() {
   const { recipes, addRecipe, updateRecipe, deleteRecipe } = useRecipes();
+  const { track } = useAnalytics();
   const { showToast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [showAI, setShowAI] = useState(false);
@@ -34,6 +37,29 @@ export default function RecipesPage() {
     if (searchOpen) searchInputRef.current?.focus();
   }, [searchOpen]);
 
+  // Debounced search tracking
+  useEffect(() => {
+    if (searchQuery.length < 3) return;
+    const timer = setTimeout(() => {
+      track(EVENTS.RECIPE_SEARCH_USED, { query_length: searchQuery.length });
+    }, 1000);
+    return () => clearTimeout(timer);
+  }, [searchQuery]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Filter tracking
+  const prevFiltersRef = useRef(filters);
+  useEffect(() => {
+    if (filters.tags.length > 0 || filters.maxPrepTimeMinutes != null) {
+      if (JSON.stringify(filters) !== JSON.stringify(prevFiltersRef.current)) {
+        track(EVENTS.RECIPE_FILTERED, {
+          tag_count: filters.tags.length,
+          max_prep_time: filters.maxPrepTimeMinutes,
+        });
+      }
+    }
+    prevFiltersRef.current = filters;
+  }, [filters]); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (filterRef.current && !filterRef.current.contains(e.target as Node)) setFilterOpen(false);
@@ -44,11 +70,20 @@ export default function RecipesPage() {
     }
   }, [filterOpen]);
 
+  const handleSelectRecipe = useCallback((recipe: Recipe) => {
+    setSelectedRecipe(recipe);
+    track(EVENTS.RECIPE_VIEWED, { recipe_title: recipe.title, is_ai_generated: recipe.isAIGenerated });
+  }, [track]);
+
   const handleSave = (data: Omit<Recipe, 'id' | 'createdAt'>) => {
     if (editingRecipe) {
       updateRecipe(editingRecipe.id, data);
       showToast('Recipe updated!');
     } else {
+      track(EVENTS.RECIPE_CREATED, { is_manual: true, title: data.title });
+      if (recipes.length === 0) {
+        track(EVENTS.FIRST_RECIPE_CREATED);
+      }
       addRecipe(data);
       showToast('Recipe created!');
     }
@@ -167,7 +202,7 @@ export default function RecipesPage() {
         recipes={recipes}
         searchQuery={searchQuery}
         filters={filters}
-        onSelectRecipe={setSelectedRecipe}
+        onSelectRecipe={handleSelectRecipe}
         onCreateRecipe={() => setShowAI(true)}
       />
 
@@ -198,6 +233,9 @@ export default function RecipesPage() {
         isOpen={showAI}
         onClose={() => setShowAI(false)}
         onSave={(recipe) => {
+          if (recipes.length === 0) {
+            track(EVENTS.FIRST_RECIPE_CREATED);
+          }
           addRecipe(recipe);
           showToast('Recipe saved!');
           setShowAI(false);

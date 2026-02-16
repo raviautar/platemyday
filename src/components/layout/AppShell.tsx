@@ -12,6 +12,8 @@ import { TopBanner } from './TopBanner';
 import { ToastProvider } from '@/components/ui/Toast';
 import { getAnonymousId, clearAnonymousId } from '@/lib/anonymous-id';
 import { migrateAnonymousData } from '@/lib/supabase/db';
+import { posthog } from '@/lib/analytics/posthog-client';
+import { EVENTS } from '@/lib/analytics/events';
 
 function AnonymousMigration() {
   const { user, isLoaded } = useUser();
@@ -24,7 +26,11 @@ function AnonymousMigration() {
     const anonymousId = getAnonymousId();
     if (anonymousId) {
       migrateAnonymousData(anonymousId, user.id)
-        .then(() => clearAnonymousId())
+        .then(() => {
+          posthog.capture(EVENTS.ANONYMOUS_DATA_MIGRATED, { previous_anonymous_id: anonymousId });
+          posthog.capture(EVENTS.USER_SIGNED_UP);
+          clearAnonymousId();
+        })
         .catch((err) => console.error('Migration failed:', err));
     }
   }, [user, isLoaded]);

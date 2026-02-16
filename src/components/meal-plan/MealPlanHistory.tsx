@@ -2,6 +2,8 @@
 
 import { useEffect } from 'react';
 import { useMealPlan } from '@/contexts/MealPlanContext';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 import { useToast } from '@/components/ui/Toast';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
@@ -15,16 +17,19 @@ interface MealPlanHistoryProps {
 
 export function MealPlanHistory({ isOpen, onClose }: MealPlanHistoryProps) {
   const { mealPlanHistory, loadHistory, restoreMealPlan, deleteMealPlan, historyLoading, weekPlan } = useMealPlan();
+  const { track } = useAnalytics();
   const { showToast } = useToast();
 
   useEffect(() => {
     if (isOpen) {
       loadHistory();
+      track(EVENTS.MEAL_PLAN_HISTORY_VIEWED);
     }
-  }, [isOpen, loadHistory]);
+  }, [isOpen, loadHistory]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleRestore = async (planId: string) => {
     await restoreMealPlan(planId);
+    track(EVENTS.MEAL_PLAN_RESTORED, { plan_id: planId });
     showToast('Meal plan restored!');
     onClose();
   };

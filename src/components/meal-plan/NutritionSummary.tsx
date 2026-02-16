@@ -1,8 +1,10 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 import { WeekPlan } from '@/types';
 import { Modal } from '@/components/ui/Modal';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 
 interface NutritionSummaryProps {
   weekPlan: WeekPlan;
@@ -70,6 +72,7 @@ function StatCard({
 }
 
 export function NutritionSummary({ weekPlan, isOpen, onClose }: NutritionSummaryProps) {
+  const { track } = useAnalytics();
 
   const weeklyTotals = useMemo(() => {
     let calories = 0, protein = 0, carbs = 0, fat = 0;
@@ -97,6 +100,15 @@ export function NutritionSummary({ weekPlan, isOpen, onClose }: NutritionSummary
 
     return { calories, protein, carbs, fat, mealsWithNutrition, dailyAvg };
   }, [weekPlan]);
+
+  useEffect(() => {
+    if (isOpen && weeklyTotals.dailyAvg) {
+      track(EVENTS.NUTRITION_SUMMARY_VIEWED, {
+        daily_avg_calories: weeklyTotals.dailyAvg.calories,
+        meals_with_nutrition: weeklyTotals.mealsWithNutrition,
+      });
+    }
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   if (weeklyTotals.mealsWithNutrition === 0) return null;
 

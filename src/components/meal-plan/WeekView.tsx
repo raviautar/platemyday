@@ -3,6 +3,8 @@
 import { WeekPlan, MealSlot, SuggestedRecipe } from '@/types';
 import { DayColumn } from './DayColumn';
 import { DragDropContext, DropResult } from '@hello-pangea/dnd';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 
 interface WeekViewProps {
   weekPlan: WeekPlan;
@@ -14,12 +16,21 @@ interface WeekViewProps {
 }
 
 export function WeekView({ weekPlan, onMoveMeal, onRemoveMeal, onReplaceMeal, suggestedRecipes, onAddToLibrary }: WeekViewProps) {
+  const { track } = useAnalytics();
+
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
     const sourceDayIndex = parseInt(result.source.droppableId.replace('day-', ''));
     const destDayIndex = parseInt(result.destination.droppableId.replace('day-', ''));
     const destIndex = result.destination.index;
+
+    if (sourceDayIndex !== destDayIndex) {
+      track(EVENTS.MEAL_MOVED, {
+        from_day: weekPlan.days[sourceDayIndex]?.dayOfWeek,
+        to_day: weekPlan.days[destDayIndex]?.dayOfWeek,
+      });
+    }
 
     onMoveMeal(result.draggableId, sourceDayIndex, destDayIndex, destIndex);
   };

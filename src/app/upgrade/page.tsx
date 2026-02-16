@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Check, Sparkles, Zap, Crown } from 'lucide-react';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 
 const features = [
   'Unlimited AI generation',
@@ -20,6 +22,11 @@ const freeFeatures = [
 
 export default function UpgradePage() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('annual');
+  const { track } = useAnalytics();
+
+  useEffect(() => {
+    track(EVENTS.UPGRADE_PAGE_VIEWED);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="max-w-6xl mx-auto">
@@ -123,9 +130,9 @@ export default function UpgradePage() {
             ))}
           </ul>
 
-          <button 
+          <button
             className="w-full bg-white text-primary hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors"
-            onClick={() => alert('Payment integration coming soon!')}
+            onClick={() => { track(EVENTS.UPGRADE_CTA_CLICKED, { plan: 'premium', billing_period: billingPeriod }); alert('Payment integration coming soon!'); }}
           >
             Get Premium
           </button>
@@ -166,9 +173,9 @@ export default function UpgradePage() {
             </li>
           </ul>
 
-          <button 
+          <button
             className="w-full bg-white text-emerald-600 hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors"
-            onClick={() => alert('Payment integration coming soon!')}
+            onClick={() => { track(EVENTS.UPGRADE_CTA_CLICKED, { plan: 'lifetime' }); alert('Payment integration coming soon!'); }}
           >
             Get Lifetime
           </button>

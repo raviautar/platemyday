@@ -6,11 +6,14 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronDown, Sparkles, Calendar, Crown, Download, Heart } from 'lucide-react';
 import { TopBanner } from '@/components/layout/TopBanner';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 
 export default function HomePage() {
   const [showTopBanner, setShowTopBanner] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const { track } = useAnalytics();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -112,7 +115,7 @@ export default function HomePage() {
             Personalized recipes for your diet and ingredients. Delicious meals, instantly.
           </p>
           <button
-            onClick={() => router.push('/recipes')}
+            onClick={() => { track(EVENTS.LANDING_CTA_CLICKED, { cta: 'browse_recipes' }); router.push('/recipes'); }}
             className="inline-flex items-center gap-2 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white font-semibold px-6 py-3 md:px-8 md:py-4 rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95"
           >
             <Heart className="w-5 h-5" />
