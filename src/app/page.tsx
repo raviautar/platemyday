@@ -71,9 +71,16 @@ export default function HomePage() {
               PlateMyDay
             </span>
           </h1>
-          <p className="text-lg md:text-xl text-muted/90 mb-10 font-[family-name:var(--font-outfit)] font-medium">
-            Plan your week. Eat well.
-          </p>
+          <div className="flex justify-center mb-10">
+            <Link
+              href="/meal-plan"
+              onClick={() => track(EVENTS.LANDING_CTA_CLICKED, { cta: 'hero_get_started' })}
+              className="inline-flex items-center gap-2 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white font-semibold px-6 py-3 md:px-8 md:py-4 rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] text-base md:text-lg"
+            >
+              <Sparkles className="w-5 h-5 md:w-6 md:h-6" />
+              Let's start!
+            </Link>
+          </div>
           <div className="flex justify-center">
             <ChevronDown className="w-7 h-7 text-primary/70 animate-bounce" />
           </div>
@@ -93,7 +100,7 @@ export default function HomePage() {
             Weekly Meal Plans
           </h2>
           <p className="text-sm md:text-base text-muted mb-6 md:mb-8 max-w-xl mx-auto leading-relaxed">
-            Weekly menus tailored to you. Balanced, varied, ready to go.
+            Menus tailored to you, ready to go.
           </p>
           <Link
             href="/meal-plan"
@@ -121,7 +128,7 @@ export default function HomePage() {
             Tailored Recipes
           </h2>
           <p className="text-sm md:text-base text-muted mb-6 md:mb-8 max-w-xl mx-auto leading-relaxed">
-            Recipes for your diet and ingredients. Delicious meals, instantly.
+            Recipes tailored to your diet and ingredients.
           </p>
           <button
             onClick={() => { track(EVENTS.LANDING_CTA_CLICKED, { cta: 'browse_recipes' }); router.push('/recipes'); }}

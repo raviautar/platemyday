@@ -17,7 +17,13 @@ import { History, ShoppingCart, AlertTriangle, RefreshCw, Trash2 } from 'lucide-
 
 export default function MealPlanPage() {
   const { recipes } = useRecipes();
-  const { weekPlan, moveMeal, removeMeal, replaceMeal, shoppingList, shoppingPantryItems, shoppingListLoading } = useMealPlan();
+  const {
+    weekPlan, moveMeal, removeMeal, replaceMeal,
+    shoppingList, shoppingPantryItems, shoppingListLoading,
+    shoppingListUpdated, nutritionUpdated,
+    dismissShoppingListUpdated, dismissNutritionUpdated,
+    addPantryItemToShoppingList,
+  } = useMealPlan();
   const { settings } = useSettings();
   const {
     loading,
@@ -69,26 +75,40 @@ export default function MealPlanPage() {
             type="button"
             aria-label="Shopping list"
             title="Shopping List"
-            onClick={() => (weekPlan || shoppingListLoading) && setShoppingListOpen(true)}
+            onClick={() => {
+              if (weekPlan || shoppingListLoading) {
+                setShoppingListOpen(true);
+                dismissShoppingListUpdated();
+              }
+            }}
             disabled={!weekPlan && !shoppingListLoading}
-            className={`flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-sm shrink-0 transition-all ${weekPlan
+            className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-sm shrink-0 transition-all ${weekPlan
               ? 'bg-gradient-to-r from-primary to-emerald-600 text-white hover:from-primary-dark hover:to-emerald-700 shadow-md hover:shadow-lg'
               : 'bg-surface border border-border text-muted cursor-not-allowed opacity-60'
               }`}
           >
             <ShoppingCart className="w-5 h-5" strokeWidth={2} />
             <span className="text-sm font-semibold hidden sm:inline">Shopping List</span>
+            {shoppingListUpdated && (
+              <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-secondary border-2 border-white animate-pulse" />
+            )}
           </button>
           {weekPlan && (
             <button
               type="button"
               aria-label="View nutrition summary"
               title="Nutrition Summary"
-              onClick={() => setNutritionOpen(true)}
-              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border border-border text-foreground hover:bg-surface-dark shadow-sm shrink-0 transition-colors"
+              onClick={() => {
+                setNutritionOpen(true);
+                dismissNutritionUpdated();
+              }}
+              className="relative flex items-center gap-2 px-3 py-2 rounded-xl bg-surface border border-border text-foreground hover:bg-surface-dark shadow-sm shrink-0 transition-colors"
             >
               <PieChartIcon className="w-5 h-5" />
               <span className="text-sm font-medium hidden sm:inline">Nutrition</span>
+              {nutritionUpdated && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-secondary border-2 border-white animate-pulse" />
+              )}
             </button>
           )}
         </div>
@@ -176,6 +196,7 @@ export default function MealPlanPage() {
             shoppingList={shoppingList}
             shoppingPantryItems={shoppingPantryItems}
             shoppingListLoading={shoppingListLoading}
+            onAddPantryItem={addPantryItemToShoppingList}
           />
         </>
       )}

@@ -129,8 +129,8 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
 
   return (
     <>
-      <div className="bg-white rounded-xl border border-border p-4">
-        <div className="flex gap-2 sm:gap-3">
+      <div className="bg-white rounded-xl border border-border p-3 sm:p-4">
+        <div className="flex gap-1.5 sm:gap-2 md:gap-3">
           <button
             onClick={() => setShowCustomize(true)}
             className="flex items-center justify-center gap-2 px-3 sm:px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 text-muted hover:text-primary transition-all duration-200 relative"
@@ -147,18 +147,17 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
             onClick={handleGenerate}
             disabled={loading}
             size="lg"
-            className="flex-1 gap-2 min-w-0"
+            className="flex-1 gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base min-w-0"
           >
             {loading ? (
               <>
                 <LoadingSpinner size="sm" className="shrink-0" />
-                <span className="truncate hidden sm:inline">Generating...</span>
-                <span className="truncate sm:hidden">...</span>
+                <span className="hidden sm:inline">Generating...</span>
               </>
             ) : (
               <>
-                <Sparkles className="w-5 h-5 shrink-0" />
-                <span className="truncate">{hasExistingPlan ? 'Regenerate' : 'Generate'}</span>
+                <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                <span className="whitespace-nowrap">{hasExistingPlan ? 'Regenerate' : 'Generate'}</span>
               </>
             )}
           </Button>

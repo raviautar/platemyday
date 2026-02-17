@@ -8,7 +8,7 @@ import { ConsolidatedCategory } from '@/contexts/MealPlanContext';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
 import { useToast } from '@/components/ui/Toast';
-import { Check, ShoppingCart, Copy } from 'lucide-react';
+import { Check, ShoppingCart, Copy, Plus } from 'lucide-react';
 
 interface ShoppingListProps {
   isOpen: boolean;
@@ -19,6 +19,7 @@ interface ShoppingListProps {
   shoppingList: ConsolidatedCategory[] | null;
   shoppingPantryItems: string[];
   shoppingListLoading: boolean;
+  onAddPantryItem: (item: string) => void;
 }
 
 const LOADING_MESSAGES = [
@@ -34,7 +35,7 @@ function getRandomLoadingMessage() {
   return LOADING_MESSAGES[Math.floor(Math.random() * LOADING_MESSAGES.length)];
 }
 
-export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedRecipes, shoppingList, shoppingPantryItems, shoppingListLoading }: ShoppingListProps) {
+export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedRecipes, shoppingList, shoppingPantryItems, shoppingListLoading, onAddPantryItem }: ShoppingListProps) {
   const [consolidatedChecked, setConsolidatedChecked] = useState<Set<string>>(new Set());
   const [loadingMessage] = useState(getRandomLoadingMessage);
   const { track } = useAnalytics();
@@ -186,8 +187,15 @@ export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedReci
                 <h3 className="text-sm font-semibold text-muted mb-1.5 px-1">🏠 Probably in Your Pantry</h3>
                 <div className="space-y-0.5">
                   {shoppingPantryItems.map(item => (
-                    <div key={item} className="flex items-center gap-3 p-2.5 rounded-lg">
+                    <div key={item} className="flex items-center justify-between gap-3 p-2.5 rounded-lg group hover:bg-surface transition-colors">
                       <span className="text-sm text-muted">{item}</span>
+                      <button
+                        onClick={() => onAddPantryItem(item)}
+                        className="sm:opacity-0 sm:group-hover:opacity-100 p-1 rounded-md bg-primary/10 text-primary hover:bg-primary/20 transition-all shrink-0"
+                        title="Add to shopping list"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   ))}
                 </div>

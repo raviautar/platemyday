@@ -51,6 +51,11 @@ interface MealPlanContextType {
   shoppingList: ConsolidatedCategory[] | null;
   shoppingPantryItems: string[];
   shoppingListLoading: boolean;
+  shoppingListUpdated: boolean;
+  nutritionUpdated: boolean;
+  dismissShoppingListUpdated: () => void;
+  dismissNutritionUpdated: () => void;
+  addPantryItemToShoppingList: (item: string) => void;
   // Generation state
   generating: boolean;
   generationError: string | null;
@@ -99,7 +104,10 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
   const [shoppingList, setShoppingList] = useState<ConsolidatedCategory[] | null>(null);
   const [shoppingPantryItems, setShoppingPantryItems] = useState<string[]>([]);
   const [shoppingListLoading, setShoppingListLoading] = useState(false);
+  const [shoppingListUpdated, setShoppingListUpdated] = useState(false);
+  const [nutritionUpdated, setNutritionUpdated] = useState(false);
   const consolidationAbortRef = useRef<AbortController | null>(null);
+  const wasGeneratingRef = useRef(false);
 
   // Generation state
   const [generating, setGenerating] = useState(false);
@@ -127,6 +135,17 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true; };
   }, [userId, anonymousId, isLoaded]);
 
+  // Clear stale shopping list when a new generation starts
+  useEffect(() => {
+    if (generating) {
+      wasGeneratingRef.current = true;
+      setShoppingList(null);
+      setShoppingPantryItems([]);
+      setShoppingListLoading(true);
+      consolidationAbortRef.current?.abort();
+    }
+  }, [generating]);
+
   // Auto-consolidate shopping list whenever weekPlan changes
   useEffect(() => {
     if (!weekPlan) {
@@ -135,11 +154,14 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    if (generating) return;
+
     const recipesMap = new Map(recipes.map(r => [r.id, r.ingredients]));
     const ingredients = collectIngredients(weekPlan, recipesMap, weekPlan.suggestedRecipes);
 
     if (ingredients.length === 0) {
       setShoppingList(null);
+      setShoppingListLoading(false);
       return;
     }
 
@@ -167,6 +189,11 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
         if (!abortController.signal.aborted) {
           setShoppingList(data.categories);
           setShoppingPantryItems(data.pantryItems || []);
+          if (wasGeneratingRef.current) {
+            setShoppingListUpdated(true);
+            setNutritionUpdated(true);
+            wasGeneratingRef.current = false;
+          }
         }
       } catch (error) {
         if (error instanceof DOMException && error.name === 'AbortError') return;
@@ -182,7 +209,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(timer);
       abortController.abort();
     };
-  }, [weekPlan, recipes, userId, anonymousId]);
+  }, [weekPlan, recipes, userId, anonymousId, generating]);
 
   const setWeekPlan = useCallback(async (plan: WeekPlan, suggestedRecipes?: Record<string, SuggestedRecipe>) => {
     setWeekPlanState(plan);
@@ -248,6 +275,28 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
 
   const clearWeekPlan = useCallback(() => {
     setWeekPlanState(null);
+  }, []);
+
+  const dismissShoppingListUpdated = useCallback(() => {
+    setShoppingListUpdated(false);
+  }, []);
+
+  const dismissNutritionUpdated = useCallback(() => {
+    setNutritionUpdated(false);
+  }, []);
+
+  const addPantryItemToShoppingList = useCallback((item: string) => {
+    setShoppingPantryItems(prev => prev.filter(p => p !== item));
+    setShoppingList(prev => {
+      if (!prev || prev.length === 0) return [{ name: 'Other', items: [item] }];
+      const otherIdx = prev.findIndex(c => c.name === 'Other');
+      if (otherIdx >= 0) {
+        return prev.map((c, i) =>
+          i === otherIdx ? { ...c, items: [...c.items, item] } : c
+        );
+      }
+      return [...prev, { name: 'Other', items: [item] }];
+    });
   }, []);
 
   const loadHistory = useCallback(async () => {
@@ -496,6 +545,11 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     shoppingList,
     shoppingPantryItems,
     shoppingListLoading,
+    shoppingListUpdated,
+    nutritionUpdated,
+    dismissShoppingListUpdated,
+    dismissNutritionUpdated,
+    addPantryItemToShoppingList,
     generating,
     generationError,
     partialPlan,
@@ -507,6 +561,8 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     weekPlan, setWeekPlan, moveMeal, removeMeal, addMealToDay, clearWeekPlan,
     replaceMeal, mealPlanHistory, loadHistory, restoreMealPlan, deleteMealPlan,
     historyLoading, loading, shoppingList, shoppingPantryItems, shoppingListLoading,
+    shoppingListUpdated, nutritionUpdated, dismissShoppingListUpdated, dismissNutritionUpdated,
+    addPantryItemToShoppingList,
     generating, generationError, partialPlan, isStreaming,
     startGeneration, retryGeneration, clearGenerationError,
   ]);
