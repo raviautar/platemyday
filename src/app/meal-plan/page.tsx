@@ -13,7 +13,7 @@ import { GeneratingAnimation } from '@/components/ui/GeneratingAnimation';
 import { StreamingMealView } from '@/components/meal-plan/StreamingMealView';
 import { PieChartIcon } from '@/components/ui/PieChartIcon';
 import { useMealPlanGeneration } from '@/hooks/useMealPlanGeneration';
-import { History, ShoppingCart, AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
+import { History, ShoppingCart, AlertTriangle, RefreshCw, Trash2, Calendar } from 'lucide-react';
 
 export default function MealPlanPage() {
   const { recipes } = useRecipes();
@@ -162,9 +162,7 @@ export default function MealPlanPage() {
           <div className="bg-white rounded-xl border border-border p-12 text-center">
             <div className="max-w-md mx-auto">
               <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
+                <Calendar className="w-8 h-8 text-emerald-600" />
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">No meal plan yet</h3>
               <p className="text-sm text-muted">
