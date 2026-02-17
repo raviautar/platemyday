@@ -1,19 +1,20 @@
 'use client';
 
+import { memo } from 'react';
 import { Recipe } from '@/types';
 import { getTagDotColor } from '@/lib/tag-colors';
 
 interface RecipeCardProps {
   recipe: Recipe;
-  onClick: () => void;
+  onSelect: (recipe: Recipe) => void;
 }
 
-export function RecipeCard({ recipe, onClick }: RecipeCardProps) {
+const RecipeCardComponent = ({ recipe, onSelect }: RecipeCardProps) => {
   const totalTime = recipe.prepTimeMinutes + recipe.cookTimeMinutes;
 
   return (
     <button
-      onClick={onClick}
+      onClick={() => onSelect(recipe)}
       className="w-full text-left bg-white rounded-xl border border-border p-4 hover:shadow-md hover:border-primary/30 transition-all"
     >
       <h3 className="font-semibold text-foreground line-clamp-1">{recipe.title}</h3>
@@ -36,4 +37,6 @@ export function RecipeCard({ recipe, onClick }: RecipeCardProps) {
       )}
     </button>
   );
-}
+};
+
+export const RecipeCard = memo(RecipeCardComponent);

@@ -1,5 +1,6 @@
 'use client';
 
+import { useMemo } from 'react';
 import { Recipe, RecipeFilters } from '@/types';
 import { RecipeCard } from './RecipeCard';
 import { Button } from '@/components/ui/Button';
@@ -14,16 +15,18 @@ interface RecipeListProps {
 }
 
 export function RecipeList({ recipes, searchQuery, filters, onSelectRecipe, onCreateRecipe }: RecipeListProps) {
-  const filtered = recipes.filter(r => {
-    const matchesSearch =
-      !searchQuery.trim() ||
-      r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
-    const matchesTags = filters.tags.length === 0 || filters.tags.some(tag => r.tags.includes(tag));
-    const matchesPrepTime =
-      filters.maxPrepTimeMinutes == null || r.prepTimeMinutes <= filters.maxPrepTimeMinutes;
-    return matchesSearch && matchesTags && matchesPrepTime;
-  });
+  const filtered = useMemo(() => {
+    return recipes.filter(r => {
+      const matchesSearch =
+        !searchQuery.trim() ||
+        r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesTags = filters.tags.length === 0 || filters.tags.some(tag => r.tags.includes(tag));
+      const matchesPrepTime =
+        filters.maxPrepTimeMinutes == null || r.prepTimeMinutes <= filters.maxPrepTimeMinutes;
+      return matchesSearch && matchesTags && matchesPrepTime;
+    });
+  }, [recipes, searchQuery, filters]);
 
   return (
     <div className="space-y-4">
@@ -54,7 +57,7 @@ export function RecipeList({ recipes, searchQuery, filters, onSelectRecipe, onCr
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
         {filtered.map(recipe => (
-          <RecipeCard key={recipe.id} recipe={recipe} onClick={() => onSelectRecipe(recipe)} />
+          <RecipeCard key={recipe.id} recipe={recipe} onSelect={onSelectRecipe} />
         ))}
       </div>
     </div>
