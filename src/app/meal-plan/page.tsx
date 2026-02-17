@@ -57,6 +57,7 @@ export default function MealPlanPage() {
             type="button"
             aria-label="History of past generations"
             title="History"
+            data-tour="meal-plan-history"
             onClick={() => setHistoryOpen(true)}
             className="p-1.5 hover:bg-surface rounded-lg transition-colors text-muted hover:text-foreground"
           >
@@ -85,6 +86,7 @@ export default function MealPlanPage() {
                 dismissShoppingListUpdated();
               }
             }}
+            data-tour="meal-plan-shopping"
             disabled={!weekPlan && !shoppingListLoading}
             className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-sm shrink-0 transition-all ${weekPlan
               ? 'bg-gradient-to-r from-primary to-emerald-600 text-white hover:from-primary-dark hover:to-emerald-700 shadow-md hover:shadow-lg'

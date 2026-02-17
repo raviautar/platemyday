@@ -6,7 +6,7 @@ import type { BillingInfo } from '@/types';
 
 interface BillingContextValue extends BillingInfo {
   loading: boolean;
-  refetch: () => Promise<void>;
+  refetch: () => Promise<BillingInfo | null>;
 }
 
 const BillingContext = createContext<BillingContextValue>({
@@ -16,7 +16,7 @@ const BillingContext = createContext<BillingContextValue>({
   creditsLimit: 10,
   creditsRemaining: 10,
   loading: true,
-  refetch: async () => {},
+  refetch: async () => null,
 });
 
 export function BillingProvider({ children }: { children: ReactNode }) {
@@ -29,29 +29,36 @@ export function BillingProvider({ children }: { children: ReactNode }) {
     creditsRemaining: 10,
   });
   const [loading, setLoading] = useState(true);
+  const hasFetchedRef = useRef(false);
   const prevUserIdRef = useRef<string | null | undefined>(undefined);
 
-  const fetchBilling = useCallback(async () => {
-    if (!isLoaded) return;
+  const fetchBilling = useCallback(async (): Promise<BillingInfo | null> => {
+    if (!isLoaded) return null;
     if (!userId && !anonymousId) {
       setLoading(false);
-      return;
+      return null;
     }
 
     try {
-      setLoading(true);
+      // Only show loading spinner on initial fetch, not on refetch/polling
+      if (!hasFetchedRef.current) {
+        setLoading(true);
+      }
       const params = new URLSearchParams();
       if (anonymousId) params.set('anonymousId', anonymousId);
       const res = await fetch(`/api/billing/credits?${params}`);
       if (res.ok) {
         const data = await res.json();
         setBilling(data);
+        return data;
       }
     } catch (err) {
       console.error('Failed to fetch billing info:', err);
     } finally {
+      hasFetchedRef.current = true;
       setLoading(false);
     }
+    return null;
   }, [userId, anonymousId, isLoaded]);
 
   useEffect(() => {

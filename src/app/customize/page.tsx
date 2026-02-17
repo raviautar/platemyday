@@ -53,7 +53,7 @@ export default function CustomizePage() {
         </button>
       </div>
 
-      <div className="space-y-6 max-w-2xl">
+      <div className="space-y-6 max-w-2xl" data-tour="customize-preferences">
         {/* General Tab */}
         {activeTab === 'general' && (
           <>

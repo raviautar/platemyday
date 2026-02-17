@@ -135,6 +135,7 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
         <div className="flex gap-1.5 sm:gap-2 md:gap-3">
           <button
             onClick={() => setShowCustomize(true)}
+            data-tour="meal-plan-customize"
             className="flex items-center justify-center gap-2 px-3 sm:px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 text-muted hover:text-primary transition-all duration-200 relative"
             aria-label="Customize meal plan"
           >
@@ -148,6 +149,7 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
           <Button
             onClick={handleGenerate}
             disabled={loading}
+            data-tour="meal-plan-generate"
             size="lg"
             className="flex-1 gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base min-w-0"
           >

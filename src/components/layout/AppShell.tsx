@@ -14,6 +14,8 @@ import { ToastProvider } from '@/components/ui/Toast';
 import { getAnonymousId, clearAnonymousId } from '@/lib/anonymous-id';
 import { migrateAnonymousData } from '@/lib/supabase/db';
 import { useBilling } from '@/contexts/BillingContext';
+import { TourProvider } from '@/contexts/TourContext';
+import { TourOverlay } from '@/components/tour/TourOverlay';
 import { posthog } from '@/lib/analytics/posthog-client';
 import { EVENTS } from '@/lib/analytics/events';
 
@@ -47,30 +49,33 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const isHomePage = pathname === '/';
 
   return (
-    <SettingsProvider>
-      <RecipeProvider>
-        <BillingProvider>
-          <ToastProvider>
-            <MealPlanProvider>
-              <AnonymousMigration />
-              <div className="min-h-screen bg-background">
-                {!isHomePage && <TopBanner />}
-                {!isHomePage && <Sidebar />}
-                <BottomNav />
-                <main className={`${isHomePage ? '' : 'md:ml-60 pb-16 md:pb-0 pt-14'} min-h-screen`}>
-                  {isHomePage ? (
-                    children
-                  ) : (
-                    <div className="max-w-6xl mx-auto p-4 md:p-6">
-                      {children}
-                    </div>
-                  )}
-                </main>
-              </div>
-            </MealPlanProvider>
-          </ToastProvider>
-        </BillingProvider>
-      </RecipeProvider>
-    </SettingsProvider>
+    <TourProvider>
+      <SettingsProvider>
+        <RecipeProvider>
+          <BillingProvider>
+            <ToastProvider>
+              <MealPlanProvider>
+                <AnonymousMigration />
+                <div className="min-h-screen bg-background">
+                  {!isHomePage && <TopBanner />}
+                  {!isHomePage && <Sidebar />}
+                  <BottomNav />
+                  <main className={`${isHomePage ? '' : 'md:ml-60 pb-16 md:pb-0 pt-14'} min-h-screen`}>
+                    {isHomePage ? (
+                      children
+                    ) : (
+                      <div className="max-w-6xl mx-auto p-4 md:p-6">
+                        {children}
+                      </div>
+                    )}
+                  </main>
+                  <TourOverlay />
+                </div>
+              </MealPlanProvider>
+            </ToastProvider>
+          </BillingProvider>
+        </RecipeProvider>
+      </SettingsProvider>
+    </TourProvider>
   );
 }

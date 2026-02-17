@@ -73,7 +73,7 @@ export async function POST(req: Request) {
         const priceId = sub.items.data[0]?.price.id;
         const planId = sub.status === 'active' ? getPlanIdFromPriceId(priceId) : 'free';
 
-        await sb.from('user_billing').upsert(
+        const { error: upsertError } = await sb.from('user_billing').upsert(
           {
             user_id: userId,
             stripe_customer_id: session.customer as string,
@@ -84,6 +84,10 @@ export async function POST(req: Request) {
           },
           { onConflict: 'user_id' },
         );
+
+        if (upsertError) {
+          console.error('Failed to upsert billing for checkout.session.completed:', upsertError);
+        }
 
         if (sub.status === 'active') {
           trackServerEvent(EVENTS.SUBSCRIPTION_ACTIVATED, userId, '', { plan: planId });
@@ -105,7 +109,7 @@ export async function POST(req: Request) {
       const priceId = sub.items.data[0]?.price.id;
       const planId = sub.status === 'active' ? getPlanIdFromPriceId(priceId) : 'free';
 
-      await sb.from('user_billing').upsert(
+      const { error: upsertError } = await sb.from('user_billing').upsert(
         {
           user_id: userId,
           stripe_customer_id: sub.customer as string,
@@ -116,6 +120,10 @@ export async function POST(req: Request) {
         },
         { onConflict: 'user_id' },
       );
+
+      if (upsertError) {
+        console.error('Failed to upsert billing:', upsertError);
+      }
 
       if (sub.status === 'active' && event.type === 'customer.subscription.created') {
         trackServerEvent(EVENTS.SUBSCRIPTION_ACTIVATED, userId, '', { plan: planId });

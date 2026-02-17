@@ -4,16 +4,18 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, Sparkles, Calendar, Crown, Download, Heart } from 'lucide-react';
+import { ChevronDown, Sparkles, Calendar, Crown, Download, Heart, Map } from 'lucide-react';
 import { TopBanner } from '@/components/layout/TopBanner';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
+import { useTour } from '@/contexts/TourContext';
 
 export default function HomePage() {
   const [showTopBanner, setShowTopBanner] = useState(false);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const { track } = useAnalytics();
+  const { startTour } = useTour();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -71,7 +73,7 @@ export default function HomePage() {
               PlateMyDay
             </span>
           </h1>
-          <div className="flex justify-center mb-10">
+          <div className="flex flex-col items-center gap-3 mb-10">
             <Link
               href="/meal-plan"
               onClick={() => track(EVENTS.LANDING_CTA_CLICKED, { cta: 'hero_get_started' })}
@@ -80,6 +82,16 @@ export default function HomePage() {
               <Sparkles className="w-5 h-5 md:w-6 md:h-6" />
               Let's start!
             </Link>
+            <button
+              onClick={() => {
+                track(EVENTS.LANDING_CTA_CLICKED, { cta: 'take_a_tour' });
+                startTour();
+              }}
+              className="inline-flex items-center gap-1.5 text-sm text-primary/80 hover:text-primary transition-colors"
+            >
+              <Map className="w-3.5 h-3.5" />
+              Take a Tour
+            </button>
           </div>
           <div className="flex justify-center">
             <ChevronDown className="w-7 h-7 text-primary/70 animate-bounce" />

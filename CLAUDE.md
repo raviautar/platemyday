@@ -21,6 +21,9 @@ bun run dev          # Start dev server (Turbopack)
 bun run build        # Production build (uses --webpack flag)
 bun run start        # Start production server
 bun run lint         # ESLint
+
+# Required for testing payment flows locally:
+stripe listen --forward-to localhost:3001/api/webhooks/stripe
 ```
 
 ## Project Structure
@@ -99,7 +102,9 @@ supabase/
 - **Database tables:** `user_credits` (credit usage), `user_billing` (Stripe subscription state), `user_billing_overrides` (admin exceptions)
 - **Credit check flow:** `generate-meal-plan` route calls `checkCredits()` → returns 402 if exhausted → `MealPlanContext` sets `isPaywalled` state
 - **BillingContext:** Fetches `/api/billing/credits` on mount and after each generation. Exposes `plan`, `unlimited`, `creditsRemaining`, `refetch()`
-- **Stripe integration:** Checkout sessions for subscriptions/one-time, webhook handler for lifecycle events, customer portal for management
+- **Stripe integration:** Checkout sessions for subscriptions/one-time, webhook handler for lifecycle events, customer portal for management. See `docs/stripe-webhooks.md` for full webhook setup guide
+- **Stripe webhooks (local dev):** Requires `stripe listen --forward-to localhost:3001/api/webhooks/stripe` running in a separate terminal. The `STRIPE_WEBHOOK_SECRET` in `.env.local` must match the signing secret output by `stripe listen` (changes on each restart)
+- **Post-checkout polling:** After Stripe redirects to `/upgrade?success=true`, the page polls `/api/billing/credits` up to 8 times (every 2s) waiting for the webhook to update `user_billing`. Uses a `useRef` for the refetch callback to prevent the polling effect from restarting when identity hydrates
 - **Admin overrides:** `POST /api/admin/override-user` with `x-admin-key` header to grant unlimited access or extra credits per user
 - **Anonymous migration:** `migrateAnonymousData()` merges anonymous credit usage into authenticated user on sign-in
 - **Atomic credit consumption:** `consume_credit` Supabase RPC prevents race conditions
