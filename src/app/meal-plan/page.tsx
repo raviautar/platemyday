@@ -15,7 +15,7 @@ import { PieChartIcon } from '@/components/ui/PieChartIcon';
 import { useMealPlanGeneration } from '@/hooks/useMealPlanGeneration';
 import { useBilling } from '@/contexts/BillingContext';
 import Link from 'next/link';
-import { History, ShoppingCart, AlertTriangle, RefreshCw, Trash2, Crown } from 'lucide-react';
+import { History, ShoppingCart, AlertTriangle, RefreshCw, Trash2, Crown, Settings2, Sparkles } from 'lucide-react';
 
 export default function MealPlanPage() {
   const { recipes } = useRecipes();
@@ -182,17 +182,57 @@ export default function MealPlanPage() {
             onAddToLibrary={handleAddToLibrary}
           />
         ) : (
-          <div className="bg-white rounded-xl border border-border p-12 text-center">
-            <div className="max-w-md mx-auto">
-              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-full flex items-center justify-center">
-                <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          <div className="-mt-2">
+            <div className="flex justify-between items-end">
+              {/* Left doodle — curves left then up toward Customize */}
+              <div className="flex flex-col-reverse items-center gap-2 sm:gap-3 w-36 sm:w-44 md:w-52">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1.5 text-slate-400">
+                    <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="text-base sm:text-lg md:text-xl font-semibold font-[family-name:var(--font-outfit)]">
+                      Customize first
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-400/80 mt-1 font-[family-name:var(--font-outfit)]">
+                    Set your diet, cuisines, and ingredients you want to use up
+                  </p>
+                </div>
+                <svg viewBox="0 0 80 200" className="w-12 sm:w-14 md:w-16 h-auto" fill="none">
+                  <path
+                    d="M50 195 C48 175, 55 155, 58 140 C62 120, 55 105, 40 95 C25 85, 15 75, 12 60 C9 45, 15 30, 22 20 C28 12, 30 6, 30 2"
+                    stroke="#94a3b8"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeDasharray="5 4"
+                  />
+                  <path d="M25 6 L30 0 L35 7" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">No meal plan yet</h3>
-              <p className="text-sm text-muted">
-                Hit Generate to create a weekly meal plan powered by AI. Customize your week first for the best results.
-              </p>
+
+              {/* Right doodle — curves right then up toward Generate */}
+              <div className="flex flex-col-reverse items-center gap-2 sm:gap-3 w-36 sm:w-44 md:w-52">
+                <div className="text-center">
+                  <div className="flex items-center justify-center gap-1.5 text-slate-400">
+                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+                    <span className="text-base sm:text-lg md:text-xl font-semibold font-[family-name:var(--font-outfit)]">
+                      Then generate!
+                    </span>
+                  </div>
+                  <p className="text-xs sm:text-sm text-slate-400/80 mt-1 font-[family-name:var(--font-outfit)]">
+                    Get personalized meal plans for the next week!
+                  </p>
+                </div>
+                <svg viewBox="0 0 80 200" className="w-12 sm:w-14 md:w-16 h-auto" fill="none">
+                  <path
+                    d="M30 195 C32 175, 25 155, 22 140 C18 120, 25 105, 40 95 C55 85, 65 75, 68 60 C71 45, 65 30, 58 20 C52 12, 50 6, 50 2"
+                    stroke="#94a3b8"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeDasharray="5 4"
+                  />
+                  <path d="M45 6 L50 0 L55 7" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
             </div>
           </div>
         )}

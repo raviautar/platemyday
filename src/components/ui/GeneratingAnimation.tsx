@@ -1,7 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { UtensilsCrossed } from 'lucide-react';
+
+const ACTION_IMAGES = [
+  '/assets/actions/cooking.png',
+  '/assets/actions/cutting.png',
+  '/assets/actions/baking.png',
+  '/assets/actions/ladle.png',
+  '/assets/actions/pancake.png',
+  '/assets/actions/rolling.png',
+  '/assets/actions/salad.png',
+];
 
 const LOADING_MESSAGES = [
   'Teaching a tomato to tango...',
@@ -12,7 +21,7 @@ const LOADING_MESSAGES = [
   'Interviewing potatoes for the role...',
   'Hiding vegetables in plain sight...',
   'Bribing the oven to preheat faster...',
-  'Whispering sweet nothings to the souffl\u00e9...',
+  'Whispering sweet nothings to the soufflé...',
   'Training chopsticks for beginners...',
   'Conducting a symphony of flavors...',
   'Sending the garlic on a spa day...',
@@ -43,6 +52,7 @@ interface GeneratingAnimationProps {
 
 export function GeneratingAnimation({ message, compact = false }: GeneratingAnimationProps) {
   const [messageIndex, setMessageIndex] = useState(0);
+  const [imageIndex, setImageIndex] = useState(0);
   const [elapsed, setElapsed] = useState(0);
 
   useEffect(() => {
@@ -67,6 +77,13 @@ export function GeneratingAnimation({ message, compact = false }: GeneratingAnim
     return () => clearInterval(timer);
   }, [message]);
 
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setImageIndex(prev => (prev + 1) % ACTION_IMAGES.length);
+    }, 3500);
+    return () => clearInterval(timer);
+  }, []);
+
   const displayMessage = message || LOADING_MESSAGES[messageIndex];
   const minutes = Math.floor(elapsed / 60);
   const seconds = elapsed % 60;
@@ -77,18 +94,16 @@ export function GeneratingAnimation({ message, compact = false }: GeneratingAnim
   if (compact) {
     return (
       <div className="flex items-center justify-center gap-3 py-4 px-4">
-        <div className="relative">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center">
-            <UtensilsCrossed
-              className="w-4 h-4 text-primary animate-spin"
-              style={{ animationDuration: '3s' }}
-              strokeWidth={1.5}
+        <div className="relative w-12 h-12 shrink-0">
+          {ACTION_IMAGES.map((src, i) => (
+            <img
+              key={src}
+              src={src}
+              alt=""
+              className="absolute inset-0 w-12 h-12 object-contain transition-opacity duration-700"
+              style={{ opacity: i === imageIndex ? 1 : 0 }}
             />
-          </div>
-          <div
-            className="absolute inset-0 rounded-full border-2 border-primary/30 border-t-primary animate-spin"
-            style={{ animationDuration: '1.5s' }}
-          />
+          ))}
         </div>
         <p className="text-sm font-medium text-foreground">{displayMessage}</p>
         <p className="text-xs text-muted tabular-nums">{timeDisplay}</p>
@@ -98,18 +113,16 @@ export function GeneratingAnimation({ message, compact = false }: GeneratingAnim
 
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="relative mb-6">
-        <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center animate-pulse">
-          <UtensilsCrossed
-            className="w-10 h-10 text-primary animate-spin"
-            style={{ animationDuration: '3s' }}
-            strokeWidth={1.5}
+      <div className="relative w-28 h-28 sm:w-32 sm:h-32 mb-6">
+        {ACTION_IMAGES.map((src, i) => (
+          <img
+            key={src}
+            src={src}
+            alt=""
+            className="absolute inset-0 w-full h-full object-contain transition-opacity duration-700"
+            style={{ opacity: i === imageIndex ? 1 : 0 }}
           />
-        </div>
-        <div
-          className="absolute inset-0 rounded-full border-2 border-primary/30 border-t-primary animate-spin"
-          style={{ animationDuration: '1.5s' }}
-        />
+        ))}
       </div>
       <p className="text-lg font-medium text-foreground mb-1 text-center transition-opacity duration-300">
         {displayMessage}
