@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/client';
+import { createServiceClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     return Response.json({ error: 'userId is required' }, { status: 400 });
   }
 
-  const sb = createClient();
+  const sb = createServiceClient();
   const { error } = await sb.from('user_billing_overrides').upsert(
     {
       user_id: userId,

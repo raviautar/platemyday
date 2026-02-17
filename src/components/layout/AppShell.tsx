@@ -13,11 +13,13 @@ import { TopBanner } from './TopBanner';
 import { ToastProvider } from '@/components/ui/Toast';
 import { getAnonymousId, clearAnonymousId } from '@/lib/anonymous-id';
 import { migrateAnonymousData } from '@/lib/supabase/db';
+import { useBilling } from '@/contexts/BillingContext';
 import { posthog } from '@/lib/analytics/posthog-client';
 import { EVENTS } from '@/lib/analytics/events';
 
 function AnonymousMigration() {
   const { user, isLoaded } = useUser();
+  const { refetch: refetchBilling } = useBilling();
   const migrated = useRef(false);
 
   useEffect(() => {
@@ -31,10 +33,11 @@ function AnonymousMigration() {
           posthog.capture(EVENTS.ANONYMOUS_DATA_MIGRATED, { previous_anonymous_id: anonymousId });
           posthog.capture(EVENTS.USER_SIGNED_UP);
           clearAnonymousId();
+          refetchBilling();
         })
         .catch((err) => console.error('Migration failed:', err));
     }
-  }, [user, isLoaded]);
+  }, [user, isLoaded, refetchBilling]);
 
   return null;
 }

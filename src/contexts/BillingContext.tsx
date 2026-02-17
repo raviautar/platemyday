@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
 import type { BillingInfo } from '@/types';
 
@@ -29,6 +29,7 @@ export function BillingProvider({ children }: { children: ReactNode }) {
     creditsRemaining: 10,
   });
   const [loading, setLoading] = useState(true);
+  const prevUserIdRef = useRef<string | null | undefined>(undefined);
 
   const fetchBilling = useCallback(async () => {
     if (!isLoaded) return;
@@ -38,6 +39,7 @@ export function BillingProvider({ children }: { children: ReactNode }) {
     }
 
     try {
+      setLoading(true);
       const params = new URLSearchParams();
       if (anonymousId) params.set('anonymousId', anonymousId);
       const res = await fetch(`/api/billing/credits?${params}`);
@@ -55,6 +57,21 @@ export function BillingProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetchBilling();
   }, [fetchBilling]);
+
+  // Detect identity changes (anonymous → authenticated) and refetch
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (prevUserIdRef.current === undefined) {
+      prevUserIdRef.current = userId ?? null;
+      return;
+    }
+    const prevUserId = prevUserIdRef.current;
+    prevUserIdRef.current = userId ?? null;
+    if (!prevUserId && userId) {
+      // User just signed in — refetch with slight delay for migration to complete
+      setTimeout(() => fetchBilling(), 1500);
+    }
+  }, [userId, isLoaded, fetchBilling]);
 
   return (
     <BillingContext.Provider value={{ ...billing, loading, refetch: fetchBilling }}>

@@ -13,7 +13,9 @@ import { GeneratingAnimation } from '@/components/ui/GeneratingAnimation';
 import { StreamingMealView } from '@/components/meal-plan/StreamingMealView';
 import { PieChartIcon } from '@/components/ui/PieChartIcon';
 import { useMealPlanGeneration } from '@/hooks/useMealPlanGeneration';
-import { History, ShoppingCart, AlertTriangle, RefreshCw, Trash2 } from 'lucide-react';
+import { useBilling } from '@/contexts/BillingContext';
+import Link from 'next/link';
+import { History, ShoppingCart, AlertTriangle, RefreshCw, Trash2, Crown } from 'lucide-react';
 
 export default function MealPlanPage() {
   const { recipes } = useRecipes();
@@ -28,6 +30,7 @@ export default function MealPlanPage() {
   const {
     loading,
     generationError,
+    isPaywalled,
     partialPlan,
     isStreaming,
     handleGenerate,
@@ -35,6 +38,7 @@ export default function MealPlanPage() {
     handleAddToLibrary,
     clearWeekPlan,
   } = useMealPlanGeneration();
+  const { unlimited, creditsRemaining, loading: billingLoading } = useBilling();
 
   const [historyOpen, setHistoryOpen] = useState(false);
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
@@ -132,6 +136,25 @@ export default function MealPlanPage() {
               <StreamingMealView partialPlan={partialPlan!} />
             )}
           </>
+        ) : isPaywalled ? (
+          <div className="bg-white rounded-xl border border-amber-200 p-8 text-center">
+            <div className="max-w-md mx-auto">
+              <div className="w-14 h-14 mx-auto mb-4 bg-amber-50 rounded-full flex items-center justify-center">
+                <Crown className="w-7 h-7 text-amber-500" />
+              </div>
+              <h3 className="text-lg font-semibold text-foreground mb-2">You&apos;ve used all your free generations</h3>
+              <p className="text-sm text-muted mb-6">
+                Upgrade to a paid plan for unlimited meal plan generations, or come back later.
+              </p>
+              <Link
+                href="/upgrade"
+                className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium text-sm hover:from-amber-600 hover:to-orange-600 shadow-sm hover:shadow-md transition-all"
+              >
+                <Crown className="w-4 h-4" />
+                Upgrade Now
+              </Link>
+            </div>
+          </div>
         ) : generationError ? (
           <div className="bg-white rounded-xl border border-red-200 p-8 text-center">
             <div className="max-w-md mx-auto">

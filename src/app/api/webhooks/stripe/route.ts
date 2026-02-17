@@ -1,13 +1,13 @@
 import Stripe from 'stripe';
 import { getStripe } from '@/lib/stripe';
-import { createClient } from '@/lib/supabase/client';
+import { createServiceClient } from '@/lib/supabase/server';
 import { trackServerEvent } from '@/lib/analytics/posthog-server';
 import { EVENTS } from '@/lib/analytics/events';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-async function getUserIdFromCustomer(sb: ReturnType<typeof createClient>, customerId: string): Promise<string | null> {
+async function getUserIdFromCustomer(sb: ReturnType<typeof createServiceClient>, customerId: string): Promise<string | null> {
   const { data } = await sb
     .from('user_billing')
     .select('user_id')
@@ -39,7 +39,7 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
-  const sb = createClient();
+  const sb = createServiceClient();
 
   switch (event.type) {
     case 'checkout.session.completed': {
@@ -62,8 +62,33 @@ export async function POST(req: Request) {
         );
 
         trackServerEvent(EVENTS.SUBSCRIPTION_ACTIVATED, userId, '', { plan: 'lifetime' });
+      } else if (session.mode === 'subscription' && session.subscription) {
+        // Subscription purchase — set billing immediately so the user is recognized
+        // as premium even before the customer.subscription.created event arrives
+        const subId = typeof session.subscription === 'string'
+          ? session.subscription
+          : session.subscription.id;
+
+        const sub = await getStripe().subscriptions.retrieve(subId);
+        const priceId = sub.items.data[0]?.price.id;
+        const planId = sub.status === 'active' ? getPlanIdFromPriceId(priceId) : 'free';
+
+        await sb.from('user_billing').upsert(
+          {
+            user_id: userId,
+            stripe_customer_id: session.customer as string,
+            plan_id: planId,
+            subscription_id: sub.id,
+            subscription_status: sub.status,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'user_id' },
+        );
+
+        if (sub.status === 'active') {
+          trackServerEvent(EVENTS.SUBSCRIPTION_ACTIVATED, userId, '', { plan: planId });
+        }
       }
-      // Subscription activation is handled by customer.subscription.created/updated
       break;
     }
 

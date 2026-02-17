@@ -49,10 +49,29 @@ function UpgradeContent() {
     track(EVENTS.UPGRADE_PAGE_VIEWED);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Poll billing data after successful checkout — webhook may not have processed yet
   useEffect(() => {
-    if (success) {
-      refetch();
-    }
+    if (!success) return;
+
+    let attempts = 0;
+    const maxAttempts = 8;
+
+    const poll = async () => {
+      await refetch();
+      attempts++;
+    };
+
+    // Immediate fetch + retries with increasing delay
+    poll();
+    const interval = setInterval(() => {
+      if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        return;
+      }
+      poll();
+    }, 2000);
+
+    return () => clearInterval(interval);
   }, [success, refetch]);
 
   async function handleCheckout(selectedPlan: 'monthly' | 'annual' | 'lifetime') {
@@ -95,8 +114,16 @@ function UpgradeContent() {
   return (
     <div className="max-w-6xl mx-auto">
       {success && (
-        <div className="mb-6 bg-primary/10 border border-primary/30 rounded-xl p-4 text-center">
-          <p className="text-primary font-semibold">Payment successful! You now have unlimited meal plan generation.</p>
+        <div className="mb-6 bg-primary/10 border border-primary/30 rounded-xl p-6 text-center">
+          <div className="w-12 h-12 mx-auto mb-3 bg-primary/20 rounded-full flex items-center justify-center">
+            <Check className="w-6 h-6 text-primary" />
+          </div>
+          <p className="text-primary font-semibold text-lg mb-1">Payment successful!</p>
+          {isActivePaid ? (
+            <p className="text-muted text-sm">You now have unlimited meal plan generation. Head to your <a href="/meal-plan" className="text-primary underline font-medium">meal plan</a> to get started.</p>
+          ) : (
+            <p className="text-muted text-sm">Activating your plan... This may take a moment.</p>
+          )}
         </div>
       )}
 

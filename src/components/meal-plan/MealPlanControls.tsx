@@ -8,6 +8,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Settings2, Sparkles, X, Plus, ChefHat, Leaf, Flame, Zap, UtensilsCrossed, ChevronDown, ChevronRight } from 'lucide-react';
 import { CUISINE_OPTIONS } from '@/lib/constants';
 import { PreferencesSection } from '@/components/settings/PreferencesSection';
+import { useBilling } from '@/contexts/BillingContext';
 
 export interface AdHocCustomizations {
   pantryIngredients: string[];
@@ -40,6 +41,7 @@ interface MealPlanControlsProps {
 }
 
 export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealPlanControlsProps) {
+  const { unlimited, creditsRemaining, loading: billingLoading } = useBilling();
   const [customizations, setCustomizations] = useState<AdHocCustomizations>(EMPTY_CUSTOMIZATIONS);
   const [showCustomize, setShowCustomize] = useState(false);
   const [ingredientInput, setIngredientInput] = useState('');
@@ -162,6 +164,16 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
             )}
           </Button>
         </div>
+
+        {!billingLoading && !unlimited && (
+          <p className={`text-xs mt-2 text-center ${
+            (creditsRemaining ?? 0) <= 2 ? 'text-accent font-medium' : 'text-muted'
+          }`}>
+            {(creditsRemaining ?? 0) === 0
+              ? 'No free generations remaining'
+              : `${creditsRemaining} free generation${creditsRemaining === 1 ? '' : 's'} remaining`}
+          </p>
+        )}
 
       </div>
 

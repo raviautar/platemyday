@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { getStripe, STRIPE_PRICES } from '@/lib/stripe';
-import { createClient } from '@/lib/supabase/client';
+import { createServiceClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
     const mode = plan === 'lifetime' ? 'payment' as const : 'subscription' as const;
 
     // Get or create Stripe customer
-    const sb = createClient();
+    const sb = createServiceClient();
     const { data: billing } = await sb
       .from('user_billing')
       .select('stripe_customer_id')

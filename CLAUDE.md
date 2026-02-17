@@ -132,6 +132,7 @@ PostHog tracks 5 high-level product metrics. **When adding new features or modif
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
+SUPABASE_SERVICE_ROLE_KEY=              # Service role key for API routes (bypasses RLS)
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
 CLERK_SECRET_KEY=
 GOOGLE_GENERATIVE_AI_API_KEY=

@@ -2,8 +2,51 @@
 
 import { usePathname } from 'next/navigation';
 import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
-import { Crown, UserCircle } from 'lucide-react';
+import { Crown, UserCircle, Check } from 'lucide-react';
 import Link from 'next/link';
+import { useBilling } from '@/contexts/BillingContext';
+
+function CreditBadgeCrown() {
+  const { unlimited, creditsRemaining, loading } = useBilling();
+
+  const badge = (() => {
+    if (loading) return null;
+
+    if (unlimited) {
+      return (
+        <span className="absolute -top-1 -right-1 flex items-center justify-center h-4 w-4 rounded-full bg-white text-primary text-[9px] font-bold shadow-sm">
+          <Check className="w-2.5 h-2.5" strokeWidth={3} />
+        </span>
+      );
+    }
+
+    const remaining = creditsRemaining ?? 0;
+    const isZero = remaining === 0;
+
+    return (
+      <span className={`absolute -top-1 -right-1 flex items-center justify-center h-4 min-w-[16px] px-0.5 rounded-full text-[9px] font-bold shadow-sm ${
+        isZero ? 'bg-accent text-white' : 'bg-white text-primary'
+      }`}>
+        {remaining}
+      </span>
+    );
+  })();
+
+  return (
+    <Link
+      href="/upgrade"
+      className="group relative p-1.5 sm:p-2 rounded-full hover:bg-white/10 transition-all duration-200 flex-shrink-0"
+      aria-label="Upgrade"
+    >
+      <Crown
+        className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-yellow-300 drop-shadow-[0_0_8px_rgba(253,224,71,0.6)] transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 group-hover:drop-shadow-[0_0_12px_rgba(253,224,71,0.9)]"
+        strokeWidth={2.5}
+        fill="rgba(253, 224, 71, 0.3)"
+      />
+      {badge}
+    </Link>
+  );
+}
 
 export function TopBanner() {
   const pathname = usePathname();
@@ -58,17 +101,8 @@ export function TopBanner() {
       </div>
       
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-        <Link 
-          href="/upgrade" 
-          className="group p-1.5 sm:p-2 rounded-full hover:bg-white/10 transition-all duration-200 flex-shrink-0"
-          aria-label="Upgrade"
-        >
-          <Crown 
-            className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-yellow-300 drop-shadow-[0_0_8px_rgba(253,224,71,0.6)] transition-all duration-300 group-hover:scale-110 group-hover:rotate-12 group-hover:drop-shadow-[0_0_12px_rgba(253,224,71,0.9)]" 
-            strokeWidth={2.5}
-            fill="rgba(253, 224, 71, 0.3)"
-          />
-        </Link>
+        <CreditBadgeCrown />
+
         
         <SignedOut>
           <SignInButton mode="modal">

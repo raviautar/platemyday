@@ -16,6 +16,7 @@ export function useMealPlanGeneration() {
     weekPlan, setWeekPlan, clearWeekPlan,
     generating: loading,
     generationError,
+    isPaywalled,
     partialPlan,
     isStreaming,
     startGeneration,
@@ -63,6 +64,7 @@ export function useMealPlanGeneration() {
   return {
     loading,
     generationError,
+    isPaywalled,
     partialPlan,
     isStreaming,
     handleGenerate,

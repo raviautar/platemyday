@@ -1,8 +1,8 @@
-import { createClient } from './client';
+import { createServiceClient } from './server';
 import type { BillingInfo, PlanId } from '@/types';
 
 function getSupabase() {
-  return createClient();
+  return createServiceClient();
 }
 
 interface CreditCheck {

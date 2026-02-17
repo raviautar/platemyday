@@ -1,6 +1,6 @@
 import { auth } from '@clerk/nextjs/server';
 import { getStripe } from '@/lib/stripe';
-import { createClient } from '@/lib/supabase/client';
+import { createServiceClient } from '@/lib/supabase/server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,7 +12,7 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const sb = createClient();
+    const sb = createServiceClient();
     const { data: billing } = await sb
       .from('user_billing')
       .select('stripe_customer_id')
