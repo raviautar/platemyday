@@ -368,4 +368,39 @@ export async function migrateAnonymousData(anonymousId: string, userId: string):
       .update({ user_id: userId, anonymous_id: null })
       .eq('anonymous_id', anonymousId);
   }
+
+  // Migrate credits: merge anonymous credits into authenticated user's credits
+  const { data: anonCredits } = await sb
+    .from('user_credits')
+    .select('credits_used, credits_limit')
+    .eq('anonymous_id', anonymousId)
+    .maybeSingle();
+
+  if (anonCredits) {
+    const { data: userCredits } = await sb
+      .from('user_credits')
+      .select('credits_used, credits_limit')
+      .eq('user_id', userId)
+      .maybeSingle();
+
+    if (userCredits) {
+      // Merge: sum credits_used, keep the higher limit
+      await sb
+        .from('user_credits')
+        .update({
+          credits_used: userCredits.credits_used + anonCredits.credits_used,
+          credits_limit: Math.max(userCredits.credits_limit, anonCredits.credits_limit),
+          updated_at: new Date().toISOString(),
+        })
+        .eq('user_id', userId);
+      // Remove the anonymous row
+      await sb.from('user_credits').delete().eq('anonymous_id', anonymousId);
+    } else {
+      // Transfer anonymous credits to user
+      await sb
+        .from('user_credits')
+        .update({ user_id: userId, anonymous_id: null, updated_at: new Date().toISOString() })
+        .eq('anonymous_id', anonymousId);
+    }
+  }
 }

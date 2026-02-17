@@ -8,7 +8,13 @@
       "Bash(bun run:*)",
       "Bash(bun run dev:*)",
       "Bash(bun run build:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "WebFetch(domain:www.pedroalonso.net)",
+      "WebFetch(domain:makerkit.dev)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:clerk.com)",
+      "Bash(node -e:*)"
     ]
   }
 }

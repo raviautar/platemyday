@@ -8,6 +8,7 @@ import {
   validateAndRateLimit,
   getUserPreferencesPrompt,
 } from '@/lib/ai-guardrails';
+import { checkCredits, consumeCredit } from '@/lib/supabase/billing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -23,6 +24,29 @@ export async function POST(req: Request) {
     if (validation instanceof Response) return validation;
 
     const { recipes, systemPrompt, preferences, weekStartDay, userId, anonymousId } = validation.data;
+
+    // Credit check — only meal plan generation costs credits
+    const creditCheck = await checkCredits(userId ?? null, anonymousId ?? '');
+    if (!creditCheck.allowed) {
+      trackServerEvent(EVENTS.PAYWALL_HIT, userId ?? null, anonymousId ?? '', {
+        credits_used: creditCheck.creditsUsed,
+        credits_limit: creditCheck.creditsLimit,
+      });
+      return Response.json(
+        {
+          error: 'no_credits',
+          message: 'You\'ve used all your free meal plan generations. Upgrade for unlimited access.',
+          creditsUsed: creditCheck.creditsUsed,
+          creditsLimit: creditCheck.creditsLimit,
+        },
+        { status: 402 },
+      );
+    }
+
+    // Consume credit atomically (skip for unlimited users)
+    if (!creditCheck.unlimited) {
+      await consumeCredit(userId ?? null, anonymousId ?? '');
+    }
 
     const prefsPrompt = await getUserPreferencesPrompt(userId, anonymousId) || preferences || '';
 

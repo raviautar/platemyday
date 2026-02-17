@@ -87,3 +87,15 @@ export interface SuggestedRecipe {
   tags: string[];
   estimatedNutrition?: NutritionInfo;
 }
+
+// ─── Billing ──────────────────────────────────────────────────
+
+export type PlanId = 'free' | 'pro_monthly' | 'pro_annual' | 'lifetime';
+
+export interface BillingInfo {
+  plan: PlanId;
+  unlimited: boolean;
+  creditsUsed: number;
+  creditsLimit: number;
+  creditsRemaining: number | null;
+}

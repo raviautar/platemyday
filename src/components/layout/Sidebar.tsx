@@ -2,8 +2,9 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Heart, Calendar, Settings, Crown } from 'lucide-react';
+import { Heart, Calendar, Settings, Crown, Check } from 'lucide-react';
 import { useMealPlan } from '@/contexts/MealPlanContext';
+import { useBilling } from '@/contexts/BillingContext';
 
 const navItems = [
   { href: '/meal-plan', label: 'Meal Plan', icon: Calendar },
@@ -11,6 +12,37 @@ const navItems = [
   { href: '/customize', label: 'Preferences', icon: Settings },
   { href: '/upgrade', label: 'Upgrade', icon: Crown },
 ];
+
+function CreditBadge({ isActive }: { isActive: boolean }) {
+  const { unlimited, creditsRemaining, loading } = useBilling();
+
+  if (loading) return null;
+
+  if (unlimited) {
+    return (
+      <span className={`absolute -top-1.5 -right-1.5 flex items-center justify-center h-4 w-4 rounded-full text-[9px] font-bold ${
+        isActive ? 'bg-white text-primary' : 'bg-primary text-white'
+      }`}>
+        <Check className="w-2.5 h-2.5" strokeWidth={3} />
+      </span>
+    );
+  }
+
+  const remaining = creditsRemaining ?? 0;
+  const isZero = remaining === 0;
+
+  return (
+    <span className={`absolute -top-1.5 -right-1.5 flex items-center justify-center h-4 min-w-[16px] px-0.5 rounded-full text-[9px] font-bold ${
+      isZero
+        ? 'bg-accent text-white'
+        : isActive
+          ? 'bg-white text-primary'
+          : 'bg-primary text-white'
+    }`}>
+      {remaining}
+    </span>
+  );
+}
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -23,6 +55,7 @@ export function Sidebar() {
           const isActive = pathname.startsWith(item.href);
           const Icon = item.icon;
           const showGenerating = item.href === '/meal-plan' && generating && !isActive;
+          const showCreditBadge = item.href === '/upgrade';
           return (
             <Link
               key={item.href}
@@ -45,6 +78,7 @@ export function Sidebar() {
                     <span className="relative inline-flex rounded-full h-3 w-3 bg-primary" />
                   </span>
                 )}
+                {showCreditBadge && <CreditBadge isActive={isActive} />}
               </span>
               <span>{item.label}</span>
             </Link>

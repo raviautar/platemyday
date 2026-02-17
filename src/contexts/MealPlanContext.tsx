@@ -7,6 +7,7 @@ import { useRecipes } from '@/contexts/RecipeContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useToast } from '@/components/ui/Toast';
+import { useBilling } from '@/contexts/BillingContext';
 import { EVENTS } from '@/lib/analytics/events';
 import { DAYS_OF_WEEK } from '@/lib/constants';
 import {
@@ -59,6 +60,7 @@ interface MealPlanContextType {
   // Generation state
   generating: boolean;
   generationError: string | null;
+  isPaywalled: boolean;
   partialPlan: PartialPlan | null;
   isStreaming: boolean;
   startGeneration: (preferences: string, systemPrompt?: string) => void;
@@ -96,6 +98,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
   const { settings } = useSettings();
   const { track } = useAnalytics();
   const { showToast } = useToast();
+  const { refetch: refetchBilling } = useBilling();
 
   const [weekPlan, setWeekPlanState] = useState<WeekPlan | null>(null);
   const [mealPlanHistory, setMealPlanHistory] = useState<WeekPlan[]>([]);
@@ -112,6 +115,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
   // Generation state
   const [generating, setGenerating] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [isPaywalled, setIsPaywalled] = useState(false);
   const [partialPlan, setPartialPlan] = useState<PartialPlan | null>(null);
   const lastPreferencesRef = useRef('');
 
@@ -405,6 +409,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
   const startGeneration = useCallback((preferences: string, systemPrompt?: string) => {
     setGenerating(true);
     setGenerationError(null);
+    setIsPaywalled(false);
     setPartialPlan(null);
     lastPreferencesRef.current = preferences;
     const isFirstPlan = !weekPlan;
@@ -433,6 +438,13 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
 
         if (!response.ok) {
           const data = await response.json();
+          if (response.status === 402 && data.error === 'no_credits') {
+            setIsPaywalled(true);
+            setGenerationError(data.message || 'You\'ve used all your free meal plan generations. Upgrade for unlimited access.');
+            setGenerating(false);
+            setPartialPlan(null);
+            return;
+          }
           throw new Error(data.error || 'Failed to generate meal plan');
         }
 
@@ -515,9 +527,10 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       } finally {
         setGenerating(false);
         setPartialPlan(null);
+        refetchBilling();
       }
     })();
-  }, [weekPlan, recipes, settings, userId, anonymousId, track, showToast, buildWeekPlan, setWeekPlan]);
+  }, [weekPlan, recipes, settings, userId, anonymousId, track, showToast, buildWeekPlan, setWeekPlan, refetchBilling]);
 
   const retryGeneration = useCallback(() => {
     setGenerationError(null);
@@ -552,6 +565,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     addPantryItemToShoppingList,
     generating,
     generationError,
+    isPaywalled,
     partialPlan,
     isStreaming,
     startGeneration,
@@ -563,7 +577,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     historyLoading, loading, shoppingList, shoppingPantryItems, shoppingListLoading,
     shoppingListUpdated, nutritionUpdated, dismissShoppingListUpdated, dismissNutritionUpdated,
     addPantryItemToShoppingList,
-    generating, generationError, partialPlan, isStreaming,
+    generating, generationError, isPaywalled, partialPlan, isStreaming,
     startGeneration, retryGeneration, clearGenerationError,
   ]);
 

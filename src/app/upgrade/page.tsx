@@ -1,12 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Check, Sparkles, Zap, Crown } from 'lucide-react';
+import { Suspense, useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Check, Sparkles, Zap, Crown, ExternalLink } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
+import { useUserIdentity } from '@/hooks/useUserIdentity';
+import { useBilling } from '@/contexts/BillingContext';
 import { EVENTS } from '@/lib/analytics/events';
+import { SignInButton } from '@clerk/nextjs';
 
 const features = [
-  'Unlimited AI generation',
+  'Unlimited AI meal plan generation',
   'Advanced dietary preferences',
   'Recipe import from URLs',
   'Nutritional tracking',
@@ -15,21 +19,93 @@ const features = [
 ];
 
 const freeFeatures = [
-  'Up to 10 recipes',
-  'Basic meal planning',
+  '10 meal plan generations',
+  'Unlimited recipe generation',
+  'Unlimited single meal regeneration',
   'Manual recipes',
 ];
 
 export default function UpgradePage() {
+  return (
+    <Suspense>
+      <UpgradeContent />
+    </Suspense>
+  );
+}
+
+function UpgradeContent() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('annual');
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
   const { track } = useAnalytics();
+  const { isAuthenticated } = useUserIdentity();
+  const { plan, unlimited, creditsUsed, creditsLimit, refetch } = useBilling();
+  const searchParams = useSearchParams();
+
+  const isActivePaid = plan === 'lifetime' || plan === 'pro_monthly' || plan === 'pro_annual';
+  const success = searchParams.get('success') === 'true';
+  const canceled = searchParams.get('canceled') === 'true';
 
   useEffect(() => {
     track(EVENTS.UPGRADE_PAGE_VIEWED);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (success) {
+      refetch();
+    }
+  }, [success, refetch]);
+
+  async function handleCheckout(selectedPlan: 'monthly' | 'annual' | 'lifetime') {
+    track(EVENTS.CHECKOUT_STARTED, { plan: selectedPlan });
+
+    setCheckoutLoading(selectedPlan);
+    try {
+      const res = await fetch('/api/billing/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ plan: selectedPlan }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        alert(data.error || 'Failed to start checkout');
+        setCheckoutLoading(null);
+      }
+    } catch {
+      alert('Failed to start checkout. Please try again.');
+      setCheckoutLoading(null);
+    }
+  }
+
+  async function handleManageSubscription() {
+    try {
+      const res = await fetch('/api/billing/create-portal-session', {
+        method: 'POST',
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch {
+      alert('Failed to open subscription management.');
+    }
+  }
+
   return (
     <div className="max-w-6xl mx-auto">
+      {success && (
+        <div className="mb-6 bg-primary/10 border border-primary/30 rounded-xl p-4 text-center">
+          <p className="text-primary font-semibold">Payment successful! You now have unlimited meal plan generation.</p>
+        </div>
+      )}
+
+      {canceled && (
+        <div className="mb-6 bg-secondary/10 border border-secondary/30 rounded-xl p-4 text-center">
+          <p className="text-foreground">Checkout was canceled. You can try again anytime.</p>
+        </div>
+      )}
+
       <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-4 py-2 rounded-full text-sm font-medium mb-4">
           <Sparkles className="w-4 h-4" />
@@ -41,35 +117,43 @@ export default function UpgradePage() {
         <p className="text-lg text-muted max-w-2xl mx-auto">
           Unlimited AI-powered meal planning
         </p>
+        {!unlimited && (
+          <p className="text-sm text-muted mt-2">
+            You&apos;ve used <span className="font-semibold text-foreground">{creditsUsed}</span> of <span className="font-semibold text-foreground">{creditsLimit}</span> free meal plan generations
+          </p>
+        )}
       </div>
 
-      <div className="flex justify-center mb-8">
-        <div className="inline-flex bg-surface rounded-lg p-1 border border-border">
-          <button
-            onClick={() => setBillingPeriod('monthly')}
-            className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
-              billingPeriod === 'monthly'
-                ? 'bg-white text-foreground shadow-sm'
-                : 'text-muted hover:text-foreground'
-            }`}
-          >
-            Monthly
-          </button>
-          <button
-            onClick={() => setBillingPeriod('annual')}
-            className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
-              billingPeriod === 'annual'
-                ? 'bg-white text-foreground shadow-sm'
-                : 'text-muted hover:text-foreground'
-            }`}
-          >
-            Annual
-            <span className="ml-2 text-xs text-accent font-semibold">Save 20%</span>
-          </button>
+      {!isActivePaid && (
+        <div className="flex justify-center mb-8">
+          <div className="inline-flex bg-surface rounded-lg p-1 border border-border">
+            <button
+              onClick={() => setBillingPeriod('monthly')}
+              className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                billingPeriod === 'monthly'
+                  ? 'bg-white text-foreground shadow-sm'
+                  : 'text-muted hover:text-foreground'
+              }`}
+            >
+              Monthly
+            </button>
+            <button
+              onClick={() => setBillingPeriod('annual')}
+              className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
+                billingPeriod === 'annual'
+                  ? 'bg-white text-foreground shadow-sm'
+                  : 'text-muted hover:text-foreground'
+              }`}
+            >
+              Annual
+              <span className="ml-2 text-xs text-accent font-semibold">Save 20%</span>
+            </button>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="grid md:grid-cols-3 gap-6 mb-12">
+        {/* Free tier */}
         <div className="bg-white rounded-xl border border-border p-6 flex flex-col">
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-foreground mb-2">Free</h3>
@@ -87,11 +171,15 @@ export default function UpgradePage() {
             ))}
           </ul>
 
-          <button className="w-full bg-transparent text-foreground hover:bg-surface-dark px-4 py-2 rounded-lg transition-colors font-medium" disabled>
-            Current Plan
+          <button
+            className="w-full bg-transparent text-foreground hover:bg-surface-dark px-4 py-2 rounded-lg transition-colors font-medium"
+            disabled
+          >
+            {plan === 'free' && !unlimited ? 'Current Plan' : isActivePaid ? '' : 'Current Plan'}
           </button>
         </div>
 
+        {/* Premium tier */}
         <div className="bg-gradient-to-br from-primary to-primary-dark rounded-xl p-6 flex flex-col relative overflow-hidden shadow-xl transform md:scale-105">
           <div className="absolute top-4 right-4">
             <div className="bg-accent text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
@@ -130,17 +218,35 @@ export default function UpgradePage() {
             ))}
           </ul>
 
-          <button
-            className="w-full bg-white text-primary hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors"
-            onClick={() => { track(EVENTS.UPGRADE_CTA_CLICKED, { plan: 'premium', billing_period: billingPeriod }); alert('Payment integration coming soon!'); }}
-          >
-            Get Premium
-          </button>
+          {(plan === 'pro_monthly' || plan === 'pro_annual') ? (
+            <button
+              className="w-full bg-white/20 text-white font-semibold px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
+              onClick={handleManageSubscription}
+            >
+              <ExternalLink className="w-4 h-4" />
+              Manage Subscription
+            </button>
+          ) : !isAuthenticated ? (
+            <SignInButton mode="modal">
+              <button className="w-full bg-white text-primary hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors">
+                Sign in to Upgrade
+              </button>
+            </SignInButton>
+          ) : (
+            <button
+              className="w-full bg-white text-primary hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              onClick={() => handleCheckout(billingPeriod)}
+              disabled={!!checkoutLoading || isActivePaid}
+            >
+              {checkoutLoading === billingPeriod ? 'Redirecting...' : 'Get Premium'}
+            </button>
+          )}
           <p className="text-xs text-white/70 text-center mt-3">
             Cancel anytime
           </p>
         </div>
 
+        {/* Lifetime tier */}
         <div className="bg-gradient-to-br from-emerald-400 to-teal-600 rounded-xl p-6 flex flex-col relative overflow-hidden shadow-lg">
           <div className="absolute top-4 right-4">
             <div className="bg-yellow-300 text-emerald-900 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
@@ -173,12 +279,28 @@ export default function UpgradePage() {
             </li>
           </ul>
 
-          <button
-            className="w-full bg-white text-emerald-600 hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors"
-            onClick={() => { track(EVENTS.UPGRADE_CTA_CLICKED, { plan: 'lifetime' }); alert('Payment integration coming soon!'); }}
-          >
-            Get Lifetime
-          </button>
+          {plan === 'lifetime' ? (
+            <button
+              className="w-full bg-white/20 text-white font-semibold px-4 py-2 rounded-lg"
+              disabled
+            >
+              Current Plan
+            </button>
+          ) : !isAuthenticated ? (
+            <SignInButton mode="modal">
+              <button className="w-full bg-white text-emerald-600 hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors">
+                Sign in to Purchase
+              </button>
+            </SignInButton>
+          ) : (
+            <button
+              className="w-full bg-white text-emerald-600 hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
+              onClick={() => handleCheckout('lifetime')}
+              disabled={!!checkoutLoading || isActivePaid}
+            >
+              {checkoutLoading === 'lifetime' ? 'Redirecting...' : 'Get Lifetime'}
+            </button>
+          )}
           <p className="text-xs text-white/70 text-center mt-3">
             Pay once, use forever
           </p>

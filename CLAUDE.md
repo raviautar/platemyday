@@ -8,6 +8,7 @@ AI-powered meal planning app built with Next.js 16.
 - **Database:** Supabase (PostgreSQL)
 - **Auth:** Clerk (`@clerk/nextjs`) with anonymous user support
 - **AI:** Vercel AI SDK (`ai` + `@ai-sdk/google`) — Google Gemini models
+- **Payments:** Stripe (`stripe` server, `@stripe/stripe-js` client)
 - **Drag & Drop:** `@hello-pangea/dnd`
 - **Schema Validation:** Zod
 - **Icons:** `lucide-react`
@@ -31,12 +32,18 @@ src/
 │   ├── recipes/page.tsx            # Recipe library
 │   ├── meal-plan/page.tsx          # Weekly meal planning
 │   ├── customize/page.tsx          # Settings
-│   ├── upgrade/page.tsx            # Premium features
+│   ├── upgrade/page.tsx            # Premium features + Stripe checkout
 │   └── api/
 │       ├── generate-recipe/        # Single recipe generation (Gemini 3 Flash)
-│       ├── generate-meal-plan/     # Full meal plan generation (Gemini 3 Flash, streaming)
+│       ├── generate-meal-plan/     # Full meal plan generation (Gemini 3 Flash, streaming, credit-gated)
 │       ├── regenerate-meal/        # Single meal replacement (Gemini 2.5 Flash Lite)
-│       └── consolidate-shopping-list/ # Shopping list consolidation (Gemini 2.5 Flash, auto-triggered on plan changes)
+│       ├── consolidate-shopping-list/ # Shopping list consolidation (Gemini 2.5 Flash, auto-triggered on plan changes)
+│       ├── billing/
+│       │   ├── credits/            # GET: current user's credit/billing state
+│       │   ├── create-checkout-session/ # POST: create Stripe Checkout session
+│       │   └── create-portal-session/   # POST: create Stripe Customer Portal session
+│       ├── webhooks/stripe/        # POST: Stripe webhook handler (signature-verified)
+│       └── admin/override-user/    # POST: admin-only credit/billing overrides (x-admin-key auth)
 ├── components/
 │   ├── layout/                     # AppShell, Sidebar, BottomNav, TopBanner
 │   ├── recipes/                    # RecipeForm, RecipeList, RecipeCard, RecipeDetail, AIRecipeGenerator
@@ -45,7 +52,8 @@ src/
 ├── contexts/
 │   ├── RecipeContext.tsx            # Recipes CRUD (Supabase-backed)
 │   ├── MealPlanContext.tsx          # Meal plan state + history (Supabase-backed)
-│   └── SettingsContext.tsx          # User settings (Supabase-backed)
+│   ├── SettingsContext.tsx          # User settings (Supabase-backed)
+│   └── BillingContext.tsx           # Credits, plan status, refetch (fetches /api/billing/credits)
 ├── hooks/
 │   ├── useUserIdentity.ts          # Clerk user + anonymous ID resolution
 │   ├── useAnalytics.ts             # PostHog tracking hook with identity enrichment
@@ -57,6 +65,7 @@ src/
 │   ├── tag-colors.ts               # Tag color utilities (getTagDotColor, getTagBadgeColor)
 │   ├── diet-icons.ts               # DIET_ICON_MAP for dietary type icons
 │   ├── anonymous-id.ts             # Anonymous user ID management
+│   ├── stripe.ts                   # Stripe SDK instance + price ID constants
 │   ├── analytics/
 │   │   ├── events.ts               # All PostHog event name constants
 │   │   ├── posthog-client.ts       # Client-side PostHog init
@@ -64,11 +73,12 @@ src/
 │   └── supabase/
 │       ├── client.ts               # Browser Supabase client
 │       ├── server.ts               # Server Supabase client
-│       └── db.ts                   # Database helper functions
+│       ├── db.ts                   # Database helper functions
+│       └── billing.ts              # Credit checking, consumption, billing info queries
 ├── types/
 │   └── index.ts                    # All TypeScript interfaces
 supabase/
-└── migrations/                     # SQL migration files (001-005)
+└── migrations/                     # SQL migration files (001-007)
 ```
 
 ## Key Patterns
@@ -80,6 +90,19 @@ supabase/
 - **Auth flow:** Anonymous users get a UUID stored in localStorage. On Clerk sign-in, anonymous data migrates to the authenticated user via `migrateAnonymousData()`
 - **Persistence:** All data stored in Supabase. Contexts fetch on mount using `useUserIdentity()` hook
 - **Meal plan history:** All generated plans are saved. Users can view and restore past plans
+
+## Billing & Premium
+
+- **Premium feature:** Only meal plan generation costs credits. Recipe generation + single meal regeneration are free
+- **Credits:** 10 lifetime credits for all users (anonymous + authenticated). No monthly reset
+- **Paid plans:** Pro Monthly, Pro Annual, Lifetime — all grant unlimited generation
+- **Database tables:** `user_credits` (credit usage), `user_billing` (Stripe subscription state), `user_billing_overrides` (admin exceptions)
+- **Credit check flow:** `generate-meal-plan` route calls `checkCredits()` → returns 402 if exhausted → `MealPlanContext` sets `isPaywalled` state
+- **BillingContext:** Fetches `/api/billing/credits` on mount and after each generation. Exposes `plan`, `unlimited`, `creditsRemaining`, `refetch()`
+- **Stripe integration:** Checkout sessions for subscriptions/one-time, webhook handler for lifecycle events, customer portal for management
+- **Admin overrides:** `POST /api/admin/override-user` with `x-admin-key` header to grant unlimited access or extra credits per user
+- **Anonymous migration:** `migrateAnonymousData()` merges anonymous credit usage into authenticated user on sign-in
+- **Atomic credit consumption:** `consume_credit` Supabase RPC prevents race conditions
 
 ## Analytics (PostHog)
 
@@ -114,4 +137,13 @@ CLERK_SECRET_KEY=
 GOOGLE_GENERATIVE_AI_API_KEY=
 NEXT_PUBLIC_POSTHOG_KEY=
 NEXT_PUBLIC_POSTHOG_HOST=
+
+# Stripe
+STRIPE_SECRET_KEY=                  # sk_live_... or sk_test_...
+STRIPE_WEBHOOK_SECRET=              # whsec_... (from Stripe Dashboard or `stripe listen`)
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY= # pk_live_... or pk_test_...
+STRIPE_PRICE_MONTHLY=               # price_... (Stripe Price ID for monthly subscription)
+STRIPE_PRICE_ANNUAL=                # price_... (Stripe Price ID for annual subscription)
+STRIPE_PRICE_LIFETIME=              # price_... (Stripe Price ID for one-time lifetime payment)
+ADMIN_SECRET_KEY=                   # Secret for /api/admin/* routes
 ```

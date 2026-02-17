@@ -48,4 +48,8 @@ export const EVENTS = {
   UPGRADE_PAGE_VIEWED: 'upgrade_page_viewed',
   UPGRADE_CTA_CLICKED: 'upgrade_cta_clicked',
   LANDING_CTA_CLICKED: 'landing_cta_clicked',
+  PAYWALL_HIT: 'paywall_hit',
+  CHECKOUT_STARTED: 'checkout_started',
+  SUBSCRIPTION_ACTIVATED: 'subscription_activated',
+  SUBSCRIPTION_CANCELED: 'subscription_canceled',
 } as const;
