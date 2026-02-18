@@ -70,7 +70,7 @@ interface MealPlanContextType {
 
 const MealPlanContext = createContext<MealPlanContextType | null>(null);
 
-function collectIngredients(
+export function collectIngredients(
   weekPlan: WeekPlan,
   recipesMap: Map<string, string[]>,
   suggestedRecipes?: Record<string, SuggestedRecipe>,
@@ -121,6 +121,9 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
 
   const isStreaming = generating && !!partialPlan && !!partialPlan.days && partialPlan.days.length > 0;
 
+  // Memoize recipesMap to avoid $O(N)$ recreation on every weekPlan change
+  const recipesMap = useMemo(() => new Map(recipes.map(r => [r.id, r.ingredients])), [recipes]);
+
   useEffect(() => {
     if (!isLoaded || !anonymousId) return;
 
@@ -160,7 +163,6 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
 
     if (generating) return;
 
-    const recipesMap = new Map(recipes.map(r => [r.id, r.ingredients]));
     const ingredients = collectIngredients(weekPlan, recipesMap, weekPlan.suggestedRecipes);
 
     if (ingredients.length === 0) {
@@ -213,7 +215,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(timer);
       abortController.abort();
     };
-  }, [weekPlan, recipes, userId, anonymousId, generating]);
+  }, [weekPlan, recipesMap, userId, anonymousId, generating]);
 
   const setWeekPlan = useCallback(async (plan: WeekPlan, suggestedRecipes?: Record<string, SuggestedRecipe>) => {
     setWeekPlanState(plan);
