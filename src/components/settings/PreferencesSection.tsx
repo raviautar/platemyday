@@ -80,33 +80,40 @@ export function PreferencesSection() {
   return (
     <div className="space-y-6">
       {/* Dietary Type */}
-      <div className="bg-white rounded-xl border border-border p-4 space-y-4">
-        <h2 className="font-semibold text-lg text-foreground">Dietary Preference</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+      <div className="bg-gradient-to-br from-white to-surface/30 rounded-2xl border-2 border-border/60 shadow-lg p-6 space-y-5">
+        <div>
+          <h2 className="font-bold text-xl text-foreground mb-1">Dietary Preference</h2>
+          <p className="text-sm text-muted">Select your dietary preference to personalize meal suggestions</p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {DIET_OPTIONS.map(option => {
             const Icon = DIET_ICON_MAP[option.value];
+            const isSelected = prefs.dietaryType === option.value;
             return (
               <button
                 key={option.value}
                 onClick={() => handleUpdate({ dietaryType: option.value })}
-                className={`min-w-0 px-2 sm:px-3 py-2 rounded-lg border-2 transition-all text-xs sm:text-sm flex items-center justify-center gap-1.5 sm:gap-2 ${
-                  prefs.dietaryType === option.value
-                    ? 'border-primary bg-primary/5 text-primary font-medium'
-                    : 'border-border bg-white text-muted hover:border-primary/50'
+                className={`p-4 rounded-xl border-2 transition-all text-left hover:scale-[1.02] active:scale-[0.98] ${
+                  isSelected
+                    ? 'border-primary bg-primary/10 shadow-md shadow-primary/20'
+                    : 'border-border bg-white hover:border-primary/50 hover:bg-surface/50'
                 }`}
               >
-                {Icon && <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />}
-                <span className="break-words text-center line-clamp-2">{option.label}</span>
+                {Icon && <Icon className={`w-6 h-6 mb-2 ${isSelected ? 'text-primary' : 'text-muted'}`} />}
+                <div className={`font-semibold text-sm ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+                  {option.label}
+                </div>
+                <div className="text-xs text-muted mt-1">{option.desc}</div>
               </button>
             );
           })}
         </div>
         <button
           onClick={() => handleUpdate({ dietaryType: null })}
-          className={`w-full px-3 py-2 rounded-lg border-2 transition-all text-sm flex items-center justify-center gap-2 ${
+          className={`w-full px-4 py-3 rounded-xl border-2 transition-all text-sm font-medium flex items-center justify-center gap-2 ${
             !prefs.dietaryType
-              ? 'border-primary bg-primary/5 text-primary font-medium'
-              : 'border-border bg-white text-muted hover:border-primary/50'
+              ? 'border-primary bg-primary/10 text-primary shadow-sm'
+              : 'border-border bg-white text-muted hover:border-primary/50 hover:bg-surface/50'
           }`}
         >
           I don&apos;t care
@@ -120,15 +127,18 @@ export function PreferencesSection() {
             onBlur={() => {
               if (isCustomDiet) showToast('Preferences updated');
             }}
-            className="min-w-0 flex-1 px-3 py-2 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+            className="min-w-0 flex-1 px-4 py-2.5 rounded-lg border-2 border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
           />
         </div>
       </div>
 
       {/* Allergies */}
-      <div className="bg-white rounded-xl border border-border p-4 space-y-4">
-        <h2 className="font-semibold text-lg text-foreground">Allergies & Restrictions</h2>
-        <div className="flex flex-wrap gap-2">
+      <div className="bg-gradient-to-br from-white to-surface/30 rounded-2xl border-2 border-border/60 shadow-lg p-6 space-y-5">
+        <div>
+          <h2 className="font-bold text-xl text-foreground mb-1">Allergies & Restrictions</h2>
+          <p className="text-sm text-muted">Select any allergies or dietary restrictions</p>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
           {ALLERGY_OPTIONS.map(option => {
             const isSelected = prefs.allergies.includes(option.value);
             return (
@@ -140,43 +150,49 @@ export function PreferencesSection() {
                     : [...prefs.allergies, option.value];
                   handleUpdate({ allergies: updated });
                 }}
-                className={`px-3 py-1.5 rounded-full border-2 transition-all text-sm flex items-center gap-1.5 ${
+                className={`p-4 rounded-xl border-2 transition-all text-left relative hover:scale-[1.02] active:scale-[0.98] ${
                   isSelected
-                    ? 'border-accent bg-accent/10 text-accent-dark font-medium'
-                    : 'border-border bg-white text-muted hover:border-accent/50'
+                    ? 'border-accent bg-accent/10 shadow-md shadow-accent/20'
+                    : 'border-border bg-white hover:border-accent/50 hover:bg-surface/50'
                 }`}
               >
-                <span>{option.icon}</span>
-                {option.label}
+                <div className="text-3xl mb-2">{option.icon}</div>
+                <div className={`font-semibold text-sm ${isSelected ? 'text-accent-dark' : 'text-foreground'}`}>
+                  {option.label}
+                </div>
+                {isSelected && (
+                  <div className="absolute top-2 right-2 w-6 h-6 rounded-full bg-accent flex items-center justify-center">
+                    <span className="text-white text-xs font-bold">✓</span>
+                  </div>
+                )}
               </button>
             );
           })}
-          {/* Custom allergies */}
-          {prefs.allergies
-            .filter(a => !ALLERGY_OPTIONS.some(o => o.value === a))
-            .map(customAllergy => (
-              <span
-                key={customAllergy}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border-2 border-accent bg-accent/10 text-accent-dark font-medium text-sm capitalize"
-              >
-                {customAllergy}
-                <button onClick={() => handleUpdate({ allergies: prefs.allergies.filter(a => a !== customAllergy) })}>
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ))
-          }
-          <button
-            onClick={() => handleUpdate({ allergies: [] })}
-            className={`px-3 py-1.5 rounded-full border-2 transition-all text-sm flex items-center gap-1.5 ${
-              prefs.allergies.length === 0
-                ? 'border-accent bg-accent/10 text-accent-dark font-medium'
-                : 'border-border bg-white text-muted hover:border-accent/50'
-            }`}
-          >
-            None
-          </button>
         </div>
+        {prefs.allergies
+          .filter(a => !ALLERGY_OPTIONS.some(o => o.value === a))
+          .length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-2 border-t border-border/40">
+            <p className="w-full text-xs font-medium text-muted mb-2">Custom allergies:</p>
+            {prefs.allergies
+              .filter(a => !ALLERGY_OPTIONS.some(o => o.value === a))
+              .map(customAllergy => (
+                <span
+                  key={customAllergy}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 border-accent bg-accent/10 text-accent-dark font-medium text-sm capitalize"
+                >
+                  {customAllergy}
+                  <button 
+                    onClick={() => handleUpdate({ allergies: prefs.allergies.filter(a => a !== customAllergy) })}
+                    className="hover:text-accent transition-colors"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </span>
+              ))
+            }
+          </div>
+        )}
         <div className="flex gap-2 min-w-0">
           <input
             type="text"
@@ -189,17 +205,17 @@ export function PreferencesSection() {
                 addCustomAllergy();
               }
             }}
-            className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50 text-sm"
+            className="min-w-0 flex-1 px-4 py-2.5 rounded-lg border-2 border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent text-sm"
           />
           <button
             onClick={addCustomAllergy}
-            className="px-3 py-1.5 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors"
+            className="px-4 py-2.5 rounded-lg bg-accent/10 text-accent hover:bg-accent/20 transition-colors border-2 border-accent/30"
           >
             <Plus className="w-4 h-4" />
           </button>
         </div>
         {prefs.allergies.length === 0 && (
-          <p className="text-sm text-muted italic">No allergies selected</p>
+          <p className="text-sm text-muted italic text-center py-2">No allergies selected</p>
         )}
       </div>
 
