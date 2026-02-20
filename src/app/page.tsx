@@ -278,15 +278,6 @@ export default function HomePage() {
                 Continue without account for now
               </button>
             </div>
-
-            <Link
-              href="/upgrade"
-              className="mt-8 inline-flex items-center gap-2 bg-gradient-to-r from-primary/10 to-emerald-500/10 text-primary hover:from-primary/15 hover:to-emerald-500/15 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 border border-primary/20 hover:border-primary/30"
-            >
-              <Sparkles className="w-4 h-4" />
-              Get unlimited meal plans
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
           </div>
         )}
       </div>
