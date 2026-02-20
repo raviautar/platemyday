@@ -482,81 +482,119 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       recipe_library_size: recipes.length,
     });
 
-    (async () => {
-      try {
-        const response = await fetch('/api/generate-meal-plan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            recipes: recipes.map(r => ({ id: r.id, title: r.title, tags: r.tags })),
-            systemPrompt: systemPrompt || settings.mealPlanSystemPrompt,
-            preferences,
-            weekStartDay: settings.weekStartDay,
-            userId,
-            anonymousId,
-          }),
-        });
+    const MAX_RETRIES = 2;
 
-        if (!response.ok) {
-          const data = await response.json();
-          if (response.status === 402 && data.error === 'no_credits') {
-            setIsPaywalled(true);
-            setGenerationError(data.message || 'You\'ve used all your free meal plan generations. Upgrade for unlimited access.');
-            setGenerating(false);
-            setPartialPlan(null);
-            return;
-          }
-          throw new Error(data.error || 'Failed to generate meal plan');
+    const attemptGeneration = async (): Promise<any> => {
+      const response = await fetch('/api/generate-meal-plan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          recipes: recipes.map(r => ({ id: r.id, title: r.title, tags: r.tags })),
+          systemPrompt: systemPrompt || settings.mealPlanSystemPrompt,
+          preferences,
+          weekStartDay: settings.weekStartDay,
+          userId,
+          anonymousId,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        if (response.status === 402 && data.error === 'no_credits') {
+          setIsPaywalled(true);
+          setGenerationError(data.message || 'You\'ve used all your free meal plan generations. Upgrade for unlimited access.');
+          setGenerating(false);
+          setPartialPlan(null);
+          return null; // Signal: don't retry
         }
+        throw new Error(data.error || 'Failed to generate meal plan');
+      }
 
-        const reader = response.body!.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        let finalData: any = null;
+      const reader = response.body!.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let finalData: any = null;
 
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
 
-          buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
 
-          for (const line of lines) {
-            const trimmed = line.trim();
-            if (!trimmed) continue;
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
 
-            if (trimmed.startsWith('ERROR:')) {
-              const errorData = JSON.parse(trimmed.slice(6));
-              throw new Error(errorData.error || 'Generation failed');
-            }
-
-            if (trimmed.startsWith('DONE:')) {
-              finalData = JSON.parse(trimmed.slice(5));
-            } else {
-              try {
-                const partial = JSON.parse(trimmed);
-                setPartialPlan(partial);
-              } catch {
-                // Ignore malformed partial lines
-              }
-            }
-          }
-        }
-
-        const remaining = buffer.trim();
-        if (remaining) {
-          if (remaining.startsWith('ERROR:')) {
-            const errorData = JSON.parse(remaining.slice(6));
+          if (trimmed.startsWith('ERROR:')) {
+            const errorData = JSON.parse(trimmed.slice(6));
             throw new Error(errorData.error || 'Generation failed');
           }
-          if (remaining.startsWith('DONE:')) {
-            finalData = JSON.parse(remaining.slice(5));
+
+          if (trimmed.startsWith('DONE:')) {
+            finalData = JSON.parse(trimmed.slice(5));
+          } else {
+            try {
+              const partial = JSON.parse(trimmed);
+              setPartialPlan(partial);
+            } catch {
+              // Ignore malformed partial lines
+            }
+          }
+        }
+      }
+
+      const remaining = buffer.trim();
+      if (remaining) {
+        if (remaining.startsWith('ERROR:')) {
+          const errorData = JSON.parse(remaining.slice(6));
+          throw new Error(errorData.error || 'Generation failed');
+        }
+        if (remaining.startsWith('DONE:')) {
+          finalData = JSON.parse(remaining.slice(5));
+        }
+      }
+
+      if (!finalData) {
+        throw new Error('Failed to generate meal plan. The server returned an incomplete response.');
+      }
+
+      return finalData;
+    };
+
+    (async () => {
+      try {
+        let finalData: any = null;
+        let lastError: Error | null = null;
+
+        for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
+          try {
+            if (attempt > 0) {
+              console.log(`Retrying meal plan generation (attempt ${attempt + 1}/${MAX_RETRIES + 1})...`);
+              setPartialPlan(null);
+            }
+
+            finalData = await attemptGeneration();
+
+            // null means paywall — already handled, exit immediately
+            if (finalData === null) return;
+
+            lastError = null;
+            break;
+          } catch (error) {
+            lastError = error instanceof Error ? error : new Error('Failed to generate meal plan');
+            console.warn(`Meal plan generation attempt ${attempt + 1} failed:`, lastError.message);
           }
         }
 
-        if (!finalData) {
-          throw new Error('Failed to generate meal plan. The server returned an incomplete response.');
+        if (lastError || !finalData) {
+          track(EVENTS.MEAL_PLAN_GENERATION_FAILED, {
+            error_message: lastError?.message || 'Failed to generate meal plan',
+            retries_attempted: MAX_RETRIES,
+          });
+          setGenerationError('Something went wrong generating your meal plan. Please try again.');
+          return;
         }
 
         const newWeekPlan = buildWeekPlan(finalData);
@@ -584,7 +622,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       } catch (error) {
         const message = error instanceof Error ? error.message : 'Failed to generate meal plan';
         track(EVENTS.MEAL_PLAN_GENERATION_FAILED, { error_message: message });
-        setGenerationError(message);
+        setGenerationError('Something went wrong generating your meal plan. Please try again.');
       } finally {
         setGenerating(false);
         setPartialPlan(null);

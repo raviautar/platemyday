@@ -43,11 +43,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Consume credit atomically (skip for unlimited users)
-    if (!creditCheck.unlimited) {
-      await consumeCredit(userId ?? null, anonymousId ?? '');
-    }
-
     const prefsPrompt = await getUserPreferencesPrompt(userId, anonymousId) || preferences || '';
 
     const recipesForPrompt = recipes.slice(0, 200);
@@ -113,6 +108,12 @@ ${hasRecipes ? '1. Use existing recipes from the library when appropriate (inclu
           }
 
           const finalObject = await result.object;
+
+          // Consume credit only after successful generation (skip for unlimited users)
+          if (!creditCheck.unlimited) {
+            await consumeCredit(userId ?? null, anonymousId ?? '');
+          }
+
           controller.enqueue(encoder.encode('DONE:' + JSON.stringify(finalObject) + '\n'));
           controller.close();
 
