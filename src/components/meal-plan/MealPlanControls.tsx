@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal } from '@/components/ui/Modal';
-import { Settings2, Sparkles, X, Plus, ChefHat, Leaf, Flame, Zap, UtensilsCrossed, ChevronDown, ChevronRight } from 'lucide-react';
+import { Settings2, Sparkles, X, Plus, ChefHat, Leaf, Flame, Zap, UtensilsCrossed, ExternalLink } from 'lucide-react';
 import { CUISINE_OPTIONS } from '@/lib/constants';
-import { PreferencesSection } from '@/components/settings/PreferencesSection';
 import { useBilling } from '@/contexts/BillingContext';
 
 export interface AdHocCustomizations {
@@ -41,12 +41,12 @@ interface MealPlanControlsProps {
 }
 
 export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealPlanControlsProps) {
+  const router = useRouter();
   const { unlimited, creditsRemaining, loading: billingLoading } = useBilling();
   const [customizations, setCustomizations] = useState<AdHocCustomizations>(EMPTY_CUSTOMIZATIONS);
   const [showCustomize, setShowCustomize] = useState(false);
   const [ingredientInput, setIngredientInput] = useState('');
   const [cuisineInput, setCuisineInput] = useState('');
-  const [savedPrefsOpen, setSavedPrefsOpen] = useState(false);
 
   const hasCustomizations =
     customizations.pantryIngredients.length > 0 ||
@@ -189,21 +189,17 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
             </button>
           </div>
 
-          <div className="border border-border rounded-xl overflow-hidden">
-            <button
-              type="button"
-              onClick={() => setSavedPrefsOpen(o => !o)}
-              className="w-full flex items-center justify-between gap-2 px-4 py-3 bg-surface hover:bg-surface/80 text-left transition-colors"
-            >
-              <span className="font-semibold text-foreground">Saved preferences</span>
-              {savedPrefsOpen ? <ChevronDown className="w-4 h-4 shrink-0" /> : <ChevronRight className="w-4 h-4 shrink-0" />}
-            </button>
-            {savedPrefsOpen && (
-              <div className="border-t border-border p-4 bg-white max-h-[60vh] overflow-y-auto">
-                <PreferencesSection />
-              </div>
-            )}
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setShowCustomize(false);
+              router.push('/customize');
+            }}
+            className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-surface hover:bg-surface/80 border border-border text-left transition-colors"
+          >
+            <span className="text-sm font-medium text-foreground">Edit saved preferences</span>
+            <ExternalLink className="w-4 h-4 text-muted shrink-0" />
+          </button>
 
           <div>
             <h3 className="text-base font-bold text-foreground tracking-tight mb-4">Options for this week&apos;s plan</h3>

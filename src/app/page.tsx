@@ -96,11 +96,21 @@ export default function HomePage() {
                 priority
               />
             </div>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-3 font-[family-name:var(--font-outfit)] tracking-tight">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-1 font-[family-name:var(--font-outfit)] tracking-tight">
               <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 bg-clip-text text-transparent">
                 PlateMyDay
               </span>
             </h1>
+            <a
+              href="https://ravilution.ai"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-[11px] text-foreground/40 hover:text-foreground/60 transition-colors mb-6"
+            >
+              by
+              <Image src="/assets/ravilution-icon.png" alt="ravilution.ai" width={14} height={14} className="w-3.5 h-3.5 rounded-full" />
+              <span className="font-medium">Ravilution</span>
+            </a>
 
             {isOnboarded ? (
               <>
@@ -269,6 +279,7 @@ export default function HomePage() {
           </div>
         )}
       </div>
+
     </div>
   );
 }
