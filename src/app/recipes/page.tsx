@@ -14,13 +14,18 @@ import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { Input } from '@/components/ui/Input';
 import { RecipeFilters } from '@/types';
 import { Plus, Search, SlidersHorizontal } from 'lucide-react';
+import { useSettings } from '@/contexts/SettingsContext';
+import { useUserIdentity } from '@/hooks/useUserIdentity';
 
 export default function RecipesPage() {
+  const { settings } = useSettings();
+  const { userId, anonymousId } = useUserIdentity();
   const { recipes, addRecipe, updateRecipe, deleteRecipe } = useRecipes();
   const { track } = useAnalytics();
   const { showToast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [showAI, setShowAI] = useState(false);
+  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
@@ -99,6 +104,49 @@ export default function RecipesPage() {
   const handleDelete = (id: string) => {
     deleteRecipe(id);
     showToast('Recipe deleted');
+  };
+
+  const handleGenerateAI = async (prompt: string) => {
+    setIsGeneratingAI(true);
+    const startTime = Date.now();
+
+    try {
+      const res = await fetch('/api/generate-recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          systemPrompt: settings.recipeSystemPrompt,
+          userId,
+          anonymousId,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to generate recipe');
+      }
+
+      const recipeData = await res.json();
+      track(EVENTS.RECIPE_GENERATION_COMPLETED, {
+        recipe_title: recipeData.title,
+        generation_time_ms: Date.now() - startTime,
+      });
+
+      const newRecipe = { ...recipeData, isAIGenerated: true };
+
+      if (recipes.length === 0) {
+        track(EVENTS.FIRST_RECIPE_CREATED);
+      }
+      addRecipe(newRecipe);
+      showToast('Recipe generated and saved!');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Something went wrong';
+      track(EVENTS.RECIPE_GENERATION_FAILED, { error_message: message });
+      showToast(`Failed to generate recipe: ${message}`);
+    } finally {
+      setIsGeneratingAI(false);
+    }
   };
 
   const toggleTag = (tag: string) => {
@@ -203,6 +251,7 @@ export default function RecipesPage() {
           recipes={recipes}
           searchQuery={searchQuery}
           filters={filters}
+          isGenerating={isGeneratingAI}
           onSelectRecipe={handleSelectRecipe}
           onCreateRecipe={() => setShowAI(true)}
         />
@@ -211,7 +260,7 @@ export default function RecipesPage() {
       <button
         onClick={() => setShowAI(true)}
         data-tour="recipes-ai-fab"
-        className="fixed bottom-20 md:bottom-8 right-4 md:right-8 w-16 h-16 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white rounded-full shadow-2xl hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 z-40 flex items-center justify-center"
+        className="fixed bottom-28 md:bottom-8 right-4 md:right-8 w-16 h-16 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white rounded-full shadow-2xl hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 z-[90] flex items-center justify-center"
         aria-label="Create Recipe"
       >
         <Plus className="w-8 h-8" strokeWidth={2.5} />
@@ -235,14 +284,7 @@ export default function RecipesPage() {
       <AIRecipeGenerator
         isOpen={showAI}
         onClose={() => setShowAI(false)}
-        onSave={(recipe) => {
-          if (recipes.length === 0) {
-            track(EVENTS.FIRST_RECIPE_CREATED);
-          }
-          addRecipe(recipe);
-          showToast('Recipe saved!');
-          setShowAI(false);
-        }}
+        onGenerate={handleGenerateAI}
       />
 
       <OnboardingWizard isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />

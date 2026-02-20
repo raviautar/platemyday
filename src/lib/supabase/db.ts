@@ -334,22 +334,44 @@ export async function upsertSettings(
   userId: string | null,
   anonymousId: string
 ): Promise<void> {
-  const owner = ownerFilter(userId, anonymousId);
-  const { error } = await getSupabase()
-    .from('user_settings')
-    .upsert({
-      ...owner,
-      recipe_system_prompt: settings.recipeSystemPrompt,
-      meal_plan_system_prompt: settings.mealPlanSystemPrompt,
-      unit_system: settings.unitSystem,
-      week_start_day: settings.weekStartDay,
-      preferences: settings.preferences,
-      updated_at: new Date().toISOString(),
-    }, {
-      onConflict: userId ? 'user_id' : 'anonymous_id',
-    });
+  const filter = userId ? { user_id: userId } : { anonymous_id: anonymousId };
 
-  if (error) throw error;
+  const { data: existing, error: selectError } = await getSupabase()
+    .from('user_settings')
+    .select('id')
+    .match(filter)
+    .maybeSingle();
+
+  if (selectError) throw selectError;
+
+  if (existing) {
+    const { error } = await getSupabase()
+      .from('user_settings')
+      .update({
+        recipe_system_prompt: settings.recipeSystemPrompt,
+        meal_plan_system_prompt: settings.mealPlanSystemPrompt,
+        unit_system: settings.unitSystem,
+        week_start_day: settings.weekStartDay,
+        preferences: settings.preferences,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', existing.id);
+
+    if (error) throw error;
+  } else {
+    const { error } = await getSupabase()
+      .from('user_settings')
+      .insert({
+        ...filter,
+        recipe_system_prompt: settings.recipeSystemPrompt,
+        meal_plan_system_prompt: settings.mealPlanSystemPrompt,
+        unit_system: settings.unitSystem,
+        week_start_day: settings.weekStartDay,
+        preferences: settings.preferences,
+      });
+
+    if (error) throw error;
+  }
 }
 
 // ─── Anonymous → Authenticated Migration ───────────────────────

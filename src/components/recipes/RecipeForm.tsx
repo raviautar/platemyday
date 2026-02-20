@@ -156,9 +156,9 @@ export function RecipeForm({ isOpen, onClose, onSave, editingRecipe }: RecipeFor
                   placeholder={`Ingredient ${i + 1}`}
                   className="flex-1 px-3 py-2 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
                 />
-                <button 
-                  type="button" 
-                  onClick={() => removeListItem('ingredients', i)} 
+                <button
+                  type="button"
+                  onClick={() => removeListItem('ingredients', i)}
                   className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-danger hover:bg-danger/10 transition-colors mt-1.5"
                   aria-label="Remove ingredient"
                 >
@@ -166,9 +166,9 @@ export function RecipeForm({ isOpen, onClose, onSave, editingRecipe }: RecipeFor
                 </button>
               </div>
             ))}
-            <button 
-              type="button" 
-              onClick={() => addListItem('ingredients')} 
+            <button
+              type="button"
+              onClick={() => addListItem('ingredients')}
               className="flex items-center gap-2 text-sm text-primary hover:text-primary-dark font-medium mt-2 px-2 py-1 rounded-lg hover:bg-primary/10 transition-colors"
             >
               <Plus className="w-4 h-4" />
@@ -196,9 +196,9 @@ export function RecipeForm({ isOpen, onClose, onSave, editingRecipe }: RecipeFor
                     rows={3}
                     className="flex-1 px-3 py-2 rounded-lg border border-border/60 bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm resize-y min-h-[80px]"
                   />
-                  <button 
-                    type="button" 
-                    onClick={() => removeListItem('instructions', i)} 
+                  <button
+                    type="button"
+                    onClick={() => removeListItem('instructions', i)}
                     className="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-danger hover:bg-danger/10 transition-colors mt-0.5"
                     aria-label="Remove step"
                   >
@@ -207,9 +207,9 @@ export function RecipeForm({ isOpen, onClose, onSave, editingRecipe }: RecipeFor
                 </div>
               </div>
             ))}
-            <button 
-              type="button" 
-              onClick={() => addListItem('instructions')} 
+            <button
+              type="button"
+              onClick={() => addListItem('instructions')}
               className="flex items-center gap-2 text-sm text-primary hover:text-primary-dark font-medium px-3 py-2 rounded-lg hover:bg-primary/10 transition-colors border border-primary/20 hover:border-primary/40"
             >
               <Plus className="w-4 h-4" />

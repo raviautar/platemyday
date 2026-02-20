@@ -9,11 +9,12 @@ interface RecipeListProps {
   recipes: Recipe[];
   searchQuery: string;
   filters: RecipeFilters;
+  isGenerating?: boolean;
   onSelectRecipe: (recipe: Recipe) => void;
   onCreateRecipe: () => void;
 }
 
-export function RecipeList({ recipes, searchQuery, filters, onSelectRecipe, onCreateRecipe }: RecipeListProps) {
+export function RecipeList({ recipes, searchQuery, filters, isGenerating, onSelectRecipe, onCreateRecipe }: RecipeListProps) {
   const filtered = recipes.filter(r => {
     const matchesSearch =
       !searchQuery.trim() ||
@@ -39,12 +40,12 @@ export function RecipeList({ recipes, searchQuery, filters, onSelectRecipe, onCr
               <ChefHat className="w-16 h-16 text-primary" strokeWidth={1.5} />
             </div>
           </div>
-          
+
           <h2 className="text-2xl font-bold text-foreground mb-2">Your Recipe Collection Awaits</h2>
           <p className="text-muted text-center max-w-md mb-6">
             Describe any dish and get a complete recipe instantly.
           </p>
-          
+
           <Button variant="primary" size="lg" onClick={onCreateRecipe}>
             <Sparkles className="w-5 h-5 mr-2" />
             Create Recipe
@@ -53,6 +54,23 @@ export function RecipeList({ recipes, searchQuery, filters, onSelectRecipe, onCr
       )}
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        {isGenerating && (
+          <div className="w-full bg-gradient-to-r from-surface to-white rounded-xl border border-primary/20 p-4 shadow-sm animate-pulse flex flex-col justify-between">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <ChefHat className="w-4 h-4 text-primary animate-bounce flex-shrink-0" />
+                <div className="h-5 bg-primary/20 rounded w-1/2"></div>
+              </div>
+              <div className="h-3 bg-surface-dark/40 rounded w-3/4 mt-2"></div>
+              <div className="h-3 bg-surface-dark/40 rounded w-2/3 mt-1.5"></div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <div className="w-2.5 h-2.5 rounded-full bg-primary/30"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-primary/30"></div>
+              <div className="w-2.5 h-2.5 rounded-full bg-primary/30"></div>
+            </div>
+          </div>
+        )}
         {filtered.map(recipe => (
           <RecipeCard key={recipe.id} recipe={recipe} onClick={() => onSelectRecipe(recipe)} />
         ))}
