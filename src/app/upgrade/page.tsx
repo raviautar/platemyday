@@ -10,12 +10,9 @@ import { EVENTS } from '@/lib/analytics/events';
 import { SignInButton } from '@clerk/nextjs';
 
 const features = [
-  'Unlimited meal plan generation',
-  'Advanced dietary preferences',
-  'Recipe import from URLs',
-  'Nutritional tracking',
-  'Shopping lists',
-  'Priority processing',
+  'Unlimited meal plan generations',
+  'Unlimited shopping lists',
+  { text: 'Import recipes from URL', comingSoon: true },
 ];
 
 const freeFeatures = [
@@ -348,34 +345,34 @@ function UpgradeContent() {
         </div>
       )}
 
-      <div className="text-center mb-8">
+      <div className="text-center mb-6">
         {isActivePaid ? (
           <>
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-3">
               <Check className="w-4 h-4" />
               Premium Active
             </div>
-            <h1 className="text-4xl font-bold text-foreground mb-4">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
               Your Plan
             </h1>
-            <p className="text-lg text-muted max-w-2xl mx-auto">
+            <p className="text-muted max-w-2xl mx-auto">
               You have unlimited meal planning
             </p>
           </>
         ) : (
           <>
-            <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-4 py-2 rounded-full text-sm font-medium mb-4">
+            <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full text-sm font-medium mb-3">
               <Sparkles className="w-4 h-4" />
               Unlock Premium
             </div>
-            <h1 className="text-4xl font-bold text-foreground mb-4">
+            <h1 className="text-3xl font-bold text-foreground mb-2">
               Upgrade to Premium
             </h1>
-            <p className="text-lg text-muted max-w-2xl mx-auto">
+            <p className="text-muted max-w-2xl mx-auto">
               Unlimited personalized meal planning
             </p>
             {!unlimited && (
-              <p className="text-sm text-muted mt-2">
+              <p className="text-sm text-muted mt-1.5">
                 You&apos;ve used <span className="font-semibold text-foreground">{creditsUsed}</span> of <span className="font-semibold text-foreground">{creditsLimit}</span> free meal plan generations
               </p>
             )}
@@ -384,7 +381,7 @@ function UpgradeContent() {
       </div>
 
       {!isActivePaid && (
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-6">
           <div className="inline-flex bg-surface rounded-lg p-1 border border-border">
             <button
               onClick={() => setBillingPeriod('monthly')}
@@ -409,35 +406,9 @@ function UpgradeContent() {
         </div>
       )}
 
-      <div className="grid md:grid-cols-3 gap-6 mb-12">
-        {/* Free tier */}
-        <div className="bg-white rounded-xl border border-border p-6 flex flex-col">
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-foreground mb-2">Free</h3>
-            <div className="flex items-baseline gap-1 mb-4">
-              <span className="text-4xl font-bold text-foreground">&euro;0</span>
-            </div>
-          </div>
-
-          <ul className="space-y-2.5 mb-6 flex-1">
-            {freeFeatures.map((feature, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm">
-                <Check className="w-4 h-4 text-muted flex-shrink-0 mt-0.5" />
-                <span className="text-muted">{feature}</span>
-              </li>
-            ))}
-          </ul>
-
-          <button
-            className="w-full bg-transparent text-foreground hover:bg-surface-dark px-4 py-2 rounded-lg transition-colors font-medium"
-            disabled
-          >
-            {plan === 'free' && !unlimited ? 'Current Plan' : isActivePaid ? '' : 'Current Plan'}
-          </button>
-        </div>
-
+      <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-12">
         {/* Premium tier */}
-        <div className="bg-gradient-to-br from-primary to-primary-dark rounded-xl p-6 flex flex-col relative overflow-hidden shadow-xl transform md:scale-105">
+        <div className="bg-gradient-to-br from-primary to-primary-dark rounded-xl p-6 flex flex-col relative overflow-hidden shadow-xl">
           <div className="absolute top-4 right-4">
             <div className="bg-accent text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
               <Zap className="w-3 h-3" />
@@ -467,12 +438,19 @@ function UpgradeContent() {
           </div>
 
           <ul className="space-y-2.5 mb-6 flex-1">
-            {features.map((feature, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm">
-                <Check className="w-4 h-4 text-white flex-shrink-0 mt-0.5" />
-                <span className="text-white">{feature}</span>
-              </li>
-            ))}
+            {features.map((feature, idx) => {
+              const text = typeof feature === 'string' ? feature : feature.text;
+              const comingSoon = typeof feature !== 'string' && feature.comingSoon;
+              return (
+                <li key={idx} className="flex items-start gap-2 text-sm">
+                  <Check className="w-4 h-4 text-white flex-shrink-0 mt-0.5" />
+                  <span className="text-white">
+                    {text}
+                    {comingSoon && <span className="ml-1.5 text-[10px] font-medium text-white/60 uppercase tracking-wide">(soon)</span>}
+                  </span>
+                </li>
+              );
+            })}
           </ul>
 
           {(plan === 'pro_monthly' || plan === 'pro_annual') ? (
@@ -508,28 +486,32 @@ function UpgradeContent() {
           <div className="absolute top-4 right-4">
             <div className="bg-yellow-300 text-emerald-900 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
               <Crown className="w-3 h-3" />
-              BEST VALUE
+              LIMITED TIME
             </div>
           </div>
 
           <div className="mb-6">
             <h3 className="text-lg font-semibold text-white mb-2">Lifetime</h3>
-            <div className="flex items-baseline gap-1 mb-1">
+            <div className="flex items-baseline gap-1 mb-2">
               <span className="text-4xl font-bold text-white">&euro;99.99</span>
-            </div>
-            <div className="text-sm text-white/90 mb-2">
-              <span className="line-through text-white/60">&euro;299</span>
-              <span className="ml-2 font-semibold">67% OFF</span>
+              <span className="text-white/80">one-time</span>
             </div>
           </div>
 
           <ul className="space-y-2.5 mb-6 flex-1">
-            {features.map((feature, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm">
-                <Check className="w-4 h-4 text-white flex-shrink-0 mt-0.5" />
-                <span className="text-white">{feature}</span>
-              </li>
-            ))}
+            {features.map((feature, idx) => {
+              const text = typeof feature === 'string' ? feature : feature.text;
+              const comingSoon = typeof feature !== 'string' && feature.comingSoon;
+              return (
+                <li key={idx} className="flex items-start gap-2 text-sm">
+                  <Check className="w-4 h-4 text-white flex-shrink-0 mt-0.5" />
+                  <span className="text-white">
+                    {text}
+                    {comingSoon && <span className="ml-1.5 text-[10px] font-medium text-white/60 uppercase tracking-wide">(soon)</span>}
+                  </span>
+                </li>
+              );
+            })}
             <li className="flex items-start gap-2 text-sm pt-2 border-t border-white/20">
               <Check className="w-4 h-4 text-yellow-200 flex-shrink-0 mt-0.5" />
               <span className="text-white font-semibold">All future updates</span>

@@ -101,16 +101,18 @@ export default function HomePage() {
                 PlateMyDay
               </span>
             </h1>
-            <a
-              href="https://ravilution.ai"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-[11px] text-foreground/40 hover:text-foreground/60 transition-colors mb-6"
-            >
-              by
-              <Image src="/assets/ravilution-icon.png" alt="ravilution.ai" width={14} height={14} className="w-3.5 h-3.5 rounded-full" />
-              <span className="font-medium">Ravilution</span>
-            </a>
+            <div className="flex flex-col items-center mb-6">
+              <a
+                href="https://ravilution.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-all bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full border border-foreground/10 hover:border-foreground/20 hover:shadow-md"
+              >
+                by
+                <Image src="/assets/ravilution-icon.png" alt="ravilution.ai" width={20} height={20} className="w-5 h-5 rounded-full" />
+                <span className="font-semibold">Ravilution</span>
+              </a>
+            </div>
 
             {isOnboarded ? (
               <>
@@ -276,6 +278,15 @@ export default function HomePage() {
                 Continue without account for now
               </button>
             </div>
+
+            <Link
+              href="/upgrade"
+              className="mt-8 inline-flex items-center gap-2 bg-gradient-to-r from-primary/10 to-emerald-500/10 text-primary hover:from-primary/15 hover:to-emerald-500/15 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 border border-primary/20 hover:border-primary/30"
+            >
+              <Sparkles className="w-4 h-4" />
+              Get unlimited meal plans
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
           </div>
         )}
       </div>

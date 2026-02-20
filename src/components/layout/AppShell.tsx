@@ -68,31 +68,36 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SettingsProvider>
-        <OnboardingGuard>
-          <RecipeProvider>
-            <BillingProvider>
-              <ToastProvider>
+      <OnboardingGuard>
+        <ToastProvider>
+          {isFullScreenPage ? (
+            <div className="min-h-screen bg-background">
+              <BottomNav />
+              <main className="min-h-screen">
+                {children}
+              </main>
+            </div>
+          ) : (
+            <RecipeProvider>
+              <BillingProvider>
                 <MealPlanProvider>
                   <AnonymousMigration />
                   <div className="min-h-screen bg-background">
-                    {!isFullScreenPage && <TopBanner />}
-                    {!isFullScreenPage && <Sidebar />}
+                    <TopBanner />
+                    <Sidebar />
                     <BottomNav />
-                    <main className={`${isFullScreenPage ? '' : 'md:ml-60 pb-16 md:pb-0 pt-14'} min-h-screen`}>
-                      {isFullScreenPage ? (
-                        children
-                      ) : (
-                        <div className="max-w-6xl mx-auto p-4 md:p-6">
-                          {children}
-                        </div>
-                      )}
+                    <main className="md:ml-60 pb-16 md:pb-0 pt-14 min-h-screen">
+                      <div className="max-w-6xl mx-auto p-4 md:p-6">
+                        {children}
+                      </div>
                     </main>
                   </div>
                 </MealPlanProvider>
-              </ToastProvider>
-            </BillingProvider>
-          </RecipeProvider>
-        </OnboardingGuard>
-      </SettingsProvider>
+              </BillingProvider>
+            </RecipeProvider>
+          )}
+        </ToastProvider>
+      </OnboardingGuard>
+    </SettingsProvider>
   );
 }

@@ -654,3 +654,8 @@ export function useMealPlan() {
   if (!context) throw new Error('useMealPlan must be used within MealPlanProvider');
   return context;
 }
+
+/** Safe version that returns null outside MealPlanProvider (e.g., landing page) */
+export function useMealPlanOptional() {
+  return useContext(MealPlanContext);
+}

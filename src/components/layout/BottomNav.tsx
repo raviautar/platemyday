@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Heart, Calendar, Settings } from 'lucide-react';
-import { useMealPlan } from '@/contexts/MealPlanContext';
+import { useMealPlanOptional } from '@/contexts/MealPlanContext';
 
 const navItems = [
   { href: '/meal-plan', label: 'Meal Plan', icon: Calendar, featureId: 'feature1' },
@@ -14,7 +14,8 @@ const navItems = [
 
 export function BottomNav() {
   const pathname = usePathname();
-  const { generating } = useMealPlan();
+  const mealPlan = useMealPlanOptional();
+  const generating = mealPlan?.generating ?? false;
   const [focusStep, setFocusStep] = useState<string | null>(null);
 
   useEffect(() => {
