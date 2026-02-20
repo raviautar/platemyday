@@ -49,12 +49,12 @@ export function Modal({ isOpen, onClose, title, children, fullscreen = false }: 
   }
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 animate-fade-in">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-0 md:p-4 animate-fade-in">
       <div
         className="fixed inset-0 bg-black/50 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
-      <div className="relative bg-white rounded-2xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-hidden flex flex-col border border-border/50 animate-fade-in">
+      <div className="relative bg-white rounded-none md:rounded-2xl shadow-2xl max-w-lg w-full h-full md:h-auto md:max-h-[90vh] overflow-hidden flex flex-col border-0 md:border border-border/50 animate-fade-in">
         {title && (
           <div className="flex items-center justify-between px-6 py-5 border-b border-border/60 bg-gradient-to-r from-white to-surface/30">
             <h2 className="text-xl font-semibold text-foreground tracking-tight">{title}</h2>

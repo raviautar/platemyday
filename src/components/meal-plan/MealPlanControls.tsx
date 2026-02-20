@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal } from '@/components/ui/Modal';
-import { Settings2, Sparkles, X, Plus, ChefHat, Leaf, Flame, Zap, UtensilsCrossed, ExternalLink } from 'lucide-react';
+import { Settings2, Sparkles, X, Plus, ChefHat, Leaf, Flame, Zap, UtensilsCrossed, ChevronRight } from 'lucide-react';
 import { CUISINE_OPTIONS } from '@/lib/constants';
 import { useBilling } from '@/contexts/BillingContext';
+import { searchIngredients } from '@/lib/ingredients';
 
 export interface AdHocCustomizations {
   pantryIngredients: string[];
@@ -47,6 +48,10 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
   const [showCustomize, setShowCustomize] = useState(false);
   const [ingredientInput, setIngredientInput] = useState('');
   const [cuisineInput, setCuisineInput] = useState('');
+  const [ingredientSuggestions, setIngredientSuggestions] = useState<string[]>([]);
+  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
+  const ingredientInputRef = useRef<HTMLInputElement>(null);
+  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   const hasCustomizations =
     customizations.pantryIngredients.length > 0 ||
@@ -75,14 +80,57 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
     onGenerate(buildPreferencesString(), undefined);
   };
 
-  const addIngredient = () => {
-    const trimmed = ingredientInput.trim();
+  useEffect(() => {
+    if (ingredientInput.trim()) {
+      const suggestions = searchIngredients(ingredientInput, 8);
+      setIngredientSuggestions(suggestions);
+      setSelectedSuggestionIndex(-1);
+    } else {
+      setIngredientSuggestions([]);
+      setSelectedSuggestionIndex(-1);
+    }
+  }, [ingredientInput]);
+
+  const addIngredient = (ingredient?: string) => {
+    const trimmed = (ingredient || ingredientInput).trim();
     if (trimmed && !customizations.pantryIngredients.includes(trimmed)) {
       setCustomizations(prev => ({
         ...prev,
         pantryIngredients: [...prev.pantryIngredients, trimmed],
       }));
       setIngredientInput('');
+      setIngredientSuggestions([]);
+      setSelectedSuggestionIndex(-1);
+    }
+  };
+
+  const handleIngredientKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (ingredientSuggestions.length === 0) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        addIngredient();
+      }
+      return;
+    }
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      setSelectedSuggestionIndex(prev => 
+        prev < ingredientSuggestions.length - 1 ? prev + 1 : prev
+      );
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      setSelectedSuggestionIndex(prev => prev > 0 ? prev - 1 : -1);
+    } else if (e.key === 'Enter') {
+      e.preventDefault();
+      if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < ingredientSuggestions.length) {
+        addIngredient(ingredientSuggestions[selectedSuggestionIndex]);
+      } else {
+        addIngredient();
+      }
+    } else if (e.key === 'Escape') {
+      setIngredientSuggestions([]);
+      setSelectedSuggestionIndex(-1);
     }
   };
 
@@ -178,14 +226,14 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
 
       {/* Customize Modal */}
       <Modal isOpen={showCustomize} onClose={() => setShowCustomize(false)}>
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
+        <div className="space-y-5">
+          <div className="flex items-start justify-between gap-4 pb-2 border-b border-border/40">
             <div>
-              <h2 className="text-xl font-bold text-foreground">Customize This Week</h2>
-              <p className="text-sm text-muted mt-1">Tailor your meal plan for the coming week</p>
+              <h2 className="text-lg font-semibold text-foreground">Customize This Week</h2>
+              <p className="text-xs text-muted mt-0.5">Tailor your meal plan for the coming week</p>
             </div>
-            <button onClick={() => setShowCustomize(false)} className="text-muted hover:text-foreground p-1">
-              <X className="w-5 h-5" />
+            <button onClick={() => setShowCustomize(false)} className="text-muted hover:text-foreground p-1.5 hover:bg-surface/50 rounded-lg transition-colors -mt-1">
+              <X className="w-4 h-4" />
             </button>
           </div>
 
@@ -195,154 +243,181 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
               setShowCustomize(false);
               router.push('/customize');
             }}
-            className="w-full flex items-center justify-between gap-2 px-4 py-3 rounded-xl bg-surface hover:bg-surface/80 border border-border text-left transition-colors"
+            className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-surface/50 hover:bg-surface border border-border/50 text-left transition-colors group"
           >
-            <span className="text-sm font-medium text-foreground">Edit saved preferences</span>
-            <ExternalLink className="w-4 h-4 text-muted shrink-0" />
+            <span className="text-xs font-medium text-foreground">Modify general preferences</span>
+            <ChevronRight className="w-3.5 h-3.5 text-muted shrink-0 group-hover:text-primary transition-colors" />
           </button>
 
-          <div>
-            <h3 className="text-base font-bold text-foreground tracking-tight mb-4">Options for this week&apos;s plan</h3>
-            <div className="space-y-6">
-              {/* Pantry Ingredients */}
+          <div className="space-y-4">
+            {/* Pantry Ingredients */}
+            <div className="space-y-2">
               <div>
-                <label className="text-sm font-semibold text-foreground mb-2 block">
-                  What&apos;s in your pantry?
-                </label>
-                <p className="text-xs text-muted mb-2">Add ingredients you&apos;d like to use up this week</p>
-                <div className="flex gap-2">
+                <label className="text-xs font-semibold text-foreground">Pantry ingredients</label>
+                <p className="text-xs text-muted/80 mt-0.5">Add ingredients to use up this week</p>
+              </div>
+              <div className="relative">
+                <div className="flex gap-1.5">
                   <input
+                    ref={ingredientInputRef}
                     type="text"
                     value={ingredientInput}
                     onChange={e => setIngredientInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addIngredient())}
+                    onKeyDown={handleIngredientKeyDown}
+                    onBlur={() => {
+                      setTimeout(() => {
+                        setIngredientSuggestions([]);
+                        setSelectedSuggestionIndex(-1);
+                      }, 200);
+                    }}
                     placeholder="e.g., chicken, rice, broccoli..."
-                    className="flex-1 px-3 py-2 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                    className="flex-1 px-3 py-1.5 rounded-lg border border-border/60 bg-white text-foreground placeholder:text-muted/60 focus:outline-none focus:ring-1.5 focus:ring-primary focus:border-primary text-sm"
                   />
                   <button
-                    onClick={addIngredient}
-                    className="px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+                    onClick={() => addIngredient()}
+                    className="px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/15 transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
-                {customizations.pantryIngredients.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {customizations.pantryIngredients.map(ing => (
-                      <span
-                        key={ing}
-                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm border border-emerald-200"
+                {ingredientSuggestions.length > 0 && (
+                  <div
+                    ref={suggestionsRef}
+                    className="absolute z-10 w-full mt-1 bg-white border border-border/60 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                  >
+                    {ingredientSuggestions.map((suggestion, index) => (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => addIngredient(suggestion)}
+                        onMouseEnter={() => setSelectedSuggestionIndex(index)}
+                        className={`w-full text-left px-3 py-2 text-sm transition-colors ${
+                          index === selectedSuggestionIndex
+                            ? 'bg-primary/10 text-primary'
+                            : 'text-foreground hover:bg-surface/50'
+                        }`}
                       >
-                        {ing}
-                        <button onClick={() => removeIngredient(ing)} className="hover:text-emerald-900">
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
+                        {suggestion}
+                      </button>
                     ))}
                   </div>
                 )}
               </div>
-
-              {/* Meal Types */}
-              <div>
-                <label className="text-sm font-semibold text-foreground mb-2 block">
-                  What kind of meals?
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {MEAL_TYPE_OPTIONS.map(({ label, icon: Icon }) => {
-                    const selected = customizations.mealTypes.includes(label);
-                    return (
-                      <button
-                        key={label}
-                        onClick={() => toggleMealType(label)}
-                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 border ${selected
-                            ? 'bg-primary text-white border-primary shadow-sm'
-                            : 'bg-white text-foreground border-border hover:border-primary/50 hover:bg-primary/5'
-                          }`}
-                      >
-                        <Icon className="w-4 h-4" />
-                        {label}
+              {customizations.pantryIngredients.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {customizations.pantryIngredients.map(ing => (
+                    <span
+                      key={ing}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/8 text-primary text-xs border border-primary/20"
+                    >
+                      {ing}
+                      <button onClick={() => removeIngredient(ing)} className="hover:text-primary-dark">
+                        <X className="w-3 h-3" />
                       </button>
-                    );
-                  })}
+                    </span>
+                  ))}
                 </div>
-              </div>
+              )}
+            </div>
 
-              {/* Cuisine Preferences */}
-              <div>
-                <label className="text-sm font-semibold text-foreground mb-2 block">
-                  Preferred cuisines
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {CUISINE_OPTIONS.map(cuisine => {
-                    const selected = customizations.cuisines.includes(cuisine);
-                    return (
+            {/* Meal Types */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-foreground block">Meal types</label>
+              <div className="flex flex-wrap gap-1.5">
+                {MEAL_TYPE_OPTIONS.map(({ label, icon: Icon }) => {
+                  const selected = customizations.mealTypes.includes(label);
+                  return (
+                    <button
+                      key={label}
+                      onClick={() => toggleMealType(label)}
+                      className={`inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all duration-150 ${selected
+                          ? 'bg-primary text-white shadow-sm'
+                          : 'bg-surface/60 text-foreground hover:bg-surface border border-border/50'
+                        }`}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Cuisine Preferences */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-foreground block">Cuisines</label>
+              <div className="flex flex-wrap gap-1.5">
+                {CUISINE_OPTIONS.map(cuisine => {
+                  const selected = customizations.cuisines.includes(cuisine);
+                  return (
+                    <button
+                      key={cuisine}
+                      onClick={() => toggleCuisine(cuisine)}
+                      className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all duration-150 ${selected
+                          ? 'bg-primary text-white shadow-sm'
+                          : 'bg-surface/60 text-foreground hover:bg-surface border border-border/50'
+                        }`}
+                    >
+                      {cuisine}
+                    </button>
+                  );
+                })}
+                {customizations.cuisines
+                  .filter(c => !(CUISINE_OPTIONS as readonly string[]).includes(c))
+                  .map(cuisine => (
+                    <span
+                      key={cuisine}
+                      className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-primary/8 text-primary text-xs border border-primary/20 font-medium"
+                    >
+                      {cuisine}
                       <button
-                        key={cuisine}
-                        onClick={() => toggleCuisine(cuisine)}
-                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border ${selected
-                            ? 'bg-teal-500 text-white border-teal-500 shadow-sm'
-                            : 'bg-white text-foreground border-border hover:border-teal-300 hover:bg-teal-50'
-                          }`}
+                        type="button"
+                        onClick={() => removeCuisine(cuisine)}
+                        className="hover:text-primary-dark"
+                        aria-label={`Remove ${cuisine}`}
                       >
-                        {cuisine}
+                        <X className="w-3 h-3" />
                       </button>
-                    );
-                  })}
-                  {customizations.cuisines
-                    .filter(c => !(CUISINE_OPTIONS as readonly string[]).includes(c))
-                    .map(cuisine => (
-                      <span
-                        key={cuisine}
-                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-teal-50 text-teal-700 text-sm border border-teal-200 font-medium"
-                      >
-                        {cuisine}
-                        <button
-                          type="button"
-                          onClick={() => removeCuisine(cuisine)}
-                          className="hover:text-teal-900"
-                          aria-label={`Remove ${cuisine}`}
-                        >
-                          <X className="w-3 h-3" />
-                        </button>
-                      </span>
-                    ))}
-                </div>
-                <div className="flex gap-2 min-w-0 mt-2">
-                  <input
-                    type="text"
-                    value={cuisineInput}
-                    onChange={e => setCuisineInput(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCuisine())}
-                    placeholder="Add custom cuisine..."
-                    className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-teal-300 text-sm"
-                  />
-                  <button
-                    type="button"
-                    onClick={addCuisine}
-                    className="px-3 py-1.5 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 transition-colors shrink-0"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </button>
-                </div>
+                    </span>
+                  ))}
               </div>
+              <div className="flex gap-1.5">
+                <input
+                  type="text"
+                  value={cuisineInput}
+                  onChange={e => setCuisineInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCuisine())}
+                  placeholder="Add custom cuisine..."
+                  className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-border/60 bg-white text-foreground placeholder:text-muted/60 focus:outline-none focus:ring-1.5 focus:ring-primary focus:border-primary text-sm"
+                />
+                <button
+                  type="button"
+                  onClick={addCuisine}
+                  className="px-2.5 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/15 transition-colors shrink-0"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
 
-              {/* Freeform Notes */}
-              <Textarea
-                label="Anything else?"
+            {/* Freeform Notes */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-foreground block">Additional notes</label>
+              <textarea
                 value={customizations.freeformNotes}
                 onChange={e => setCustomizations(prev => ({ ...prev, freeformNotes: e.target.value }))}
-                placeholder="e.g., No red meat this week, extra protein, kid-friendly meals, birthday dinner on Friday..."
+                placeholder="e.g., No red meat this week, extra protein, kid-friendly meals..."
                 rows={3}
+                className="w-full px-3 py-2 rounded-lg border border-border/60 bg-white text-foreground placeholder:text-muted/60 focus:outline-none focus:ring-1.5 focus:ring-primary focus:border-primary resize-y min-h-[80px] text-sm"
               />
             </div>
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-2">
+          <div className="flex gap-2 pt-2 border-t border-border/40">
             <Button
               variant="ghost"
-              className="flex-1"
+              className="flex-1 text-sm"
               onClick={() => {
                 setCustomizations(EMPTY_CUSTOMIZATIONS);
                 setIngredientInput('');
@@ -352,7 +427,7 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
               Clear All
             </Button>
             <Button
-              className="flex-1"
+              className="flex-1 text-sm"
               onClick={() => setShowCustomize(false)}
             >
               Done
