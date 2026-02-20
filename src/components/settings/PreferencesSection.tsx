@@ -22,6 +22,10 @@ export function PreferencesSection() {
     calories: typeof prefs.macroGoals.calories === 'number' ? 'custom' : 'preset',
   });
 
+  const [customDietInput, setCustomDietInput] = useState(() => {
+    const isCustom = prefs.dietaryType && !DIET_OPTIONS.some(o => o.value === prefs.dietaryType);
+    return isCustom ? (prefs.dietaryType ?? '') : '';
+  });
   const [customAllergyInput, setCustomAllergyInput] = useState('');
   const [customCuisineInput, setCustomCuisineInput] = useState('');
 
@@ -33,6 +37,23 @@ export function PreferencesSection() {
       calories: typeof prefs.macroGoals.calories === 'number' ? 'custom' : 'preset',
     });
   }, [prefs.macroGoals]);
+
+  const isCustomDiet = prefs.dietaryType && !DIET_OPTIONS.some(o => o.value === prefs.dietaryType);
+
+  useEffect(() => {
+    if (isCustomDiet) {
+      setCustomDietInput(prefs.dietaryType ?? '');
+    } else {
+      setCustomDietInput('');
+    }
+  }, [prefs.dietaryType, isCustomDiet]);
+
+  const submitCustomDiet = () => {
+    const value = customDietInput.trim();
+    if (value) {
+      handleUpdate({ dietaryType: value });
+    }
+  };
 
   const handleUpdate = (updates: Partial<UserPreferences>, showNotification = true) => {
     updateSettings({
@@ -58,8 +79,6 @@ export function PreferencesSection() {
   const handleServingsEnd = () => {
     showToast('Preferences updated');
   };
-
-  const isCustomDiet = prefs.dietaryType && !DIET_OPTIONS.some(o => o.value === prefs.dietaryType);
 
   const addCustomAllergy = () => {
     const trimmed = customAllergyInput.trim().toLowerCase();
@@ -119,13 +138,26 @@ export function PreferencesSection() {
           <input
             type="text"
             placeholder="Or type a custom diet..."
-            value={isCustomDiet ? (prefs.dietaryType ?? '') : ''}
-            onChange={(e) => handleUpdate({ dietaryType: e.target.value || null }, false)}
+            value={customDietInput}
+            onChange={(e) => setCustomDietInput(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                submitCustomDiet();
+              }
+            }}
             onBlur={() => {
-              if (isCustomDiet) showToast('Preferences updated');
+              if (customDietInput.trim()) submitCustomDiet();
             }}
             className="min-w-0 flex-1 px-3 py-2 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary text-sm"
           />
+          <button
+            onClick={submitCustomDiet}
+            disabled={!customDietInput.trim()}
+            className="px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <Plus className="w-4 h-4" />
+          </button>
         </div>
       </div>
 

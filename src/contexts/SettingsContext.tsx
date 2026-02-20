@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
+import React, { createContext, useContext, useCallback, useState, useEffect, useRef } from 'react';
 import { AppSettings, UnitSystem } from '@/types';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
 import { useSupabase } from '@/hooks/useSupabase';
@@ -43,11 +43,23 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     return () => { cancelled = true; };
   }, [userId, anonymousId, isLoaded, supabase]);
 
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const persistSettings = useCallback((newSettings: AppSettings) => {
-    upsertSettings(supabase, newSettings, userId, anonymousId).catch(err =>
-      console.error('Failed to save settings:', err)
-    );
-  }, [userId, anonymousId, supabase]);
+    if (!isLoaded || !anonymousId) return;
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    debounceTimerRef.current = setTimeout(() => {
+      upsertSettings(supabase, newSettings, userId, anonymousId).catch(err =>
+        console.error('Failed to save settings:', err)
+      );
+    }, 500);
+  }, [userId, anonymousId, isLoaded, supabase]);
+
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    };
+  }, []);
 
   const updateSettings = useCallback((updates: Partial<AppSettings>) => {
     setSettings(prev => {

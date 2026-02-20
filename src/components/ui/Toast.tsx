@@ -19,7 +19,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
 
   const showToast = useCallback((message: string, type: Toast['type'] = 'success') => {
     const id = crypto.randomUUID();
-    setToasts(prev => [...prev, { id, message, type }]);
+    setToasts(prev => {
+      if (prev.some(t => t.message === message && t.type === type)) return prev;
+      return [...prev, { id, message, type }];
+    });
     setTimeout(() => {
       setToasts(prev => prev.filter(t => t.id !== id));
     }, 3000);
@@ -28,7 +31,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed top-4 right-4 z-[200] flex flex-col gap-2">
+      <div className="fixed right-4 z-[200] flex flex-col gap-2" style={{ top: 'calc(1rem + env(safe-area-inset-top, 0px))' }}>
         {toasts.map(toast => (
           <div
             key={toast.id}

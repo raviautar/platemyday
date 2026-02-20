@@ -265,9 +265,11 @@ export function RecipeForm({ isOpen, onClose, onSave, editingRecipe }: RecipeFor
           </div>
         </div>
 
-        <div className="flex gap-2 pt-2 border-t border-border/40">
-          <Button type="submit" className="flex-1 py-2 text-sm h-auto">{editingRecipe ? 'Save Changes' : 'Create Recipe'}</Button>
-          <Button type="button" variant="ghost" onClick={onClose} className="py-2 text-sm h-auto">Cancel</Button>
+        <div className="sticky bottom-0 bg-white pt-3 pb-2 -mx-6 px-6 md:-mx-8 md:px-8 lg:-mx-10 lg:px-10 border-t border-border/40 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+          <div className="flex gap-2">
+            <Button type="submit" className="flex-1 py-2 text-sm h-auto">{editingRecipe ? 'Save Changes' : 'Create Recipe'}</Button>
+            <Button type="button" variant="ghost" onClick={onClose} className="py-2 text-sm h-auto">Cancel</Button>
+          </div>
         </div>
       </form>
     </Modal>
