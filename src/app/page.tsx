@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Calendar, Heart, Map, ArrowRight, User as UserIcon, LogIn, Settings } from 'lucide-react';
+import { Sparkles, Map, ArrowRight, User as UserIcon, LogIn } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
 import { useTour } from '@/contexts/TourContext';
@@ -118,8 +118,16 @@ export default function HomePage() {
 
         {view === 'feature1' && (
           <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto">
-            <div className="w-20 h-20 mb-8 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-xl shadow-teal-500/20 transform hover:-translate-y-1 transition-transform duration-300">
-              <Calendar className="w-10 h-10 text-white" strokeWidth={2} />
+            <div className="mb-6 bg-white p-2 rounded-2xl shadow-2xl shadow-teal-500/20 ring-1 ring-black/5 transform hover:-translate-y-1 transition-transform duration-300">
+              <Image
+                src="/assets/tour/meal-plan.png"
+                alt="Weekly Meal Plans"
+                width={600}
+                height={600}
+                className="rounded-xl w-[280px] h-[280px] sm:w-[360px] sm:h-[360px] object-cover"
+                style={{ objectPosition: 'center -50px' }}
+                priority
+              />
             </div>
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-3 font-[family-name:var(--font-outfit)]">Feature 1 of 3</p>
             <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-outfit)] text-foreground">Weekly Meal Plans</h2>
@@ -137,8 +145,16 @@ export default function HomePage() {
 
         {view === 'feature2' && (
           <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto">
-            <div className="w-20 h-20 mb-8 bg-gradient-to-br from-primary to-emerald-600 rounded-2xl flex items-center justify-center shadow-xl shadow-primary/20 transform hover:-translate-y-1 transition-transform duration-300">
-              <Heart className="w-10 h-10 text-white" strokeWidth={2} />
+            <div className="mb-6 bg-white p-2 rounded-2xl shadow-2xl shadow-primary/20 ring-1 ring-black/5 transform hover:-translate-y-1 transition-transform duration-300">
+              <Image
+                src="/assets/tour/recipes.png"
+                alt="Tailored Recipes"
+                width={600}
+                height={600}
+                className="rounded-xl w-[280px] h-[280px] sm:w-[360px] sm:h-[360px] object-cover"
+                style={{ objectPosition: 'center -50px' }}
+                priority
+              />
             </div>
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-3 font-[family-name:var(--font-outfit)]">Feature 2 of 3</p>
             <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-outfit)] text-foreground">Tailored Recipes</h2>
@@ -156,8 +172,16 @@ export default function HomePage() {
 
         {view === 'feature3' && (
           <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto">
-            <div className="w-20 h-20 mb-8 bg-gradient-to-br from-teal-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-xl shadow-teal-500/20 transform hover:-translate-y-1 transition-transform duration-300">
-              <Settings className="w-10 h-10 text-white" strokeWidth={2} />
+            <div className="mb-6 bg-white p-2 rounded-2xl shadow-2xl shadow-teal-500/20 ring-1 ring-black/5 transform hover:-translate-y-1 transition-transform duration-300">
+              <Image
+                src="/assets/tour/preferences.png"
+                alt="Dietary Preferences"
+                width={600}
+                height={600}
+                className="rounded-xl w-[280px] h-[280px] sm:w-[360px] sm:h-[360px] object-cover"
+                style={{ objectPosition: 'center -50px' }}
+                priority
+              />
             </div>
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-3 font-[family-name:var(--font-outfit)]">Feature 3 of 3</p>
             <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-outfit)] text-foreground">Dietary Preferences</h2>

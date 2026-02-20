@@ -411,13 +411,10 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     const targetDay = dayMap[weekStartDay];
     const currentDay = today.getDay();
 
-    let daysToSubtract = currentDay - targetDay;
-    if (daysToSubtract < 0) {
-      daysToSubtract += 7;
-    }
+    const daysToAdd = (targetDay - currentDay + 7) % 7;
 
     const weekStart = new Date(today);
-    weekStart.setDate(today.getDate() - daysToSubtract);
+    weekStart.setDate(today.getDate() + daysToAdd);
 
     return weekStart;
   }, []);

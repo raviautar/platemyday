@@ -40,12 +40,10 @@ export function StreamingMealView({ partialPlan, totalDays = 7 }: StreamingMealV
               key={index}
               className="w-full md:flex-shrink-0 md:w-[200px] lg:w-[220px]"
             >
-              <div className={`bg-surface rounded-xl p-3 h-full transition-opacity duration-500 ${
-                hasData ? 'opacity-100' : 'opacity-50'
-              }`}>
-                {/* Day header */}
+              <div className={`bg-surface rounded-xl p-3 h-full transition-opacity duration-500 ${hasData ? 'opacity-100' : 'opacity-50'
+                }`}>
                 <h3 className="font-semibold text-sm text-center text-primary-dark mb-2 h-5">
-                  {hasData ? day.dayOfWeek!.slice(0, 3) : (
+                  {hasData ? day.dayOfWeek : (
                     <span className="inline-block w-12 h-3 bg-border/60 rounded animate-pulse" />
                   )}
                 </h3>

@@ -26,8 +26,7 @@ export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, o
     const date = new Date(dateStr + 'T00:00:00');
     const month = date.toLocaleDateString('en-US', { month: 'short' });
     const dayNum = date.getDate();
-    const dayAbbr = dayOfWeek.slice(0, 3);
-    return `${dayAbbr} - ${month} ${dayNum}`;
+    return `${dayOfWeek} - ${month} ${dayNum}`;
   };
 
   return (
@@ -40,9 +39,8 @@ export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, o
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`space-y-2 min-h-[120px] rounded-lg p-1 transition-colors ${
-              snapshot.isDraggingOver ? 'bg-primary/10 border-2 border-dashed border-primary/30' : ''
-            }`}
+            className={`space-y-2 min-h-[120px] rounded-lg p-1 transition-colors ${snapshot.isDraggingOver ? 'bg-primary/10 border-2 border-dashed border-primary/30' : ''
+              }`}
           >
             {day.meals.map((meal, mealIndex) => {
               const suggestedRecipe = meal.recipeTitleFallback
