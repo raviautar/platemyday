@@ -13,6 +13,7 @@ import { TopBanner } from './TopBanner';
 import { ToastProvider } from '@/components/ui/Toast';
 import { getAnonymousId, clearAnonymousId } from '@/lib/anonymous-id';
 import { migrateAnonymousData } from '@/lib/supabase/db';
+import { useSupabase } from '@/hooks/useSupabase';
 import { useBilling } from '@/contexts/BillingContext';
 import { TourProvider } from '@/contexts/TourContext';
 import { TourOverlay } from '@/components/tour/TourOverlay';
@@ -22,6 +23,7 @@ import { EVENTS } from '@/lib/analytics/events';
 function AnonymousMigration() {
   const { user, isLoaded } = useUser();
   const { refetch: refetchBilling } = useBilling();
+  const supabase = useSupabase();
   const migrated = useRef(false);
 
   useEffect(() => {
@@ -30,7 +32,7 @@ function AnonymousMigration() {
 
     const anonymousId = getAnonymousId();
     if (anonymousId) {
-      migrateAnonymousData(anonymousId, user.id)
+      migrateAnonymousData(supabase, anonymousId, user.id)
         .then(() => {
           posthog.capture(EVENTS.ANONYMOUS_DATA_MIGRATED, { previous_anonymous_id: anonymousId });
           posthog.capture(EVENTS.USER_SIGNED_UP);
@@ -39,7 +41,7 @@ function AnonymousMigration() {
         })
         .catch((err) => console.error('Migration failed:', err));
     }
-  }, [user, isLoaded, refetchBilling]);
+  }, [user, isLoaded, refetchBilling, supabase]);
 
   return null;
 }

@@ -25,67 +25,96 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
   // Show suggested recipe detail (AI-generated, not yet in library)
   if (suggestedRecipe) {
     return (
-      <Modal isOpen={isOpen} onClose={onClose} title={suggestedRecipe.title}>
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 text-xs bg-secondary/20 text-secondary-dark px-2 py-0.5 rounded-full">
-              <Sparkles className="w-3 h-3" />
-              AI Generated
-            </span>
-            <span className="text-xs bg-secondary/30 text-yellow-800 px-2 py-0.5 rounded-full capitalize">
-              {meal.mealType}
-            </span>
+      <Modal isOpen={isOpen} onClose={onClose} title={suggestedRecipe.title} fullscreen>
+        <div className="bg-gradient-to-br from-white to-surface/50 rounded-xl border border-border/60 shadow-lg overflow-hidden flex flex-col max-h-full">
+          <div className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent px-4 py-4 border-b border-border/40 shrink-0">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="inline-flex items-center gap-1 text-[10px] bg-secondary/20 text-secondary-dark px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+                <Sparkles className="w-3 h-3" />
+                AI Generated
+              </span>
+              <span className="text-[10px] bg-secondary/30 text-yellow-800 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+                {meal.mealType}
+              </span>
+            </div>
+
+            {suggestedRecipe.description && (
+              <p className="text-sm text-muted leading-snug">{suggestedRecipe.description}</p>
+            )}
+
+            {onAddToLibrary && (
+              <div className="mt-4 pt-4 border-t border-border/40">
+                <Button onClick={() => { onAddToLibrary(suggestedRecipe); onClose(); }} size="sm" className="w-full gap-2 text-sm py-1.5 h-auto">
+                  <Heart className="w-4 h-4" />
+                  Save to Library
+                </Button>
+                <p className="text-xs text-muted text-center mt-2">
+                  Save this recipe to your library to use it in the future.
+                </p>
+              </div>
+            )}
           </div>
 
-          {suggestedRecipe.description && (
-            <p className="text-muted">{suggestedRecipe.description}</p>
-          )}
+          <div className="px-4 py-4 space-y-5 overflow-y-auto w-full">
+            {(suggestedRecipe.prepTimeMinutes !== undefined ||
+              suggestedRecipe.cookTimeMinutes !== undefined ||
+              suggestedRecipe.servings !== undefined) && (
+                <div className="flex flex-wrap gap-2">
+                  {suggestedRecipe.prepTimeMinutes !== undefined && (
+                    <div className="flex items-center gap-1.5 bg-white/80 px-2.5 py-1.5 rounded-lg border border-border/40 shadow-sm">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-muted leading-none uppercase tracking-wider">Prep</span>
+                        <span className="text-xs font-semibold text-foreground">{suggestedRecipe.prepTimeMinutes}m</span>
+                      </div>
+                    </div>
+                  )}
+                  {suggestedRecipe.cookTimeMinutes !== undefined && (
+                    <div className="flex items-center gap-1.5 bg-white/80 px-2.5 py-1.5 rounded-lg border border-border/40 shadow-sm">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-muted leading-none uppercase tracking-wider">Cook</span>
+                        <span className="text-xs font-semibold text-foreground">{suggestedRecipe.cookTimeMinutes}m</span>
+                      </div>
+                    </div>
+                  )}
+                  {suggestedRecipe.servings !== undefined && (
+                    <div className="flex items-center gap-1.5 bg-white/80 px-2.5 py-1.5 rounded-lg border border-border/40 shadow-sm">
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-muted leading-none uppercase tracking-wider">Serves</span>
+                        <span className="text-xs font-semibold text-foreground">{suggestedRecipe.servings}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
-          {(suggestedRecipe.prepTimeMinutes !== undefined ||
-            suggestedRecipe.cookTimeMinutes !== undefined ||
-            suggestedRecipe.servings !== undefined) && (
-            <div className="flex gap-4 text-sm text-muted">
-              {suggestedRecipe.servings !== undefined && <span>Servings: {suggestedRecipe.servings}</span>}
-              {suggestedRecipe.prepTimeMinutes !== undefined && <span>Prep: {suggestedRecipe.prepTimeMinutes} min</span>}
-              {suggestedRecipe.cookTimeMinutes !== undefined && <span>Cook: {suggestedRecipe.cookTimeMinutes} min</span>}
-            </div>
-          )}
+            {suggestedRecipe.estimatedNutrition && (
+              <NutritionGrid nutrition={suggestedRecipe.estimatedNutrition} />
+            )}
 
-          {suggestedRecipe.estimatedNutrition && (
-            <NutritionGrid nutrition={suggestedRecipe.estimatedNutrition} />
-          )}
-
-          {suggestedRecipe.tags.length > 0 && (
-            <div>
-              <h4 className="font-semibold text-sm mb-2">Tags</h4>
-              <div className="flex flex-wrap gap-1">
-                {suggestedRecipe.tags.map(tag => (
-                  <span key={tag} className={`text-xs px-2 py-1 rounded-full ${getTagBadgeColor(tag)}`}>
-                    {tag}
-                  </span>
-                ))}
+            {suggestedRecipe.tags.length > 0 && (
+              <div>
+                <h4 className="font-semibold text-sm mb-2 flex items-center gap-1.5">
+                  <div className="w-1 h-4 bg-primary rounded-full"></div>
+                  Tags
+                </h4>
+                <div className="flex flex-wrap gap-1.5">
+                  {suggestedRecipe.tags.map(tag => (
+                    <span key={tag} className={`text-xs px-2.5 py-1 rounded-full ${getTagBadgeColor(tag)}`}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {(suggestedRecipe.ingredients.length > 0 || suggestedRecipe.instructions.length > 0) && (
-            <RecipeIngredientsAndInstructions 
-              ingredients={suggestedRecipe.ingredients}
-              instructions={suggestedRecipe.instructions}
-            />
-          )}
+            {(suggestedRecipe.ingredients.length > 0 || suggestedRecipe.instructions.length > 0) && (
+              <RecipeIngredientsAndInstructions
+                ingredients={suggestedRecipe.ingredients}
+                instructions={suggestedRecipe.instructions}
+              />
+            )}
 
-          {onAddToLibrary && (
-            <div className="bg-accent/5 border border-accent/30 rounded-lg p-4">
-              <p className="text-sm text-muted mb-3">
-                Save this recipe to your library to use it in future meal plans.
-              </p>
-              <Button onClick={() => { onAddToLibrary(suggestedRecipe); onClose(); }} size="sm" className="gap-2">
-                <Heart className="w-4 h-4" />
-                Save to Library
-              </Button>
-            </div>
-          )}
+          </div>
         </div>
       </Modal>
     );
@@ -97,22 +126,24 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
 
   if (isUnmatched) {
     return (
-      <Modal isOpen={isOpen} onClose={onClose} title={title || 'New Recipe'}>
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center gap-1 text-xs bg-secondary/20 text-secondary-dark px-2 py-0.5 rounded-full">
-              <Sparkles className="w-3 h-3" />
-              AI Generated
-            </span>
-            <span className="text-xs bg-secondary/30 text-yellow-800 px-2 py-0.5 rounded-full capitalize">
-              {meal.mealType}
-            </span>
-          </div>
+      <Modal isOpen={isOpen} onClose={onClose} title={title || 'New Recipe'} fullscreen>
+        <div className="bg-gradient-to-br from-white to-surface/50 rounded-xl border border-border/60 shadow-lg overflow-hidden flex flex-col max-h-full">
+          <div className="px-4 py-4 space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="inline-flex items-center gap-1 text-[10px] bg-secondary/20 text-secondary-dark px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+                <Sparkles className="w-3 h-3" />
+                AI Generated
+              </span>
+              <span className="text-[10px] bg-secondary/30 text-yellow-800 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+                {meal.mealType}
+              </span>
+            </div>
 
-          <div className="bg-secondary/10 border border-secondary rounded-lg p-4">
-            <p className="text-sm text-muted">
-              This recipe was suggested by AI. Recipe details are not available.
-            </p>
+            <div className="bg-secondary/10 border border-secondary rounded-lg p-3">
+              <p className="text-sm text-muted">
+                This recipe was suggested by AI. Recipe details are not available.
+              </p>
+            </div>
           </div>
         </div>
       </Modal>
@@ -130,59 +161,87 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={recipe.title}>
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          {recipe.isAIGenerated && (
-            <span className="inline-flex items-center gap-1 text-xs bg-accent/20 text-accent-dark px-2 py-0.5 rounded-full">
-              <Sparkles className="w-3 h-3" />
-              AI Generated
+    <Modal isOpen={isOpen} onClose={onClose} title={recipe.title} fullscreen>
+      <div className="bg-gradient-to-br from-white to-surface/50 rounded-xl border border-border/60 shadow-lg overflow-hidden flex flex-col max-h-full">
+        <div className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent px-4 py-4 border-b border-border/40 shrink-0">
+          <div className="flex items-center gap-2 mb-3">
+            {recipe.isAIGenerated && (
+              <span className="inline-flex items-center gap-1 text-[10px] bg-accent/20 text-accent-dark px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+                <Sparkles className="w-3 h-3" />
+                AI Generated
+              </span>
+            )}
+            <span className="text-[10px] bg-secondary/30 text-yellow-800 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+              {meal.mealType}
             </span>
+          </div>
+
+          <p className="text-sm text-muted leading-snug">{recipe.description}</p>
+        </div>
+
+        <div className="px-4 py-4 space-y-5 overflow-y-auto w-full">
+          <div className="flex flex-wrap gap-2">
+            {recipe.prepTimeMinutes > 0 && (
+              <div className="flex items-center gap-1.5 bg-white/80 px-2.5 py-1.5 rounded-lg border border-border/40 shadow-sm">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-muted leading-none uppercase tracking-wider">Prep</span>
+                  <span className="text-xs font-semibold text-foreground">{recipe.prepTimeMinutes}m</span>
+                </div>
+              </div>
+            )}
+            {recipe.cookTimeMinutes > 0 && (
+              <div className="flex items-center gap-1.5 bg-white/80 px-2.5 py-1.5 rounded-lg border border-border/40 shadow-sm">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-muted leading-none uppercase tracking-wider">Cook</span>
+                  <span className="text-xs font-semibold text-foreground">{recipe.cookTimeMinutes}m</span>
+                </div>
+              </div>
+            )}
+            {recipe.servings > 0 && (
+              <div className="flex items-center gap-1.5 bg-white/80 px-2.5 py-1.5 rounded-lg border border-border/40 shadow-sm">
+                <div className="flex flex-col">
+                  <span className="text-[10px] text-muted leading-none uppercase tracking-wider">Serves</span>
+                  <span className="text-xs font-semibold text-foreground">{recipe.servings}</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {meal.estimatedNutrition && (
+            <NutritionGrid nutrition={meal.estimatedNutrition} />
           )}
-          <span className="text-xs bg-secondary/30 text-yellow-800 px-2 py-0.5 rounded-full capitalize">
-            {meal.mealType}
-          </span>
-        </div>
 
-        <p className="text-muted">{recipe.description}</p>
-
-        <div className="flex gap-4 text-sm text-muted">
-          {recipe.servings > 0 && <span>Servings: {recipe.servings}</span>}
-          {recipe.prepTimeMinutes > 0 && <span>Prep: {recipe.prepTimeMinutes} min</span>}
-          {recipe.cookTimeMinutes > 0 && <span>Cook: {recipe.cookTimeMinutes} min</span>}
-        </div>
-
-        {meal.estimatedNutrition && (
-          <NutritionGrid nutrition={meal.estimatedNutrition} />
-        )}
-
-        {recipe.tags.length > 0 && (
-          <div>
-            <h4 className="font-semibold text-sm mb-2">Tags</h4>
-            <div className="flex flex-wrap gap-1">
-              {recipe.tags.map(tag => (
-                <span key={tag} className={`text-xs px-2 py-1 rounded-full ${getTagBadgeColor(tag)}`}>
-                  {tag}
-                </span>
-              ))}
+          {recipe.tags.length > 0 && (
+            <div>
+              <h4 className="font-semibold text-sm mb-2 flex items-center gap-1.5">
+                <div className="w-1 h-4 bg-primary rounded-full"></div>
+                Tags
+              </h4>
+              <div className="flex flex-wrap gap-1.5">
+                {recipe.tags.map(tag => (
+                  <span key={tag} className={`text-xs px-2.5 py-1 rounded-full ${getTagBadgeColor(tag)}`}>
+                    {tag}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {(recipe.ingredients.length > 0 || recipe.instructions.length > 0) && (
-          <RecipeIngredientsAndInstructions 
-            ingredients={recipe.ingredients}
-            instructions={recipe.instructions}
-          />
-        )}
+          {(recipe.ingredients.length > 0 || recipe.instructions.length > 0) && (
+            <RecipeIngredientsAndInstructions
+              ingredients={recipe.ingredients}
+              instructions={recipe.instructions}
+            />
+          )}
 
-        {recipe.ingredients.length === 0 && recipe.instructions.length === 0 && (
-          <div className="bg-secondary/10 border border-secondary rounded-lg p-4">
-            <p className="text-sm text-muted">
-              This recipe doesn&apos;t have ingredients or instructions yet. Edit it in your Recipe Library to add details.
-            </p>
-          </div>
-        )}
+          {recipe.ingredients.length === 0 && recipe.instructions.length === 0 && (
+            <div className="bg-secondary/10 border border-secondary rounded-lg p-3">
+              <p className="text-sm text-muted">
+                This recipe doesn&apos;t have ingredients or instructions yet. Edit it in your Recipe Library to add details.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
     </Modal>
   );

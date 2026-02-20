@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useCallback, useState, useEffect, useRef, useMemo } from 'react';
 import { WeekPlan, MealSlot, SuggestedRecipe } from '@/types';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
+import { useSupabase } from '@/hooks/useSupabase';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -94,6 +95,7 @@ export function collectIngredients(
 
 export function MealPlanProvider({ children }: { children: React.ReactNode }) {
   const { userId, anonymousId, isLoaded } = useUserIdentity();
+  const supabase = useSupabase();
   const { recipes } = useRecipes();
   const { settings } = useSettings();
   const { track } = useAnalytics();
@@ -130,7 +132,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     setLoading(true);
 
-    getActiveMealPlan(userId, anonymousId)
+    getActiveMealPlan(supabase, userId, anonymousId)
       .then((plan) => {
         if (!cancelled) setWeekPlanState(plan);
       })
@@ -140,7 +142,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       });
 
     return () => { cancelled = true; };
-  }, [userId, anonymousId, isLoaded]);
+  }, [userId, anonymousId, isLoaded, supabase]);
 
   // Clear stale shopping list when a new generation starts
   useEffect(() => {
@@ -280,12 +282,12 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
   const setWeekPlan = useCallback(async (plan: WeekPlan, suggestedRecipes?: Record<string, SuggestedRecipe>) => {
     setWeekPlanState(plan);
     try {
-      const saved = await saveMealPlanDb(plan, userId, anonymousId, suggestedRecipes);
+      const saved = await saveMealPlanDb(supabase, plan, userId, anonymousId, suggestedRecipes);
       setWeekPlanState(prev => prev ? { ...prev, id: saved.id, createdAt: saved.createdAt } : prev);
     } catch (err) {
       console.error('Failed to save meal plan:', err);
     }
-  }, [userId, anonymousId]);
+  }, [userId, anonymousId, supabase]);
 
   const updateLocalPlan = useCallback((updater: (prev: WeekPlan) => WeekPlan) => {
     setWeekPlanState(prev => {
@@ -368,28 +370,28 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
   const loadHistory = useCallback(async () => {
     setHistoryLoading(true);
     try {
-      const plans = await getMealPlans(userId, anonymousId);
+      const plans = await getMealPlans(supabase, userId, anonymousId);
       setMealPlanHistory(plans);
     } catch (err) {
       console.error('Failed to load meal plan history:', err);
     } finally {
       setHistoryLoading(false);
     }
-  }, [userId, anonymousId]);
+  }, [userId, anonymousId, supabase]);
 
   const restoreMealPlan = useCallback(async (planId: string) => {
     try {
-      await restoreMealPlanDb(planId, userId, anonymousId);
-      const plan = await getActiveMealPlan(userId, anonymousId);
+      await restoreMealPlanDb(supabase, planId, userId, anonymousId);
+      const plan = await getActiveMealPlan(supabase, userId, anonymousId);
       setWeekPlanState(plan);
     } catch (err) {
       console.error('Failed to restore meal plan:', err);
     }
-  }, [userId, anonymousId]);
+  }, [userId, anonymousId, supabase]);
 
   const deleteMealPlan = useCallback(async (planId: string) => {
     try {
-      await deleteMealPlanDb(planId);
+      await deleteMealPlanDb(supabase, planId);
       setMealPlanHistory(prev => prev.filter(p => p.id !== planId));
       if (weekPlan?.id === planId) {
         setWeekPlanState(null);
@@ -397,7 +399,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     } catch (err) {
       console.error('Failed to delete meal plan:', err);
     }
-  }, [weekPlan?.id]);
+  }, [weekPlan?.id, supabase]);
 
   // --- Generation logic ---
 

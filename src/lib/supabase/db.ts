@@ -1,10 +1,6 @@
-import { createClient } from './client';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { Recipe, WeekPlan, DayPlan, MealSlot, AppSettings, SuggestedRecipe } from '@/types';
 import { DEFAULT_USER_PREFERENCES } from '@/lib/constants';
-
-function getSupabase() {
-  return createClient();
-}
 
 function ownerFilter(userId: string | null, anonymousId: string) {
   return userId ? { user_id: userId } : { anonymous_id: anonymousId };
@@ -12,8 +8,8 @@ function ownerFilter(userId: string | null, anonymousId: string) {
 
 // ─── Recipes ───────────────────────────────────────────────────
 
-export async function getRecipes(userId: string | null, anonymousId: string): Promise<Recipe[]> {
-  const { data, error } = await getSupabase()
+export async function getRecipes(supabase: SupabaseClient, userId: string | null, anonymousId: string): Promise<Recipe[]> {
+  const { data, error } = await supabase
     .from('recipes')
     .select('*')
     .or(`${userId ? `user_id.eq.${userId}` : `anonymous_id.eq.${anonymousId}`}`)
@@ -24,11 +20,12 @@ export async function getRecipes(userId: string | null, anonymousId: string): Pr
 }
 
 export async function insertRecipe(
+  supabase: SupabaseClient,
   recipe: Omit<Recipe, 'id' | 'createdAt'>,
   userId: string | null,
   anonymousId: string
 ): Promise<Recipe> {
-  const { data, error } = await getSupabase()
+  const { data, error } = await supabase
     .from('recipes')
     .insert({
       ...ownerFilter(userId, anonymousId),
@@ -49,7 +46,7 @@ export async function insertRecipe(
   return mapDbRecipe(data);
 }
 
-export async function updateRecipeDb(id: string, updates: Partial<Recipe>): Promise<void> {
+export async function updateRecipeDb(supabase: SupabaseClient, id: string, updates: Partial<Recipe>): Promise<void> {
   const dbUpdates: Record<string, unknown> = {};
   if (updates.title !== undefined) dbUpdates.title = updates.title;
   if (updates.description !== undefined) dbUpdates.description = updates.description;
@@ -61,12 +58,12 @@ export async function updateRecipeDb(id: string, updates: Partial<Recipe>): Prom
   if (updates.tags !== undefined) dbUpdates.tags = updates.tags;
   if (updates.isAIGenerated !== undefined) dbUpdates.is_ai_generated = updates.isAIGenerated;
 
-  const { error } = await getSupabase().from('recipes').update(dbUpdates).eq('id', id);
+  const { error } = await supabase.from('recipes').update(dbUpdates).eq('id', id);
   if (error) throw error;
 }
 
-export async function deleteRecipeDb(id: string): Promise<void> {
-  const { error } = await getSupabase().from('recipes').delete().eq('id', id);
+export async function deleteRecipeDb(supabase: SupabaseClient, id: string): Promise<void> {
+  const { error } = await supabase.from('recipes').delete().eq('id', id);
   if (error) throw error;
 }
 
@@ -88,9 +85,9 @@ function mapDbRecipe(row: any): Recipe {
 
 // ─── Meal Plans ────────────────────────────────────────────────
 
-export async function getMealPlans(userId: string | null, anonymousId: string): Promise<WeekPlan[]> {
+export async function getMealPlans(supabase: SupabaseClient, userId: string | null, anonymousId: string): Promise<WeekPlan[]> {
   const filter = userId ? `user_id.eq.${userId}` : `anonymous_id.eq.${anonymousId}`;
-  const { data: plans, error } = await getSupabase()
+  const { data: plans, error } = await supabase
     .from('meal_plans')
     .select(`
       *,
@@ -107,9 +104,9 @@ export async function getMealPlans(userId: string | null, anonymousId: string): 
   return (plans || []).map(mapDbMealPlan);
 }
 
-export async function getActiveMealPlan(userId: string | null, anonymousId: string): Promise<WeekPlan | null> {
+export async function getActiveMealPlan(supabase: SupabaseClient, userId: string | null, anonymousId: string): Promise<WeekPlan | null> {
   const filter = userId ? `user_id.eq.${userId}` : `anonymous_id.eq.${anonymousId}`;
-  const { data: plans, error } = await getSupabase()
+  const { data: plans, error } = await supabase
     .from('meal_plans')
     .select(`
       *,
@@ -128,9 +125,9 @@ export async function getActiveMealPlan(userId: string | null, anonymousId: stri
   return mapDbMealPlan(plans[0]);
 }
 
-export async function getMealPlanById(id: string, userId: string | null, anonymousId: string): Promise<WeekPlan | null> {
+export async function getMealPlanById(supabase: SupabaseClient, id: string, userId: string | null, anonymousId: string): Promise<WeekPlan | null> {
   const filter = userId ? `user_id.eq.${userId}` : `anonymous_id.eq.${anonymousId}`;
-  const { data: plans, error } = await getSupabase()
+  const { data: plans, error } = await supabase
     .from('meal_plans')
     .select(`
       *,
@@ -150,6 +147,7 @@ export async function getMealPlanById(id: string, userId: string | null, anonymo
 }
 
 export async function saveMealPlan(
+  supabase: SupabaseClient,
   weekPlan: WeekPlan,
   userId: string | null,
   anonymousId: string,
@@ -157,14 +155,14 @@ export async function saveMealPlan(
 ): Promise<WeekPlan> {
   // Deactivate all existing active plans for this user
   const owner = ownerFilter(userId, anonymousId);
-  await getSupabase()
+  await supabase
     .from('meal_plans')
     .update({ is_active: false })
     .match(owner)
     .eq('is_active', true);
 
   // Insert the new meal plan
-  const { data: plan, error: planError } = await getSupabase()
+  const { data: plan, error: planError } = await supabase
     .from('meal_plans')
     .insert({
       ...owner,
@@ -184,7 +182,7 @@ export async function saveMealPlan(
     day_index: index,
   }));
 
-  const { data: days, error: daysError } = await getSupabase()
+  const { data: days, error: daysError } = await supabase
     .from('meal_plan_days')
     .insert(daysToInsert)
     .select();
@@ -206,7 +204,7 @@ export async function saveMealPlan(
   );
 
   if (mealsToInsert.length > 0) {
-    const { error: mealsError } = await getSupabase()
+    const { error: mealsError } = await supabase
       .from('meal_plan_meals')
       .insert(mealsToInsert);
     if (mealsError) throw mealsError;
@@ -226,7 +224,7 @@ export async function saveMealPlan(
       tags: sr.tags,
     }));
 
-    const { error: sugError } = await getSupabase()
+    const { error: sugError } = await supabase
       .from('suggested_recipes')
       .insert(suggestedToInsert);
     if (sugError) throw sugError;
@@ -237,27 +235,28 @@ export async function saveMealPlan(
 }
 
 export async function restoreMealPlanDb(
+  supabase: SupabaseClient,
   planId: string,
   userId: string | null,
   anonymousId: string
 ): Promise<void> {
   const owner = ownerFilter(userId, anonymousId);
   // Deactivate all
-  await getSupabase()
+  await supabase
     .from('meal_plans')
     .update({ is_active: false })
     .match(owner)
     .eq('is_active', true);
 
   // Activate the selected one
-  await getSupabase()
+  await supabase
     .from('meal_plans')
     .update({ is_active: true })
     .eq('id', planId);
 }
 
-export async function deleteMealPlanDb(planId: string): Promise<void> {
-  const { error } = await getSupabase().from('meal_plans').delete().eq('id', planId);
+export async function deleteMealPlanDb(supabase: SupabaseClient, planId: string): Promise<void> {
+  const { error } = await supabase.from('meal_plans').delete().eq('id', planId);
   if (error) throw error;
 }
 
@@ -308,9 +307,9 @@ function mapDbMealPlan(row: any): WeekPlan {
 
 // ─── Settings ──────────────────────────────────────────────────
 
-export async function getSettings(userId: string | null, anonymousId: string): Promise<AppSettings | null> {
+export async function getSettings(supabase: SupabaseClient, userId: string | null, anonymousId: string): Promise<AppSettings | null> {
   const filter = userId ? `user_id.eq.${userId}` : `anonymous_id.eq.${anonymousId}`;
-  const { data, error } = await getSupabase()
+  const { data, error } = await supabase
     .from('user_settings')
     .select('*')
     .or(filter)
@@ -330,13 +329,14 @@ export async function getSettings(userId: string | null, anonymousId: string): P
 }
 
 export async function upsertSettings(
+  supabase: SupabaseClient,
   settings: AppSettings,
   userId: string | null,
   anonymousId: string
 ): Promise<void> {
   const filter = userId ? { user_id: userId } : { anonymous_id: anonymousId };
 
-  const { data: existing, error: selectError } = await getSupabase()
+  const { data: existing, error: selectError } = await supabase
     .from('user_settings')
     .select('id')
     .match(filter)
@@ -345,7 +345,7 @@ export async function upsertSettings(
   if (selectError) throw selectError;
 
   if (existing) {
-    const { error } = await getSupabase()
+    const { error } = await supabase
       .from('user_settings')
       .update({
         recipe_system_prompt: settings.recipeSystemPrompt,
@@ -359,7 +359,7 @@ export async function upsertSettings(
 
     if (error) throw error;
   } else {
-    const { error } = await getSupabase()
+    const { error } = await supabase
       .from('user_settings')
       .insert({
         ...filter,
@@ -376,8 +376,8 @@ export async function upsertSettings(
 
 // ─── Anonymous → Authenticated Migration ───────────────────────
 
-export async function migrateAnonymousData(anonymousId: string, userId: string): Promise<void> {
-  const sb = getSupabase();
+export async function migrateAnonymousData(supabase: SupabaseClient, anonymousId: string, userId: string): Promise<void> {
+  const sb = supabase;
 
   // Migrate recipes
   await sb

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
 import { Recipe } from '@/types';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
+import { useSupabase } from '@/hooks/useSupabase';
 import {
   getRecipes as fetchRecipes,
   insertRecipe,
@@ -23,6 +24,7 @@ const RecipeContext = createContext<RecipeContextType | null>(null);
 
 export function RecipeProvider({ children }: { children: React.ReactNode }) {
   const { userId, anonymousId, isLoaded } = useUserIdentity();
+  const supabase = useSupabase();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -32,7 +34,7 @@ export function RecipeProvider({ children }: { children: React.ReactNode }) {
     let cancelled = false;
     setLoading(true);
 
-    fetchRecipes(userId, anonymousId)
+    fetchRecipes(supabase, userId, anonymousId)
       .then((data) => {
         if (!cancelled) setRecipes(data);
       })
@@ -42,23 +44,23 @@ export function RecipeProvider({ children }: { children: React.ReactNode }) {
       });
 
     return () => { cancelled = true; };
-  }, [userId, anonymousId, isLoaded]);
+  }, [userId, anonymousId, isLoaded, supabase]);
 
   const addRecipe = useCallback(async (recipe: Omit<Recipe, 'id' | 'createdAt'>): Promise<Recipe> => {
-    const newRecipe = await insertRecipe(recipe, userId, anonymousId);
+    const newRecipe = await insertRecipe(supabase, recipe, userId, anonymousId);
     setRecipes(prev => [newRecipe, ...prev]);
     return newRecipe;
-  }, [userId, anonymousId]);
+  }, [userId, anonymousId, supabase]);
 
   const updateRecipe = useCallback((id: string, updates: Partial<Recipe>) => {
     setRecipes(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
-    updateRecipeDb(id, updates).catch(err => console.error('Failed to update recipe:', err));
-  }, []);
+    updateRecipeDb(supabase, id, updates).catch(err => console.error('Failed to update recipe:', err));
+  }, [supabase]);
 
   const deleteRecipe = useCallback((id: string) => {
     setRecipes(prev => prev.filter(r => r.id !== id));
-    deleteRecipeDb(id).catch(err => console.error('Failed to delete recipe:', err));
-  }, []);
+    deleteRecipeDb(supabase, id).catch(err => console.error('Failed to delete recipe:', err));
+  }, [supabase]);
 
   const getRecipe = useCallback((id: string) => {
     return recipes.find(r => r.id === id);

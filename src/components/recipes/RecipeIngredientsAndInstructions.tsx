@@ -17,18 +17,18 @@ export function RecipeIngredientsAndInstructions({ ingredients, instructions }: 
     <>
       {hasIngredients && (
         <div className="space-y-1">
-          <h4 className="font-semibold text-base text-foreground flex items-center gap-2 mb-3">
-            <div className="w-1 h-5 bg-primary rounded-full"></div>
+          <h4 className="font-semibold text-sm text-foreground flex items-center gap-1.5 mb-2">
+            <div className="w-1 h-4 bg-primary rounded-full"></div>
             Ingredients
           </h4>
-          <div className="bg-white/60 rounded-lg p-4 border border-border/40">
+          <div className="bg-white/60 rounded-lg p-3 border border-border/40">
             <ul className="space-y-2">
               {ingredients.map((ing, i) => (
-                <li key={i} className="flex items-start gap-3 text-sm text-foreground">
-                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/20 flex items-center justify-center mt-0.5">
-                    <span className="text-primary text-xs font-semibold">{i + 1}</span>
+                <li key={i} className="flex items-start gap-2 text-xs text-foreground">
+                  <span className="flex-shrink-0 w-4 h-4 rounded-full bg-primary/20 flex items-center justify-center mt-0.5">
+                    <span className="text-primary text-[10px] font-semibold">{i + 1}</span>
                   </span>
-                  <span className="flex-1 leading-relaxed">{ing}</span>
+                  <span className="flex-1 leading-normal">{ing}</span>
                 </li>
               ))}
             </ul>
@@ -38,18 +38,18 @@ export function RecipeIngredientsAndInstructions({ ingredients, instructions }: 
 
       {hasInstructions && (
         <div className="space-y-1">
-          <h4 className="font-semibold text-base text-foreground flex items-center gap-2 mb-3">
-            <div className="w-1 h-5 bg-primary rounded-full"></div>
+          <h4 className="font-semibold text-sm text-foreground flex items-center gap-1.5 mb-2">
+            <div className="w-1 h-4 bg-primary rounded-full"></div>
             Instructions
           </h4>
-          <div className="bg-white/60 rounded-lg p-4 border border-border/40">
-            <ol className="space-y-3">
+          <div className="bg-white/60 rounded-lg p-3 border border-border/40">
+            <ol className="space-y-2.5">
               {instructions.map((step, i) => (
-                <li key={i} className="flex items-start gap-3 text-sm text-foreground">
-                  <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-xs mt-0.5">
+                <li key={i} className="flex items-start gap-2.5 text-xs text-foreground">
+                  <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary text-white flex items-center justify-center font-semibold text-[10px] mt-0.5">
                     {i + 1}
                   </span>
-                  <span className="flex-1 leading-relaxed">{step}</span>
+                  <span className="flex-1 leading-normal">{step}</span>
                 </li>
               ))}
             </ol>

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useCallback, useState, useEffect } from 'react';
 import { AppSettings, UnitSystem } from '@/types';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
+import { useSupabase } from '@/hooks/useSupabase';
 import { DEFAULT_SETTINGS, getRecipeSystemPrompt, getMealPlanSystemPrompt } from '@/lib/constants';
 import { getSettings as fetchSettings, upsertSettings } from '@/lib/supabase/db';
 
@@ -18,6 +19,7 @@ const SettingsContext = createContext<SettingsContextType | null>(null);
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const { userId, anonymousId, isLoaded } = useUserIdentity();
+  const supabase = useSupabase();
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
 
@@ -26,7 +28,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
     let cancelled = false;
 
-    fetchSettings(userId, anonymousId)
+    fetchSettings(supabase, userId, anonymousId)
       .then((data) => {
         if (!cancelled) {
           if (data) setSettings(data);
@@ -39,13 +41,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       });
 
     return () => { cancelled = true; };
-  }, [userId, anonymousId, isLoaded]);
+  }, [userId, anonymousId, isLoaded, supabase]);
 
   const persistSettings = useCallback((newSettings: AppSettings) => {
-    upsertSettings(newSettings, userId, anonymousId).catch(err =>
+    upsertSettings(supabase, newSettings, userId, anonymousId).catch(err =>
       console.error('Failed to save settings:', err)
     );
-  }, [userId, anonymousId]);
+  }, [userId, anonymousId, supabase]);
 
   const updateSettings = useCallback((updates: Partial<AppSettings>) => {
     setSettings(prev => {

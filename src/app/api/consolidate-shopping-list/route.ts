@@ -6,6 +6,7 @@ import {
   validateAndRateLimit,
 } from '@/lib/ai-guardrails';
 import { getMealPlanById, getRecipes } from '@/lib/supabase/db';
+import { createServiceClient } from '@/lib/supabase/server';
 import { Recipe, WeekPlan } from '@/types';
 
 export const runtime = 'nodejs';
@@ -45,9 +46,10 @@ export async function POST(req: Request) {
 
     const { mealPlanId, userId, anonymousId } = validation.data;
 
+    const supabase = createServiceClient();
     const [mealPlan, recipes] = await Promise.all([
-      getMealPlanById(mealPlanId, userId ?? null, anonymousId ?? ''),
-      getRecipes(userId ?? null, anonymousId ?? '')
+      getMealPlanById(supabase, mealPlanId, userId ?? null, anonymousId ?? ''),
+      getRecipes(supabase, userId ?? null, anonymousId ?? '')
     ]);
 
     if (!mealPlan) {

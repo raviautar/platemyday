@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { DAYS_OF_WEEK, MEAL_TYPES, formatPreferencesPrompt } from '@/lib/constants';
 import { getSettings } from '@/lib/supabase/db';
+import { createServiceClient } from '@/lib/supabase/server';
 
 const optionalActorIdSchema = z.preprocess(
   (value) => {
@@ -273,6 +274,7 @@ export async function getUserPreferencesPrompt(
   anonymousId?: string
 ): Promise<string> {
   if (!userId && !anonymousId) return '';
-  const settings = await getSettings(userId ?? null, anonymousId ?? '');
+  const supabase = createServiceClient();
+  const settings = await getSettings(supabase, userId ?? null, anonymousId ?? '');
   return settings ? formatPreferencesPrompt(settings.preferences) : '';
 }

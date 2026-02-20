@@ -53,38 +53,42 @@ export function RecipeDetail({ recipe, isOpen, onClose, onEdit, onDelete }: Reci
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={recipe.title}>
-      <div className="bg-gradient-to-br from-white to-surface/50 rounded-xl border border-border/60 shadow-lg overflow-hidden">
-        <div className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent px-6 py-5 border-b border-border/40">
-          <p className="text-sm text-muted leading-relaxed">{recipe.description}</p>
+    <Modal isOpen={isOpen} onClose={onClose} title={recipe.title} fullscreen>
+      <div className="bg-gradient-to-br from-white to-surface/50 rounded-xl border border-border/60 shadow-lg overflow-hidden flex flex-col max-h-full">
+        <div className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent px-4 py-4 border-b border-border/40 shrink-0">
+          <p className="text-sm text-muted leading-snug">{recipe.description}</p>
+          <div className="flex gap-2 mt-4 pt-4 border-t border-border/40">
+            <Button variant="ghost" size="sm" onClick={() => onEdit(recipe)} className="flex-1 text-sm py-1.5 h-auto">Edit Recipe</Button>
+            <Button variant="danger" size="sm" onClick={() => { onDelete(recipe.id); onClose(); }} className="flex-1 text-sm py-1.5 h-auto">Delete</Button>
+          </div>
         </div>
 
-        <div className="px-6 py-4 space-y-5">
-          <div className="flex flex-wrap gap-3">
+        <div className="px-4 py-4 space-y-5 overflow-y-auto w-full">
+          <div className="flex flex-wrap gap-2">
             {recipe.prepTimeMinutes > 0 && (
-              <div className="flex items-center gap-2 bg-white/80 px-3 py-2 rounded-lg border border-border/40 shadow-sm">
-                <Clock className="w-4 h-4 text-primary" />
+              <div className="flex items-center gap-1.5 bg-white/80 px-2.5 py-1.5 rounded-lg border border-border/40 shadow-sm">
+                <Clock className="w-3.5 h-3.5 text-primary" />
                 <div className="flex flex-col">
-                  <span className="text-xs text-muted leading-none">Prep</span>
-                  <span className="text-sm font-semibold text-foreground">{recipe.prepTimeMinutes}m</span>
+                  <span className="text-[10px] text-muted leading-none uppercase tracking-wider">Prep</span>
+                  <span className="text-xs font-semibold text-foreground">{recipe.prepTimeMinutes}m</span>
                 </div>
               </div>
             )}
             {recipe.cookTimeMinutes > 0 && (
-              <div className="flex items-center gap-2 bg-white/80 px-3 py-2 rounded-lg border border-border/40 shadow-sm">
-                <ChefHat className="w-4 h-4 text-primary" />
+              <div className="flex items-center gap-1.5 bg-white/80 px-2.5 py-1.5 rounded-lg border border-border/40 shadow-sm">
+                <ChefHat className="w-3.5 h-3.5 text-primary" />
                 <div className="flex flex-col">
-                  <span className="text-xs text-muted leading-none">Cook</span>
-                  <span className="text-sm font-semibold text-foreground">{recipe.cookTimeMinutes}m</span>
+                  <span className="text-[10px] text-muted leading-none uppercase tracking-wider">Cook</span>
+                  <span className="text-xs font-semibold text-foreground">{recipe.cookTimeMinutes}m</span>
                 </div>
               </div>
             )}
             {recipe.servings > 0 && (
-              <div className="flex items-center gap-2 bg-white/80 px-3 py-2 rounded-lg border border-border/40 shadow-sm">
-                <Users className="w-4 h-4 text-primary" />
+              <div className="flex items-center gap-1.5 bg-white/80 px-2.5 py-1.5 rounded-lg border border-border/40 shadow-sm">
+                <Users className="w-3.5 h-3.5 text-primary" />
                 <div className="flex flex-col">
-                  <span className="text-xs text-muted leading-none">Serves</span>
-                  <span className="text-sm font-semibold text-foreground">{recipe.servings}</span>
+                  <span className="text-[10px] text-muted leading-none uppercase tracking-wider">Serves</span>
+                  <span className="text-xs font-semibold text-foreground">{recipe.servings}</span>
                 </div>
               </div>
             )}
@@ -102,14 +106,13 @@ export function RecipeDetail({ recipe, isOpen, onClose, onEdit, onDelete }: Reci
                 </Button>
               )}
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               {currentTags.map(tag => (
                 <span
                   key={tag}
-                  className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full transition-colors ${getTagBadgeColor(tag)} ${
-                    isEditingTags ? 'pr-2' : ''
-                  }`}
+                  className={`inline-flex items-center gap-1.5 text-xs font-medium px-3 py-1 rounded-full transition-colors ${getTagBadgeColor(tag)} ${isEditingTags ? 'pr-2' : ''
+                    }`}
                 >
                   {tag}
                   {isEditingTags && (
@@ -154,15 +157,10 @@ export function RecipeDetail({ recipe, isOpen, onClose, onEdit, onDelete }: Reci
             )}
           </div>
 
-          <RecipeIngredientsAndInstructions 
+          <RecipeIngredientsAndInstructions
             ingredients={recipe.ingredients}
             instructions={recipe.instructions}
           />
-
-          <div className="flex gap-3 pt-2 border-t border-border/40">
-            <Button variant="ghost" onClick={() => onEdit(recipe)} className="flex-1">Edit</Button>
-            <Button variant="danger" onClick={() => { onDelete(recipe.id); onClose(); }} className="flex-1">Delete</Button>
-          </div>
         </div>
       </div>
     </Modal>
