@@ -224,7 +224,7 @@ export async function parseJsonBody(request: Request): Promise<unknown | null> {
 }
 
 export const consolidateShoppingListRequestSchema = z.object({
-  ingredients: z.array(z.string().trim().min(1).max(500)).min(1).max(500),
+  mealPlanId: z.string().trim().min(1),
   userId: optionalActorIdSchema,
   anonymousId: optionalActorIdSchema,
 });

@@ -182,7 +182,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            ingredients,
+            mealPlanId: weekPlan.id,
             userId,
             anonymousId,
           }),
@@ -191,10 +191,70 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
 
         if (!response.ok) throw new Error('Failed to consolidate');
 
-        const data = await response.json();
-        if (!abortController.signal.aborted) {
-          setShoppingList(data.categories);
-          setShoppingPantryItems(data.pantryItems || []);
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          const data = await response.json();
+          if (!abortController.signal.aborted) {
+            setShoppingList(data.categories || []);
+            setShoppingPantryItems(data.pantryItems || []);
+            if (wasGeneratingRef.current) {
+              setShoppingListUpdated(true);
+              setNutritionUpdated(true);
+              wasGeneratingRef.current = false;
+            }
+          }
+          return;
+        }
+
+        const reader = response.body!.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+        let finalData: any = null;
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+
+            if (trimmed.startsWith('ERROR:')) {
+              throw new Error(JSON.parse(trimmed.slice(6)).error);
+            }
+            if (trimmed.startsWith('DONE:')) {
+              finalData = JSON.parse(trimmed.slice(5));
+            } else {
+              try {
+                const partial = JSON.parse(trimmed);
+                if (!abortController.signal.aborted) {
+                  setShoppingList(partial.categories || []);
+                  setShoppingPantryItems(partial.pantryItems || []);
+                }
+              } catch {
+                // Ignore malformed partials
+              }
+            }
+          }
+        }
+
+        const remaining = buffer.trim();
+        if (remaining) {
+          if (remaining.startsWith('ERROR:')) {
+            throw new Error(JSON.parse(remaining.slice(6)).error);
+          }
+          if (remaining.startsWith('DONE:')) {
+            finalData = JSON.parse(remaining.slice(5));
+          }
+        }
+
+        if (!abortController.signal.aborted && finalData) {
+          setShoppingList(finalData.categories || []);
+          setShoppingPantryItems(finalData.pantryItems || []);
           if (wasGeneratingRef.current) {
             setShoppingListUpdated(true);
             setNutritionUpdated(true);

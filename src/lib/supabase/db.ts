@@ -128,6 +128,27 @@ export async function getActiveMealPlan(userId: string | null, anonymousId: stri
   return mapDbMealPlan(plans[0]);
 }
 
+export async function getMealPlanById(id: string, userId: string | null, anonymousId: string): Promise<WeekPlan | null> {
+  const filter = userId ? `user_id.eq.${userId}` : `anonymous_id.eq.${anonymousId}`;
+  const { data: plans, error } = await getSupabase()
+    .from('meal_plans')
+    .select(`
+      *,
+      meal_plan_days (
+        *,
+        meal_plan_meals (*)
+      ),
+      suggested_recipes (*)
+    `)
+    .or(filter)
+    .eq('id', id)
+    .limit(1);
+
+  if (error) throw error;
+  if (!plans || plans.length === 0) return null;
+  return mapDbMealPlan(plans[0]);
+}
+
 export async function saveMealPlan(
   weekPlan: WeekPlan,
   userId: string | null,

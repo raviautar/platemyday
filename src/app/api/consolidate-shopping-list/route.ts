@@ -1,14 +1,38 @@
-import { generateText, Output } from 'ai';
+import { streamObject } from 'ai';
 import { google } from '@ai-sdk/google';
 import { consolidatedShoppingListSchema } from '@/lib/ai';
 import {
   consolidateShoppingListRequestSchema,
   validateAndRateLimit,
 } from '@/lib/ai-guardrails';
+import { getMealPlanById, getRecipes } from '@/lib/supabase/db';
+import { Recipe, WeekPlan } from '@/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 30;
+
+function collectIngredients(
+  weekPlan: WeekPlan,
+  recipes: Recipe[],
+): string[] {
+  const recipesMap = new Map(recipes.map(r => [r.id, r.ingredients]));
+  const allIngredients: string[] = [];
+
+  for (const day of weekPlan.days) {
+    for (const meal of day.meals) {
+      if (meal.recipeId) {
+        const ingredients = recipesMap.get(meal.recipeId);
+        if (ingredients) allIngredients.push(...ingredients);
+      } else if (meal.recipeTitleFallback) {
+        const suggested = weekPlan.suggestedRecipes?.[meal.recipeTitleFallback];
+        if (suggested) allIngredients.push(...suggested.ingredients);
+      }
+    }
+  }
+
+  return allIngredients.filter(i => i.trim());
+}
 
 export async function POST(req: Request) {
   try {
@@ -19,7 +43,23 @@ export async function POST(req: Request) {
     });
     if (validation instanceof Response) return validation;
 
-    const { ingredients } = validation.data;
+    const { mealPlanId, userId, anonymousId } = validation.data;
+
+    const [mealPlan, recipes] = await Promise.all([
+      getMealPlanById(mealPlanId, userId ?? null, anonymousId ?? ''),
+      getRecipes(userId ?? null, anonymousId ?? '')
+    ]);
+
+    if (!mealPlan) {
+      return Response.json({ error: 'Meal plan not found' }, { status: 404 });
+    }
+
+    const ingredients = collectIngredients(mealPlan, recipes);
+
+    // If no ingredients, return empty immediately
+    if (ingredients.length === 0) {
+      return Response.json({ categories: [], pantryItems: [] });
+    }
 
     const ingredientList = ingredients.map((ing, i) => `${i + 1}. ${ing}`).join('\n');
 
@@ -39,21 +79,45 @@ Rules:
 6. Sort items alphabetically within each category
 7. Separate common pantry staples the cook likely already has at home (salt, pepper, cooking oil, rice, flour, sugar, butter, soy sauce, vinegar, etc.) into the pantryItems list. Still include their approximate quantities needed.`;
 
-    const result = await generateText({
+    const result = streamObject({
       model: google('gemini-2.5-flash'),
-      output: Output.object({ schema: consolidatedShoppingListSchema }),
+      schema: consolidatedShoppingListSchema,
       system: 'You are a practical kitchen assistant that creates grocery shopping lists optimized for a real store trip. Always express items as buyable quantities, never as recipe preparation terms.',
       prompt,
     });
 
-    if (!result.output) {
-      return Response.json(
-        { error: 'Failed to consolidate shopping list.' },
-        { status: 500 }
-      );
-    }
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        let lastSendTime = 0;
+        try {
+          for await (const partial of result.partialObjectStream) {
+            const now = Date.now();
+            if (now - lastSendTime >= 500) {
+              controller.enqueue(encoder.encode(JSON.stringify(partial) + '\n'));
+              lastSendTime = now;
+            }
+          }
+          const finalObject = await result.object;
+          controller.enqueue(encoder.encode('DONE:' + JSON.stringify(finalObject) + '\n'));
+          controller.close();
+        } catch (error) {
+          console.error('Shopping list streaming error:', error);
+          controller.enqueue(encoder.encode('ERROR:' + JSON.stringify({
+            error: 'Failed to consolidate shopping list.',
+          }) + '\n'));
+          controller.close();
+        }
+      },
+    });
 
-    return Response.json(result.output);
+    return new Response(stream, {
+      headers: {
+        'Content-Type': 'text/plain; charset=utf-8',
+        'Transfer-Encoding': 'chunked',
+        'Cache-Control': 'no-cache',
+      },
+    });
   } catch (error) {
     console.error('Shopping list consolidation error:', error);
     return Response.json(

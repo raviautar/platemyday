@@ -1,5 +1,4 @@
 # PlateMyDay
-
 AI-powered meal planning app built with Next.js 16.
 
 ## Tech Stack
@@ -153,3 +152,8 @@ STRIPE_PRICE_ANNUAL=                # price_... (Stripe Price ID for annual subs
 STRIPE_PRICE_LIFETIME=              # price_... (Stripe Price ID for one-time lifetime payment)
 ADMIN_SECRET_KEY=                   # Secret for /api/admin/* routes
 ```
+
+
+## Rules
+- Do not open the browser to test the app, unless explicitly asked.
+- Always run bun run build after implementing changes to check for errors.

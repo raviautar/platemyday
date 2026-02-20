@@ -11,6 +11,7 @@ interface SettingsContextType {
   updateSettings: (updates: Partial<AppSettings>) => void;
   updateUnitSystem: (unitSystem: UnitSystem) => void;
   resetSettings: () => void;
+  isSettingsLoaded: boolean;
 }
 
 const SettingsContext = createContext<SettingsContextType | null>(null);
@@ -18,6 +19,7 @@ const SettingsContext = createContext<SettingsContextType | null>(null);
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const { userId, anonymousId, isLoaded } = useUserIdentity();
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
+  const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
 
   useEffect(() => {
     if (!isLoaded || !anonymousId) return;
@@ -26,9 +28,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
 
     fetchSettings(userId, anonymousId)
       .then((data) => {
-        if (!cancelled && data) setSettings(data);
+        if (!cancelled) {
+          if (data) setSettings(data);
+          setIsSettingsLoaded(true);
+        }
       })
-      .catch((err) => console.error('Failed to load settings:', err));
+      .catch((err) => {
+        console.error('Failed to load settings:', err);
+        if (!cancelled) setIsSettingsLoaded(true);
+      });
 
     return () => { cancelled = true; };
   }, [userId, anonymousId, isLoaded]);
@@ -66,7 +74,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }, [persistSettings]);
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings, updateUnitSystem, resetSettings }}>
+    <SettingsContext.Provider value={{ settings, updateSettings, updateUnitSystem, resetSettings, isSettingsLoaded }}>
       {children}
     </SettingsContext.Provider>
   );

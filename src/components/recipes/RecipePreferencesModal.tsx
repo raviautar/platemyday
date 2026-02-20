@@ -24,7 +24,7 @@ export function RecipePreferencesModal({ isOpen, onClose, onSave }: RecipePrefer
   useEffect(() => {
     setPreferences(settings.preferences);
     const isCustomDiet = settings.preferences.dietaryType && !DIET_OPTIONS.some(o => o.value === settings.preferences.dietaryType);
-    setCustomDietInput(isCustomDiet ? settings.preferences.dietaryType : '');
+    setCustomDietInput(isCustomDiet ? (settings.preferences.dietaryType || '') : '');
   }, [settings.preferences, isOpen]);
 
   const handleSave = () => {
@@ -87,11 +87,10 @@ export function RecipePreferencesModal({ isOpen, onClose, onSave }: RecipePrefer
                   <button
                     key={option.value}
                     onClick={() => handleDietChange(isSelected ? null : option.value)}
-                    className={`p-4 rounded-xl border-2 transition-all text-left hover:scale-[1.02] active:scale-[0.98] ${
-                      isSelected
+                    className={`p-4 rounded-xl border-2 transition-all text-left hover:scale-[1.02] active:scale-[0.98] ${isSelected
                         ? 'border-primary bg-primary/10 shadow-md shadow-primary/20'
                         : 'border-border bg-white hover:border-primary/50 hover:bg-surface/50'
-                    }`}
+                      }`}
                   >
                     {Icon && <Icon className={`w-6 h-6 mb-2 ${isSelected ? 'text-primary' : 'text-muted'}`} />}
                     <div className={`font-semibold text-sm ${isSelected ? 'text-primary' : 'text-foreground'}`}>
@@ -125,11 +124,10 @@ export function RecipePreferencesModal({ isOpen, onClose, onSave }: RecipePrefer
                   <button
                     key={option.value}
                     onClick={() => toggleAllergy(option.value)}
-                    className={`p-4 rounded-xl border-2 transition-all text-left relative hover:scale-[1.02] active:scale-[0.98] ${
-                      isSelected
+                    className={`p-4 rounded-xl border-2 transition-all text-left relative hover:scale-[1.02] active:scale-[0.98] ${isSelected
                         ? 'border-accent bg-accent/10 shadow-md shadow-accent/20'
                         : 'border-border bg-white hover:border-accent/50 hover:bg-surface/50'
-                    }`}
+                      }`}
                   >
                     <div className="text-3xl mb-2">{option.icon}</div>
                     <div className={`font-semibold text-sm ${isSelected ? 'text-accent-dark' : 'text-foreground'}`}>
@@ -153,7 +151,7 @@ export function RecipePreferencesModal({ isOpen, onClose, onSave }: RecipePrefer
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border-2 border-accent bg-accent/10 text-accent-dark font-medium text-sm capitalize"
                   >
                     {allergy}
-                    <button 
+                    <button
                       onClick={() => removeAllergy(allergy)}
                       className="hover:text-accent transition-colors"
                     >
@@ -189,14 +187,14 @@ export function RecipePreferencesModal({ isOpen, onClose, onSave }: RecipePrefer
         </div>
 
         <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-border/40">
-          <Button 
-            onClick={handleSave} 
+          <Button
+            onClick={handleSave}
             className="flex-1 px-6 py-3 text-base font-semibold"
           >
             Save Preferences
           </Button>
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             onClick={onClose}
             className="px-6 py-3 text-base"
           >
