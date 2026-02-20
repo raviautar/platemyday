@@ -88,7 +88,7 @@ export function TopBanner() {
           </Link>
         )}
         
-        <div className="flex flex-col -space-y-1 min-w-0">
+        <Link href="/" className="flex flex-col -space-y-1 min-w-0">
           <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white tracking-normal drop-shadow-md relative font-[family-name:var(--font-outfit)] truncate">
             <span className="bg-gradient-to-r from-white via-yellow-50 to-white bg-clip-text text-transparent animate-shimmer">
               PlateMyDay
@@ -97,7 +97,7 @@ export function TopBanner() {
           <p className="text-[9px] sm:text-[10px] md:text-xs text-emerald-50/90 font-medium tracking-wide hidden sm:block font-[family-name:var(--font-outfit)]">
             Your personalized meal planner
           </p>
-        </div>
+        </Link>
       </div>
       
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">

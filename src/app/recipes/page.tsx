@@ -246,7 +246,7 @@ export default function RecipesPage() {
         )}
       </div>
 
-      <div data-tour="recipes-list">
+      <div>
         <RecipeList
           recipes={recipes}
           searchQuery={searchQuery}
@@ -259,7 +259,6 @@ export default function RecipesPage() {
 
       <button
         onClick={() => setShowAI(true)}
-        data-tour="recipes-ai-fab"
         className="fixed bottom-28 md:bottom-8 right-4 md:right-8 w-16 h-16 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white rounded-full shadow-2xl hover:shadow-xl transition-all duration-200 hover:scale-105 active:scale-95 z-[90] flex items-center justify-center"
         aria-label="Create Recipe"
       >

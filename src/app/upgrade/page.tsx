@@ -10,12 +10,12 @@ import { EVENTS } from '@/lib/analytics/events';
 import { SignInButton } from '@clerk/nextjs';
 
 const features = [
-  'Unlimited AI meal plan generation',
+  'Unlimited meal plan generation',
   'Advanced dietary preferences',
   'Recipe import from URLs',
   'Nutritional tracking',
   'Shopping lists',
-  'Priority AI processing',
+  'Priority processing',
 ];
 
 const freeFeatures = [
@@ -84,7 +84,7 @@ function SuccessCelebration({ isActivePaid }: { isActivePaid: boolean }) {
             </h2>
 
             <p className="celebration-subtitle text-muted text-lg mb-2 max-w-md mx-auto">
-              You now have unlimited AI-powered meal planning.
+              You now have unlimited meal planning.
             </p>
             <p className="celebration-subtitle-delayed text-muted text-sm mb-6">
               Time to create something delicious.
@@ -359,7 +359,7 @@ function UpgradeContent() {
               Your Plan
             </h1>
             <p className="text-lg text-muted max-w-2xl mx-auto">
-              You have unlimited AI-powered meal planning
+              You have unlimited meal planning
             </p>
           </>
         ) : (
@@ -372,7 +372,7 @@ function UpgradeContent() {
               Upgrade to Premium
             </h1>
             <p className="text-lg text-muted max-w-2xl mx-auto">
-              Unlimited AI-powered meal planning
+              Unlimited personalized meal planning
             </p>
             {!unlimited && (
               <p className="text-sm text-muted mt-2">
@@ -388,21 +388,19 @@ function UpgradeContent() {
           <div className="inline-flex bg-surface rounded-lg p-1 border border-border">
             <button
               onClick={() => setBillingPeriod('monthly')}
-              className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
-                billingPeriod === 'monthly'
+              className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${billingPeriod === 'monthly'
                   ? 'bg-white text-foreground shadow-sm'
                   : 'text-muted hover:text-foreground'
-              }`}
+                }`}
             >
               Monthly
             </button>
             <button
               onClick={() => setBillingPeriod('annual')}
-              className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${
-                billingPeriod === 'annual'
+              className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${billingPeriod === 'annual'
                   ? 'bg-white text-foreground shadow-sm'
                   : 'text-muted hover:text-foreground'
-              }`}
+                }`}
             >
               Annual
               <span className="ml-2 text-xs text-accent font-semibold">Save 16%</span>
@@ -439,7 +437,7 @@ function UpgradeContent() {
         </div>
 
         {/* Premium tier */}
-        <div data-tour="upgrade-premium" className="bg-gradient-to-br from-primary to-primary-dark rounded-xl p-6 flex flex-col relative overflow-hidden shadow-xl transform md:scale-105">
+        <div className="bg-gradient-to-br from-primary to-primary-dark rounded-xl p-6 flex flex-col relative overflow-hidden shadow-xl transform md:scale-105">
           <div className="absolute top-4 right-4">
             <div className="bg-accent text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
               <Zap className="w-3 h-3" />

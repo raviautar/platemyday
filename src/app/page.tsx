@@ -4,10 +4,9 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles, Map, ArrowRight, User as UserIcon, LogIn } from 'lucide-react';
+import { Sparkles, ArrowRight, User as UserIcon, LogIn, UtensilsCrossed, BookOpen, SlidersHorizontal } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
-import { useTour } from '@/contexts/TourContext';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
 import { SignInButton } from '@clerk/nextjs';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -17,16 +16,17 @@ export default function HomePage() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const router = useRouter();
   const { track } = useAnalytics();
-  const { startTour } = useTour();
   const { isLoaded: isAuthLoaded } = useUserIdentity();
-  const { settings, updateSettings } = useSettings();
+  const { settings, updateSettings, isSettingsLoaded } = useSettings();
+
+  const isOnboarded = isSettingsLoaded && settings.preferences.onboardingCompleted;
 
   const changeView = (nextView: 'hero' | 'feature1' | 'feature2' | 'feature3' | 'auth') => {
     setIsTransitioning(true);
     setTimeout(() => {
       setView(nextView);
       setIsTransitioning(false);
-    }, 300); // 300ms transition
+    }, 300);
   };
 
   useEffect(() => {
@@ -60,6 +60,16 @@ export default function HomePage() {
 
   return (
     <div className="h-screen w-full flex items-center justify-center relative overflow-hidden bg-white">
+      {/* Top Nav */}
+      <div className="absolute top-0 left-0 right-0 z-20 flex justify-end px-6 py-4">
+        <Link
+          href="/about"
+          className="text-xs font-medium text-foreground/50 hover:text-foreground/80 transition-colors backdrop-blur-sm bg-white/30 px-3 py-1.5 rounded-full border border-white/40"
+        >
+          About
+        </Link>
+      </div>
+
       {/* Decorative Background */}
       <div className="absolute inset-0 bg-[linear-gradient(135deg,_#f0fdf4_0%,_#ecfdf5_30%,_#ccfbf1_70%,_#f0fdf4_100%)]" />
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_rgba(16,185,129,0.15),transparent)]" />
@@ -74,7 +84,7 @@ export default function HomePage() {
         {view === 'hero' && (
           <div className="text-center w-full max-w-2xl mx-auto">
             <p className="text-xs md:text-sm font-medium uppercase tracking-[0.2em] text-primary/80 mb-6 font-[family-name:var(--font-outfit)]">
-              Personalized meal planning
+              Your personalized meal planner
             </p>
             <div className="mb-6 md:mb-8 flex justify-center transition-transform hover:scale-105 duration-500">
               <Image
@@ -82,37 +92,68 @@ export default function HomePage() {
                 alt="PlateMyDay Logo"
                 width={200}
                 height={200}
-                className="w-32 h-32 md:w-40 md:h-40 drop-shadow-2xl"
+                className="w-28 h-28 md:w-36 md:h-36 drop-shadow-2xl"
                 priority
               />
             </div>
-            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-4 font-[family-name:var(--font-outfit)] tracking-tight">
+            <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-3 font-[family-name:var(--font-outfit)] tracking-tight">
               <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 bg-clip-text text-transparent">
                 PlateMyDay
               </span>
             </h1>
-            <p className="text-muted-foreground mb-10 max-w-md mx-auto text-sm md:text-base leading-relaxed">
-              Generate a personalized meal plan in seconds. Delicious recipes tailored to your preferences, ready to go.
-            </p>
-            <div className="flex flex-col items-center gap-4 mb-2">
+
+            {isOnboarded ? (
+              <>
+                {/* Quick actions for returning users */}
+                <div className="grid grid-cols-3 gap-3 max-w-sm mx-auto mb-8">
+                  <Link
+                    href="/meal-plan"
+                    className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/80 backdrop-blur border border-border hover:border-primary/40 hover:shadow-lg transition-all duration-200 group"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <UtensilsCrossed className="w-5 h-5 text-primary" />
+                    </div>
+                    <span className="text-xs font-medium text-foreground">Meal Plan</span>
+                  </Link>
+                  <Link
+                    href="/recipes"
+                    className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/80 backdrop-blur border border-border hover:border-primary/40 hover:shadow-lg transition-all duration-200 group"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <BookOpen className="w-5 h-5 text-primary" />
+                    </div>
+                    <span className="text-xs font-medium text-foreground">Recipes</span>
+                  </Link>
+                  <Link
+                    href="/customize"
+                    className="flex flex-col items-center gap-2 p-4 rounded-2xl bg-white/80 backdrop-blur border border-border hover:border-primary/40 hover:shadow-lg transition-all duration-200 group"
+                  >
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                      <SlidersHorizontal className="w-5 h-5 text-primary" />
+                    </div>
+                    <span className="text-xs font-medium text-foreground">Settings</span>
+                  </Link>
+                </div>
+                <button
+                  onClick={() => {
+                    track(EVENTS.LANDING_CTA_CLICKED, { cta: 'hero_generate' });
+                    router.push('/meal-plan');
+                  }}
+                  className="inline-flex items-center justify-center gap-2 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] text-lg w-full sm:w-auto min-w-[200px]"
+                >
+                  <Sparkles className="w-5 h-5" />
+                  Let&apos;s Plan!
+                </button>
+              </>
+            ) : (
               <button
                 onClick={handleStart}
                 className="inline-flex items-center justify-center gap-2 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] text-lg w-full sm:w-auto min-w-[200px]"
               >
                 <Sparkles className="w-5 h-5 md:w-6 md:h-6" />
-                Let&apos;s start!
+                Get Started
               </button>
-              <button
-                onClick={() => {
-                  track(EVENTS.LANDING_CTA_CLICKED, { cta: 'take_a_tour' });
-                  startTour();
-                }}
-                className="inline-flex items-center gap-1.5 text-sm text-primary/80 hover:text-primary transition-colors font-medium"
-              >
-                <Map className="w-4 h-4" />
-                Take a Tour
-              </button>
-            </div>
+            )}
           </div>
         )}
 
@@ -132,7 +173,7 @@ export default function HomePage() {
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-3 font-[family-name:var(--font-outfit)]">Feature 1 of 3</p>
             <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-outfit)] text-foreground">Weekly Meal Plans</h2>
             <p className="text-muted-foreground mb-10 text-base md:text-lg leading-relaxed">
-              Menus tailored to you, ready to go. Save time and eat healthier with fully personalized plans.
+              Personalized menus ready in seconds. Eat healthier without the hassle.
             </p>
             <button
               onClick={() => changeView('feature2')}
@@ -159,7 +200,7 @@ export default function HomePage() {
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-3 font-[family-name:var(--font-outfit)]">Feature 2 of 3</p>
             <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-outfit)] text-foreground">Tailored Recipes</h2>
             <p className="text-muted-foreground mb-10 text-base md:text-lg leading-relaxed">
-              Delicious recipes curated just for you based on your diet, preferences, and available ingredients.
+              Recipes curated for your diet and preferences.
             </p>
             <button
               onClick={() => changeView('feature3')}
@@ -186,7 +227,7 @@ export default function HomePage() {
             <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-3 font-[family-name:var(--font-outfit)]">Feature 3 of 3</p>
             <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-outfit)] text-foreground">Dietary Preferences</h2>
             <p className="text-muted-foreground mb-10 text-base md:text-lg leading-relaxed">
-              Set your dietary needs, track macros, and filter out allergens with our comprehensive settings.
+              Set your dietary needs and allergens. Every plan respects your choices.
             </p>
             <button
               onClick={() => changeView('auth')}
@@ -204,7 +245,7 @@ export default function HomePage() {
             </div>
             <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-outfit)] text-foreground">Save your progress</h2>
             <p className="text-muted-foreground mb-10 text-base md:text-lg leading-relaxed">
-              Create an account to save your generated meal plans, favorite recipes, and dietary preferences.
+              Sign in to keep your meal plans, recipes, and preferences across devices.
             </p>
 
             <div className="flex flex-col w-full gap-3">
@@ -231,4 +272,3 @@ export default function HomePage() {
     </div>
   );
 }
-

@@ -21,10 +21,6 @@ export const EVENTS = {
   ONBOARDING_SKIPPED: 'onboarding_skipped',
   FIRST_MEAL_PLAN_GENERATED: 'first_meal_plan_generated',
   FIRST_RECIPE_CREATED: 'first_recipe_created',
-  TOUR_STARTED: 'tour_started',
-  TOUR_COMPLETED: 'tour_completed',
-  TOUR_SKIPPED: 'tour_skipped',
-  TOUR_STEP_VIEWED: 'tour_step_viewed',
 
   // ── Metric 3: Weekly Active Engagement ────────────────────────────
   // Pageviews handled automatically by PostHog

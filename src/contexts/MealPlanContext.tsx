@@ -556,7 +556,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (!finalData) {
-          throw new Error('Failed to generate meal plan. The AI returned an incomplete response.');
+          throw new Error('Failed to generate meal plan. The server returned an incomplete response.');
         }
 
         const newWeekPlan = buildWeekPlan(finalData);

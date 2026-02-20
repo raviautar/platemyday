@@ -12,6 +12,7 @@ import { Sparkles, Heart, Flame } from 'lucide-react';
 import { MealDetail } from './MealDetail';
 import { MealOptionsMenu } from './MealOptionsMenu';
 import { ReplaceFromRecipes } from './ReplaceFromRecipes';
+import { RecipeForm } from '@/components/recipes/RecipeForm';
 import { useToast } from '@/components/ui/Toast';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
@@ -27,13 +28,14 @@ interface MealCardProps {
 }
 
 const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, onReplaceMeal, suggestedRecipe, onAddToLibrary }: MealCardProps) => {
-  const { getRecipe } = useRecipes();
+  const { getRecipe, updateRecipe } = useRecipes();
   const { settings } = useSettings();
   const { userId, anonymousId } = useUserIdentity();
   const { track } = useAnalytics();
   const { showToast } = useToast();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isReplaceOpen, setIsReplaceOpen] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const recipe = meal.recipeId ? getRecipe(meal.recipeId) : null;
 
@@ -127,11 +129,10 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
   return (
     <>
       <div
-        className={`bg-white rounded-lg p-2 shadow-sm cursor-pointer hover:shadow-md transition-shadow relative ${
-          isUnmatched
+        className={`bg-white rounded-lg p-2 shadow-sm cursor-pointer hover:shadow-md transition-shadow relative ${isUnmatched
             ? 'border-2 border-dashed border-secondary'
             : 'border border-border'
-        } ${isRegenerating ? 'opacity-75' : ''}`}
+          } ${isRegenerating ? 'opacity-75' : ''}`}
         title={isUnmatched ? 'Click to view details and add to your library' : 'Click to view recipe details'}
         onClick={handleCardClick}
       >
@@ -203,7 +204,20 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
         onClose={() => setIsDetailOpen(false)}
         suggestedRecipe={suggestedRecipe}
         onAddToLibrary={onAddToLibrary}
+        onEdit={recipe ? () => setIsEditOpen(true) : undefined}
       />
+
+      {recipe && (
+        <RecipeForm
+          isOpen={isEditOpen}
+          onClose={() => setIsEditOpen(false)}
+          onSave={(updated) => {
+            updateRecipe(recipe.id, updated);
+            showToast('Recipe updated!');
+          }}
+          editingRecipe={recipe}
+        />
+      )}
 
       <ReplaceFromRecipes
         isOpen={isReplaceOpen}

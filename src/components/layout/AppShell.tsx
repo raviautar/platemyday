@@ -15,8 +15,6 @@ import { getAnonymousId, clearAnonymousId } from '@/lib/anonymous-id';
 import { migrateAnonymousData } from '@/lib/supabase/db';
 import { useSupabase } from '@/hooks/useSupabase';
 import { useBilling } from '@/contexts/BillingContext';
-import { TourProvider } from '@/contexts/TourContext';
-import { TourOverlay } from '@/components/tour/TourOverlay';
 import { posthog } from '@/lib/analytics/posthog-client';
 import { EVENTS } from '@/lib/analytics/events';
 
@@ -51,24 +49,25 @@ function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { settings, isSettingsLoaded } = useSettings();
 
+  const isPublicPage = pathname === '/' || pathname === '/about';
+
   useEffect(() => {
-    if (isSettingsLoaded && pathname !== '/' && !settings.preferences.onboardingCompleted) {
+    if (isSettingsLoaded && !isPublicPage && !settings.preferences.onboardingCompleted) {
       router.replace('/');
     }
-  }, [isSettingsLoaded, pathname, settings.preferences.onboardingCompleted, router]);
+  }, [isSettingsLoaded, isPublicPage, settings.preferences.onboardingCompleted, router]);
 
-  if (!isSettingsLoaded && pathname !== '/') return null;
+  if (!isSettingsLoaded && !isPublicPage) return null;
 
   return <>{children}</>;
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isHomePage = pathname === '/';
+  const isFullScreenPage = pathname === '/' || pathname === '/about';
 
   return (
-    <TourProvider>
-      <SettingsProvider>
+    <SettingsProvider>
         <OnboardingGuard>
           <RecipeProvider>
             <BillingProvider>
@@ -76,11 +75,11 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                 <MealPlanProvider>
                   <AnonymousMigration />
                   <div className="min-h-screen bg-background">
-                    {!isHomePage && <TopBanner />}
-                    {!isHomePage && <Sidebar />}
+                    {!isFullScreenPage && <TopBanner />}
+                    {!isFullScreenPage && <Sidebar />}
                     <BottomNav />
-                    <main className={`${isHomePage ? '' : 'md:ml-60 pb-16 md:pb-0 pt-14'} min-h-screen`}>
-                      {isHomePage ? (
+                    <main className={`${isFullScreenPage ? '' : 'md:ml-60 pb-16 md:pb-0 pt-14'} min-h-screen`}>
+                      {isFullScreenPage ? (
                         children
                       ) : (
                         <div className="max-w-6xl mx-auto p-4 md:p-6">
@@ -88,7 +87,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
                         </div>
                       )}
                     </main>
-                    <TourOverlay />
                   </div>
                 </MealPlanProvider>
               </ToastProvider>
@@ -96,6 +94,5 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </RecipeProvider>
         </OnboardingGuard>
       </SettingsProvider>
-    </TourProvider>
   );
 }

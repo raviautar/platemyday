@@ -5,7 +5,7 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { NutritionGrid } from '@/components/ui/NutritionGrid';
 import { useRecipes } from '@/contexts/RecipeContext';
-import { Sparkles, Heart } from 'lucide-react';
+import { Sparkles, Heart, Pencil } from 'lucide-react';
 import { RecipeIngredientsAndInstructions } from '@/components/recipes/RecipeIngredientsAndInstructions';
 import { getTagBadgeColor } from '@/lib/tag-colors';
 
@@ -15,14 +15,15 @@ interface MealDetailProps {
   onClose: () => void;
   suggestedRecipe?: SuggestedRecipe;
   onAddToLibrary?: (recipe: SuggestedRecipe) => void;
+  onEdit?: () => void;
 }
 
-export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibrary }: MealDetailProps) {
+export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibrary, onEdit }: MealDetailProps) {
   const { getRecipe } = useRecipes();
 
   if (!meal) return null;
 
-  // Show suggested recipe detail (AI-generated, not yet in library)
+  // Show suggested recipe detail (generated, not yet in library)
   if (suggestedRecipe) {
     return (
       <Modal isOpen={isOpen} onClose={onClose} title={suggestedRecipe.title} fullscreen>
@@ -31,27 +32,22 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
             <div className="flex items-center gap-2 mb-3">
               <span className="inline-flex items-center gap-1 text-[10px] bg-secondary/20 text-secondary-dark px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
                 <Sparkles className="w-3 h-3" />
-                AI Generated
+                Generated
               </span>
               <span className="text-[10px] bg-secondary/30 text-yellow-800 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
                 {meal.mealType}
               </span>
             </div>
 
-            {suggestedRecipe.description && (
-              <p className="text-sm text-muted leading-snug">{suggestedRecipe.description}</p>
+            {onAddToLibrary && (
+              <Button onClick={() => { onAddToLibrary(suggestedRecipe); onClose(); }} size="sm" className="w-full gap-2 text-sm py-1.5 h-auto mb-3">
+                <Heart className="w-4 h-4" />
+                Save to Library
+              </Button>
             )}
 
-            {onAddToLibrary && (
-              <div className="mt-4 pt-4 border-t border-border/40">
-                <Button onClick={() => { onAddToLibrary(suggestedRecipe); onClose(); }} size="sm" className="w-full gap-2 text-sm py-1.5 h-auto">
-                  <Heart className="w-4 h-4" />
-                  Save to Library
-                </Button>
-                <p className="text-xs text-muted text-center mt-2">
-                  Save this recipe to your library to use it in the future.
-                </p>
-              </div>
+            {suggestedRecipe.description && (
+              <p className="text-sm text-muted leading-snug">{suggestedRecipe.description}</p>
             )}
           </div>
 
@@ -132,7 +128,7 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 text-[10px] bg-secondary/20 text-secondary-dark px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
                 <Sparkles className="w-3 h-3" />
-                AI Generated
+                Generated
               </span>
               <span className="text-[10px] bg-secondary/30 text-yellow-800 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
                 {meal.mealType}
@@ -141,7 +137,7 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
 
             <div className="bg-secondary/10 border border-secondary rounded-lg p-3">
               <p className="text-sm text-muted">
-                This recipe was suggested by AI. Recipe details are not available.
+                This is a suggested recipe. Recipe details are not available.
               </p>
             </div>
           </div>
@@ -168,13 +164,20 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
             {recipe.isAIGenerated && (
               <span className="inline-flex items-center gap-1 text-[10px] bg-accent/20 text-accent-dark px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
                 <Sparkles className="w-3 h-3" />
-                AI Generated
+                Generated
               </span>
             )}
             <span className="text-[10px] bg-secondary/30 text-yellow-800 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
               {meal.mealType}
             </span>
           </div>
+
+          {onEdit && (
+            <Button variant="ghost" size="sm" onClick={() => { onEdit(); onClose(); }} className="w-full gap-2 text-sm py-1.5 h-auto mb-3">
+              <Pencil className="w-4 h-4" />
+              Edit Recipe
+            </Button>
+          )}
 
           <p className="text-sm text-muted leading-snug">{recipe.description}</p>
         </div>

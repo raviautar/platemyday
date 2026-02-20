@@ -157,3 +157,4 @@ ADMIN_SECRET_KEY=                   # Secret for /api/admin/* routes
 ## Rules
 - Do not open the browser to test the app, unless explicitly asked.
 - Always run bun run build after implementing changes to check for errors.
+- Never use the term "AI" in user-facing text (UI labels, descriptions, error messages). Use alternatives like "personalized", "tailored", "generated", or "smart" instead. Internal code comments and variable names are fine.

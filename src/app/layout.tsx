@@ -31,7 +31,7 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: "PlateMyDay",
-  description: "AI-powered meal planning made simple",
+  description: "Personalized meal planning made simple",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,

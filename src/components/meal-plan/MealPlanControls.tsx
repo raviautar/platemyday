@@ -135,7 +135,6 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
         <div className="flex gap-1.5 sm:gap-2 md:gap-3">
           <button
             onClick={() => setShowCustomize(true)}
-            data-tour="meal-plan-customize"
             className="flex items-center justify-center gap-2 px-3 sm:px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 text-muted hover:text-primary transition-all duration-200 relative"
             aria-label="Customize meal plan"
           >
@@ -149,7 +148,6 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
           <Button
             onClick={handleGenerate}
             disabled={loading}
-            data-tour="meal-plan-generate"
             size="lg"
             className="flex-1 gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base min-w-0"
           >
@@ -168,9 +166,8 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
         </div>
 
         {!billingLoading && !unlimited && (
-          <p className={`text-xs mt-2 text-center ${
-            (creditsRemaining ?? 0) <= 2 ? 'text-accent font-medium' : 'text-muted'
-          }`}>
+          <p className={`text-xs mt-2 text-center ${(creditsRemaining ?? 0) <= 2 ? 'text-accent font-medium' : 'text-muted'
+            }`}>
             {(creditsRemaining ?? 0) === 0
               ? 'No free generations remaining'
               : `${creditsRemaining} free generation${creditsRemaining === 1 ? '' : 's'} remaining`}
@@ -211,139 +208,137 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
           <div>
             <h3 className="text-base font-bold text-foreground tracking-tight mb-4">Options for this week&apos;s plan</h3>
             <div className="space-y-6">
-          {/* Pantry Ingredients */}
-          <div>
-            <label className="text-sm font-semibold text-foreground mb-2 block">
-              What&apos;s in your pantry?
-            </label>
-            <p className="text-xs text-muted mb-2">Add ingredients you&apos;d like to use up this week</p>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={ingredientInput}
-                onChange={e => setIngredientInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addIngredient())}
-                placeholder="e.g., chicken, rice, broccoli..."
-                className="flex-1 px-3 py-2 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-              />
-              <button
-                onClick={addIngredient}
-                className="px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-            {customizations.pantryIngredients.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {customizations.pantryIngredients.map(ing => (
-                  <span
-                    key={ing}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm border border-emerald-200"
+              {/* Pantry Ingredients */}
+              <div>
+                <label className="text-sm font-semibold text-foreground mb-2 block">
+                  What&apos;s in your pantry?
+                </label>
+                <p className="text-xs text-muted mb-2">Add ingredients you&apos;d like to use up this week</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={ingredientInput}
+                    onChange={e => setIngredientInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addIngredient())}
+                    placeholder="e.g., chicken, rice, broccoli..."
+                    className="flex-1 px-3 py-2 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                  />
+                  <button
+                    onClick={addIngredient}
+                    className="px-3 py-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
                   >
-                    {ing}
-                    <button onClick={() => removeIngredient(ing)} className="hover:text-emerald-900">
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                {customizations.pantryIngredients.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {customizations.pantryIngredients.map(ing => (
+                      <span
+                        key={ing}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-sm border border-emerald-200"
+                      >
+                        {ing}
+                        <button onClick={() => removeIngredient(ing)} className="hover:text-emerald-900">
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-          </div>
 
-          {/* Meal Types */}
-          <div>
-            <label className="text-sm font-semibold text-foreground mb-2 block">
-              What kind of meals?
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {MEAL_TYPE_OPTIONS.map(({ label, icon: Icon }) => {
-                const selected = customizations.mealTypes.includes(label);
-                return (
-                  <button
-                    key={label}
-                    onClick={() => toggleMealType(label)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 border ${
-                      selected
-                        ? 'bg-primary text-white border-primary shadow-sm'
-                        : 'bg-white text-foreground border-border hover:border-primary/50 hover:bg-primary/5'
-                    }`}
-                  >
-                    <Icon className="w-4 h-4" />
-                    {label}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
+              {/* Meal Types */}
+              <div>
+                <label className="text-sm font-semibold text-foreground mb-2 block">
+                  What kind of meals?
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {MEAL_TYPE_OPTIONS.map(({ label, icon: Icon }) => {
+                    const selected = customizations.mealTypes.includes(label);
+                    return (
+                      <button
+                        key={label}
+                        onClick={() => toggleMealType(label)}
+                        className={`inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 border ${selected
+                            ? 'bg-primary text-white border-primary shadow-sm'
+                            : 'bg-white text-foreground border-border hover:border-primary/50 hover:bg-primary/5'
+                          }`}
+                      >
+                        <Icon className="w-4 h-4" />
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
 
-          {/* Cuisine Preferences */}
-          <div>
-            <label className="text-sm font-semibold text-foreground mb-2 block">
-              Preferred cuisines
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {CUISINE_OPTIONS.map(cuisine => {
-                const selected = customizations.cuisines.includes(cuisine);
-                return (
+              {/* Cuisine Preferences */}
+              <div>
+                <label className="text-sm font-semibold text-foreground mb-2 block">
+                  Preferred cuisines
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {CUISINE_OPTIONS.map(cuisine => {
+                    const selected = customizations.cuisines.includes(cuisine);
+                    return (
+                      <button
+                        key={cuisine}
+                        onClick={() => toggleCuisine(cuisine)}
+                        className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border ${selected
+                            ? 'bg-teal-500 text-white border-teal-500 shadow-sm'
+                            : 'bg-white text-foreground border-border hover:border-teal-300 hover:bg-teal-50'
+                          }`}
+                      >
+                        {cuisine}
+                      </button>
+                    );
+                  })}
+                  {customizations.cuisines
+                    .filter(c => !(CUISINE_OPTIONS as readonly string[]).includes(c))
+                    .map(cuisine => (
+                      <span
+                        key={cuisine}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-teal-50 text-teal-700 text-sm border border-teal-200 font-medium"
+                      >
+                        {cuisine}
+                        <button
+                          type="button"
+                          onClick={() => removeCuisine(cuisine)}
+                          className="hover:text-teal-900"
+                          aria-label={`Remove ${cuisine}`}
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </span>
+                    ))}
+                </div>
+                <div className="flex gap-2 min-w-0 mt-2">
+                  <input
+                    type="text"
+                    value={cuisineInput}
+                    onChange={e => setCuisineInput(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCuisine())}
+                    placeholder="Add custom cuisine..."
+                    className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-teal-300 text-sm"
+                  />
                   <button
-                    key={cuisine}
-                    onClick={() => toggleCuisine(cuisine)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border ${
-                      selected
-                        ? 'bg-teal-500 text-white border-teal-500 shadow-sm'
-                        : 'bg-white text-foreground border-border hover:border-teal-300 hover:bg-teal-50'
-                    }`}
+                    type="button"
+                    onClick={addCuisine}
+                    className="px-3 py-1.5 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 transition-colors shrink-0"
                   >
-                    {cuisine}
+                    <Plus className="w-4 h-4" />
                   </button>
-                );
-              })}
-              {customizations.cuisines
-                .filter(c => !(CUISINE_OPTIONS as readonly string[]).includes(c))
-                .map(cuisine => (
-                  <span
-                    key={cuisine}
-                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-teal-50 text-teal-700 text-sm border border-teal-200 font-medium"
-                  >
-                    {cuisine}
-                    <button
-                      type="button"
-                      onClick={() => removeCuisine(cuisine)}
-                      className="hover:text-teal-900"
-                      aria-label={`Remove ${cuisine}`}
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </span>
-                ))}
-            </div>
-            <div className="flex gap-2 min-w-0 mt-2">
-              <input
-                type="text"
-                value={cuisineInput}
-                onChange={e => setCuisineInput(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addCuisine())}
-                placeholder="Add custom cuisine..."
-                className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-teal-300 text-sm"
+                </div>
+              </div>
+
+              {/* Freeform Notes */}
+              <Textarea
+                label="Anything else?"
+                value={customizations.freeformNotes}
+                onChange={e => setCustomizations(prev => ({ ...prev, freeformNotes: e.target.value }))}
+                placeholder="e.g., No red meat this week, extra protein, kid-friendly meals, birthday dinner on Friday..."
+                rows={3}
               />
-              <button
-                type="button"
-                onClick={addCuisine}
-                className="px-3 py-1.5 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 transition-colors shrink-0"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Freeform Notes */}
-          <Textarea
-            label="Anything else?"
-            value={customizations.freeformNotes}
-            onChange={e => setCustomizations(prev => ({ ...prev, freeformNotes: e.target.value }))}
-            placeholder="e.g., No red meat this week, extra protein, kid-friendly meals, birthday dinner on Friday..."
-            rows={3}
-          />
             </div>
           </div>
 
