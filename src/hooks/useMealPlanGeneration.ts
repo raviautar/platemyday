@@ -25,8 +25,8 @@ export function useMealPlanGeneration() {
   const { track } = useAnalytics();
   const { showToast } = useToast();
 
-  const handleGenerate = useCallback(async (preferences: string, systemPrompt?: string) => {
-    startGeneration(preferences, systemPrompt);
+  const handleGenerate = useCallback(async () => {
+    startGeneration('');
   }, [startGeneration]);
 
   const handleAddToLibrary = useCallback(async (suggestedRecipe: SuggestedRecipe) => {

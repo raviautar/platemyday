@@ -3,7 +3,6 @@
 import { useState, useMemo } from 'react';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useMealPlan } from '@/contexts/MealPlanContext';
-import { useSettings } from '@/contexts/SettingsContext';
 import { WeekView } from '@/components/meal-plan/WeekView';
 import { MealPlanControls } from '@/components/meal-plan/MealPlanControls';
 import { MealPlanHistory } from '@/components/meal-plan/MealPlanHistory';
@@ -26,7 +25,6 @@ export default function MealPlanPage() {
     dismissShoppingListUpdated, dismissNutritionUpdated,
     addPantryItemToShoppingList,
   } = useMealPlan();
-  const { settings } = useSettings();
   const {
     loading,
     generationError,
@@ -122,8 +120,6 @@ export default function MealPlanPage() {
         onGenerate={handleGenerate}
         hasExistingPlan={!!weekPlan}
         loading={loading}
-        defaultSystemPrompt={settings.mealPlanSystemPrompt}
-        onboardingCompleted={settings.preferences.onboardingCompleted}
       />
 
       <div className="mt-6">
@@ -184,13 +180,13 @@ export default function MealPlanPage() {
         ) : (
           <div className="-mt-2">
             <div className="flex justify-between items-end">
-              {/* Left doodle — curves left then up toward Customize */}
+              {/* Left doodle — curves left then up toward Preferences */}
               <div className="flex flex-col-reverse items-center gap-2 sm:gap-3 w-36 sm:w-44 md:w-52">
                 <div className="text-center">
                   <div className="flex items-center justify-center gap-1.5 text-slate-400">
                     <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
                     <span className="text-base sm:text-lg md:text-xl font-semibold font-[family-name:var(--font-outfit)]">
-                      Customize first
+                      Set preferences
                     </span>
                   </div>
                   <p className="text-xs sm:text-sm text-slate-400/80 mt-1 font-[family-name:var(--font-outfit)]">

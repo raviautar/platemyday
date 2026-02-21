@@ -324,7 +324,7 @@ export async function getSettings(supabase: SupabaseClient, userId: string | nul
     mealPlanSystemPrompt: data.meal_plan_system_prompt || '',
     unitSystem: data.unit_system as 'metric' | 'imperial',
     weekStartDay: data.week_start_day as AppSettings['weekStartDay'],
-    preferences: data.preferences || DEFAULT_USER_PREFERENCES,
+    preferences: { ...DEFAULT_USER_PREFERENCES, ...(data.preferences || {}) },
   };
 }
 

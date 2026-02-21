@@ -63,9 +63,19 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   servings: 2,
   macroGoals: {},
   mealNotes: [],
+  pantryIngredients: [],
+  mealTypes: [],
   onboardingCompleted: false,
   onboardingDismissed: false,
 };
+
+export const MEAL_TYPE_LABELS = [
+  'Quick & Easy',
+  'Comfort Food',
+  'Light & Healthy',
+  'One-Pot Meals',
+  'Meal Prep Friendly',
+] as const;
 
 export const DEFAULT_SETTINGS: AppSettings = {
   recipeSystemPrompt: DEFAULT_RECIPE_SYSTEM_PROMPT,
@@ -141,6 +151,14 @@ export function formatPreferencesPrompt(preferences: UserPreferences): string {
 
   if (preferences.mealNotes.length > 0) {
     parts.push(`Additional meal preferences: ${preferences.mealNotes.join('. ')}`);
+  }
+
+  if (preferences.pantryIngredients && preferences.pantryIngredients.length > 0) {
+    parts.push(`I have these ingredients available that I'd like to use: ${preferences.pantryIngredients.join(', ')}`);
+  }
+
+  if (preferences.mealTypes && preferences.mealTypes.length > 0) {
+    parts.push(`I'd like these types of meals: ${preferences.mealTypes.join(', ')}`);
   }
 
   return parts.length > 0 ? parts.join('. ') + '.' : '';

@@ -22,17 +22,10 @@ export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, o
     return day.meals.reduce((sum, meal) => sum + (meal.estimatedNutrition?.calories || 0), 0);
   }, [day.meals]);
 
-  const formatDate = (dateStr: string, dayOfWeek: string) => {
-    const date = new Date(dateStr + 'T00:00:00');
-    const month = date.toLocaleDateString('en-US', { month: 'short' });
-    const dayNum = date.getDate();
-    return `${dayOfWeek} - ${month} ${dayNum}`;
-  };
-
   return (
     <div className="bg-surface rounded-xl p-3 h-full">
       <h3 className="font-semibold text-sm text-center text-primary-dark mb-2">
-        {formatDate(day.date, day.dayOfWeek)}
+        {day.dayOfWeek}
       </h3>
       <Droppable droppableId={`day-${dayIndex}`}>
         {(provided, snapshot) => (

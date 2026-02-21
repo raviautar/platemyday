@@ -57,6 +57,8 @@ export interface UserPreferences {
     calories?: number;
   };
   mealNotes: string[];
+  pantryIngredients: string[];
+  mealTypes: string[];
   onboardingCompleted: boolean;
   onboardingDismissed: boolean;
 }

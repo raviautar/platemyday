@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/components/ui/Toast';
-import { PreferencesSection } from '@/components/settings/PreferencesSection';
+import { PreferencesEditor } from '@/components/settings/PreferencesEditor';
 import { UnitSystem, WeekStartDay } from '@/types';
 
 type Tab = 'preferences' | 'general';
@@ -112,7 +112,7 @@ export default function CustomizePage() {
 
         {/* Preferences Tab */}
         {activeTab === 'preferences' && (
-          <PreferencesSection />
+          <PreferencesEditor />
         )}
       </div>
     </div>
