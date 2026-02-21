@@ -48,6 +48,7 @@ export const EVENTS = {
   UPGRADE_PAGE_VIEWED: 'upgrade_page_viewed',
   UPGRADE_CTA_CLICKED: 'upgrade_cta_clicked',
   LANDING_CTA_CLICKED: 'landing_cta_clicked',
+  ONBOARDING_AUTH_ATTEMPTED: 'onboarding_auth_attempted',
   PAYWALL_HIT: 'paywall_hit',
   CHECKOUT_STARTED: 'checkout_started',
   SUBSCRIPTION_ACTIVATED: 'subscription_activated',

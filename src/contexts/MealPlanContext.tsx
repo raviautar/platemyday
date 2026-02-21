@@ -234,7 +234,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
               try {
                 const partial = JSON.parse(trimmed);
                 if (!abortController.signal.aborted) {
-                  setShoppingList(partial.categories || []);
+                  setShoppingList((partial.categories || []).map((c: any) => ({ ...c, items: c.items || [] })));
                   setShoppingPantryItems(partial.pantryItems || []);
                 }
               } catch {

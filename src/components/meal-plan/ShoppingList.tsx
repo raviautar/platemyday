@@ -43,7 +43,7 @@ export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedReci
 
   useEffect(() => {
     if (isOpen && shoppingList) {
-      const totalItems = shoppingList.reduce((sum, cat) => sum + cat.items.length, 0);
+      const totalItems = shoppingList.reduce((sum, cat) => sum + (cat.items?.length || 0), 0);
       track(EVENTS.SHOPPING_LIST_VIEWED, { ingredient_count: totalItems });
     }
   }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -84,7 +84,7 @@ export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedReci
 
     try {
       await navigator.clipboard.writeText(text.trim());
-      const totalCount = shoppingList.reduce((sum, cat) => sum + cat.items.length, 0);
+      const totalCount = shoppingList.reduce((sum, cat) => sum + (cat.items?.length || 0), 0);
       track(EVENTS.SHOPPING_LIST_COPIED, { is_consolidated: true, item_count: totalCount });
       showToast('Shopping list copied to clipboard!');
     } catch {
@@ -94,7 +94,7 @@ export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedReci
 
   const checkedCount = consolidatedChecked.size;
   const totalCount = shoppingList
-    ? shoppingList.reduce((sum, cat) => sum + cat.items.length, 0)
+    ? shoppingList.reduce((sum, cat) => sum + (cat.items?.length || 0), 0)
     : 0;
 
   return (
@@ -156,7 +156,7 @@ export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedReci
               <div key={category.name}>
                 <h3 className="text-sm font-semibold text-foreground mb-1.5 px-1">{category.name}</h3>
                 <div className="space-y-0.5">
-                  {category.items.map(item => {
+                  {(category.items || []).map(item => {
                     const key = `${category.name}:${item}`;
                     const checked = consolidatedChecked.has(key);
                     return (

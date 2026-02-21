@@ -49,7 +49,7 @@ export function MealPlanHistory({ isOpen, onClose }: MealPlanHistoryProps) {
   };
 
   const getMealCount = (plan: typeof mealPlanHistory[0]) => {
-    return plan.days.reduce((sum, day) => sum + day.meals.length, 0);
+    return plan.days.reduce((sum, day) => sum + (day.meals?.length || 0), 0);
   };
 
   return (

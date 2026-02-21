@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles, ArrowRight, User as UserIcon, LogIn, UtensilsCrossed, BookOpen, SlidersHorizontal } from 'lucide-react';
+import { Sparkles, UtensilsCrossed, BookOpen, SlidersHorizontal } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
@@ -16,10 +16,10 @@ export default function HomePage() {
   const [isTransitioning, setIsTransitioning] = useState(false);
   const router = useRouter();
   const { track } = useAnalytics();
-  const { isLoaded: isAuthLoaded } = useUserIdentity();
+  const { isLoaded: isAuthLoaded, isAuthenticated } = useUserIdentity();
   const { settings, updateSettings, isSettingsLoaded } = useSettings();
 
-  const isOnboarded = isSettingsLoaded && settings.preferences.onboardingCompleted;
+  const isOnboarded = (isSettingsLoaded && settings.preferences.onboardingCompleted) || (isAuthLoaded && isAuthenticated);
 
   const changeView = (nextView: 'hero' | 'feature1' | 'feature2' | 'feature3' | 'auth') => {
     setIsTransitioning(true);
@@ -42,7 +42,7 @@ export default function HomePage() {
 
   const handleStart = () => {
     track(EVENTS.LANDING_CTA_CLICKED, { cta: 'hero_get_started' });
-    if (isAuthLoaded && settings.preferences.onboardingCompleted) {
+    if ((isAuthLoaded && isAuthenticated) || (isSettingsLoaded && settings.preferences.onboardingCompleted)) {
       router.push('/meal-plan');
     } else {
       changeView('feature1');
@@ -157,6 +157,8 @@ export default function HomePage() {
                   Let&apos;s Plan!
                 </button>
               </>
+            ) : !isAuthLoaded ? (
+              <div className="h-14" />
             ) : (
               <button
                 onClick={handleStart}
@@ -169,39 +171,10 @@ export default function HomePage() {
           </div>
         )}
 
-        {(view === 'feature1' || view === 'feature2' || view === 'feature3') && (
-          <FeatureTour view={view} onNext={changeView} />
+        {(view === 'feature1' || view === 'feature2' || view === 'feature3' || view === 'auth') && (
+          <FeatureTour view={view} onNext={changeView} onComplete={completeOnboarding} />
         )}
 
-        {view === 'auth' && (
-          <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto">
-            <div className="w-20 h-20 mb-8 bg-gradient-to-br from-emerald-600 to-teal-700 rounded-full flex items-center justify-center shadow-xl shadow-emerald-500/20 transform hover:scale-105 transition-transform duration-300">
-              <UserIcon className="w-10 h-10 text-white" strokeWidth={2} />
-            </div>
-            <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-outfit)] text-foreground">Save your progress</h2>
-            <p className="text-muted-foreground mb-10 text-base md:text-lg leading-relaxed">
-              Sign in to keep your meal plans, recipes, and preferences across devices.
-            </p>
-
-            <div className="flex flex-col w-full gap-3">
-              <Link
-                href="/login?redirect=/meal-plan"
-                onClick={() => completeOnboarding()}
-                className="w-full flex items-center justify-center gap-2 bg-gradient-to-br from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold px-6 py-4 rounded-xl shadow-lg shadow-emerald-600/25 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] text-lg"
-              >
-                <LogIn className="w-5 h-5" />
-                Sign In / Create Account
-              </Link>
-
-              <button
-                onClick={() => completeOnboarding('/meal-plan')}
-                className="w-full flex items-center justify-center pb-2 pt-3 text-muted-foreground hover:text-foreground font-medium transition-colors hover:underline underline-offset-4 text-sm"
-              >
-                Continue without account for now
-              </button>
-            </div>
-          </div>
-        )}
       </div>
 
     </div>
