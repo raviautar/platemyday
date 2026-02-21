@@ -21,6 +21,7 @@ import { EVENTS } from '@/lib/analytics/events';
 function AnonymousMigration() {
   const { userId, isAuthenticated, isLoaded } = useUserIdentity();
   const { refetch: refetchBilling } = useBilling();
+  const { refetchSettings } = useSettings();
   const supabase = useSupabase();
   const migrated = useRef(false);
 
@@ -36,10 +37,11 @@ function AnonymousMigration() {
           posthog.capture(EVENTS.USER_SIGNED_UP);
           clearAnonymousId();
           refetchBilling();
+          refetchSettings();
         })
         .catch((err) => console.error('Migration failed:', err));
     }
-  }, [userId, isAuthenticated, isLoaded, refetchBilling, supabase]);
+  }, [userId, isAuthenticated, isLoaded, refetchBilling, refetchSettings, supabase]);
 
   return null;
 }

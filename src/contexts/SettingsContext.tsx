@@ -12,6 +12,7 @@ interface SettingsContextType {
   updateSettings: (updates: Partial<AppSettings>) => void;
   updateUnitSystem: (unitSystem: UnitSystem) => void;
   resetSettings: () => void;
+  refetchSettings: () => Promise<void>;
   isSettingsLoaded: boolean;
 }
 
@@ -23,8 +24,30 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(DEFAULT_SETTINGS);
   const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
 
+  const fetchAndSetSettings = useCallback(async () => {
+    if (!userId && !anonymousId) return;
+    try {
+      const data = await fetchSettings(supabase, userId, anonymousId);
+      if (data) setSettings(data);
+    } catch (err) {
+      console.error('Failed to load settings:', err);
+    } finally {
+      setIsSettingsLoaded(true);
+    }
+  }, [userId, anonymousId, supabase]);
+
   useEffect(() => {
     if (!isLoaded || !anonymousId) return;
+
+    // If the user is authenticated but we also have an anonymousId locally,
+    // a migration is about to happen in AppShell. We should NOT fetch settings
+    // yet, because we might get an empty result (default settings) and cache it
+    // right before the migration completes.
+    // Instead, we wait for AnonymousMigration to explicitly call refetchSettings.
+    if (userId && anonymousId) {
+      // Do nothing, just wait for the migration to call refetchSettings
+      return;
+    }
 
     let cancelled = false;
 
@@ -88,7 +111,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   }, [persistSettings]);
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings, updateUnitSystem, resetSettings, isSettingsLoaded }}>
+    <SettingsContext.Provider value={{ settings, updateSettings, updateUnitSystem, resetSettings, refetchSettings: fetchAndSetSettings, isSettingsLoaded }}>
       {children}
     </SettingsContext.Provider>
   );
