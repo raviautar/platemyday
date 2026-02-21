@@ -10,7 +10,6 @@ import { RecipeList } from '@/components/recipes/RecipeList';
 import { RecipeForm } from '@/components/recipes/RecipeForm';
 import { RecipeDetail } from '@/components/recipes/RecipeDetail';
 import { AIRecipeGenerator } from '@/components/recipes/AIRecipeGenerator';
-import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 import { Input } from '@/components/ui/Input';
 import { RecipeFilters } from '@/types';
 import { Plus, Search, SlidersHorizontal } from 'lucide-react';
@@ -28,7 +27,6 @@ export default function RecipesPage() {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
@@ -286,7 +284,6 @@ export default function RecipesPage() {
         onGenerate={handleGenerateAI}
       />
 
-      <OnboardingWizard isOpen={showOnboarding} onClose={() => setShowOnboarding(false)} />
     </div>
   );
 }
