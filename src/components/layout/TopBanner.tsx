@@ -1,10 +1,11 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { SignInButton, SignedIn, SignedOut, UserButton } from '@clerk/nextjs';
 import { Crown, UserCircle, Check } from 'lucide-react';
 import Link from 'next/link';
 import { useBilling } from '@/contexts/BillingContext';
+import { useUserIdentity } from '@/hooks/useUserIdentity';
+import { UserMenu } from './UserMenu';
 
 function CreditBadgeCrown() {
   const { unlimited, creditsRemaining, loading } = useBilling();
@@ -51,6 +52,7 @@ function CreditBadgeCrown() {
 export function TopBanner() {
   const pathname = usePathname();
   const isHomePage = pathname === '/';
+  const { isAuthenticated } = useUserIdentity();
 
   const handleLogoClick = () => {
     if (isHomePage) {
@@ -87,7 +89,7 @@ export function TopBanner() {
             />
           </Link>
         )}
-        
+
         <Link href="/" className="flex flex-col -space-y-1 min-w-0">
           <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white tracking-normal drop-shadow-md relative font-[family-name:var(--font-outfit)] truncate">
             <span className="bg-gradient-to-r from-white via-yellow-50 to-white bg-clip-text text-transparent animate-shimmer">
@@ -99,32 +101,23 @@ export function TopBanner() {
           </p>
         </Link>
       </div>
-      
+
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         <CreditBadgeCrown />
 
-        
-        <SignedOut>
-          <SignInButton mode="modal">
-            <button className="p-1.5 sm:p-2 bg-white text-emerald-600 hover:bg-emerald-50 rounded-full transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 flex-shrink-0" aria-label="Sign In">
-              <UserCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2} />
-            </button>
-          </SignInButton>
-        </SignedOut>
-        <SignedIn>
-          <div className="flex-shrink-0">
-            <UserButton 
-              appearance={{
-                elements: {
-                  avatarBox: "w-7 h-7 sm:w-8 sm:h-8 ring-2 ring-white/50",
-                  userButtonPopoverCard: "shadow-xl",
-                }
-              }}
-            />
-          </div>
-        </SignedIn>
+        {!isAuthenticated ? (
+          <Link
+            href={`/login?redirect=${encodeURIComponent(pathname)}`}
+            className="p-1.5 sm:p-2 bg-white text-emerald-600 hover:bg-emerald-50 rounded-full transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 flex-shrink-0"
+            aria-label="Sign In"
+          >
+            <UserCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2} />
+          </Link>
+        ) : (
+          <UserMenu />
+        )}
       </div>
-      
+
       <style jsx>{`
         @keyframes shimmer {
           0%, 100% {
@@ -135,7 +128,7 @@ export function TopBanner() {
             background-position: 100% 50%;
           }
         }
-        
+
         .animate-shimmer {
           animation: shimmer 3s ease-in-out infinite;
         }

@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { getAuthUser } from '@/lib/supabase/auth';
 import { getStripe } from '@/lib/stripe';
 import { createServiceClient } from '@/lib/supabase/server';
 
@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthUser();
     if (!userId) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 });
     }

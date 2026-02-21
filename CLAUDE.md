@@ -5,7 +5,7 @@ AI-powered meal planning app built with Next.js 16.
 
 - **Framework:** Next.js 16 (App Router, TypeScript, Tailwind CSS v4)
 - **Database:** Supabase (PostgreSQL)
-- **Auth:** Clerk (`@clerk/nextjs`) with anonymous user support
+- **Auth:** Supabase Auth (`@supabase/ssr`) with anonymous user support
 - **AI:** Vercel AI SDK (`ai` + `@ai-sdk/google`) — Google Gemini models
 - **Payments:** Stripe (`stripe` server, `@stripe/stripe-js` client)
 - **Drag & Drop:** `@hello-pangea/dnd`
@@ -31,6 +31,9 @@ stripe listen --forward-to localhost:3001/api/webhooks/stripe
 src/
 ├── app/
 │   ├── page.tsx                    # Landing page
+│   ├── login/page.tsx              # Sign-in (email/password + Google OAuth)
+│   ├── signup/page.tsx             # Sign-up (email/password + Google OAuth)
+│   ├── auth/callback/route.ts      # OAuth callback handler
 │   ├── recipes/page.tsx            # Recipe library
 │   ├── meal-plan/page.tsx          # Weekly meal planning
 │   ├── customize/page.tsx          # Settings
@@ -47,7 +50,7 @@ src/
 │       ├── webhooks/stripe/        # POST: Stripe webhook handler (signature-verified)
 │       └── admin/override-user/    # POST: admin-only credit/billing overrides (x-admin-key auth)
 ├── components/
-│   ├── layout/                     # AppShell, Sidebar, BottomNav, TopBanner
+│   ├── layout/                     # AppShell, Sidebar, BottomNav, TopBanner, UserMenu
 │   ├── recipes/                    # RecipeForm, RecipeList, RecipeCard, RecipeDetail, AIRecipeGenerator
 │   ├── meal-plan/                  # WeekView, DayColumn, MealCard, MealDetail, MealPlanHistory, etc.
 │   └── ui/                         # Modal, Button, Input, Textarea, Toast, LoadingSpinner, GeneratingAnimation, NutritionGrid, PieChartIcon
@@ -57,7 +60,7 @@ src/
 │   ├── SettingsContext.tsx          # User settings (Supabase-backed)
 │   └── BillingContext.tsx           # Credits, plan status, refetch (fetches /api/billing/credits)
 ├── hooks/
-│   ├── useUserIdentity.ts          # Clerk user + anonymous ID resolution
+│   ├── useUserIdentity.ts          # Supabase Auth user + anonymous ID resolution
 │   ├── useAnalytics.ts             # PostHog tracking hook with identity enrichment
 │   └── useMealPlanGeneration.ts    # Meal plan generation logic (streaming, parsing, state)
 ├── lib/
@@ -73,14 +76,15 @@ src/
 │   │   ├── posthog-client.ts       # Client-side PostHog init
 │   │   └── posthog-server.ts       # Server-side PostHog for API routes
 │   └── supabase/
-│       ├── client.ts               # Browser Supabase client
-│       ├── server.ts               # Server Supabase client
+│       ├── client.ts               # Browser Supabase client (createBrowserClient)
+│       ├── server.ts               # Server Supabase client (createClient, createServiceClient)
+│       ├── auth.ts                 # Server-side auth helper (getAuthUser)
 │       ├── db.ts                   # Database helper functions
 │       └── billing.ts              # Credit checking, consumption, billing info queries
 ├── types/
 │   └── index.ts                    # All TypeScript interfaces
 supabase/
-└── migrations/                     # SQL migration files (001-007)
+└── migrations/                     # SQL migration files (001-009)
 ```
 
 ## Key Patterns
@@ -89,7 +93,7 @@ supabase/
 - **Color palette:** primary=#4CAF50, secondary=#FFD54F, accent=#F48FB1, bg=#FAFFF5
 - **AI routes:** Use `generateText()` with `Output.object({ schema })` for structured output. All routes use `validateAndRateLimit()` from `ai-guardrails.ts` for request parsing, validation, and rate limiting
 - **Models:** Main generation uses `gemini-3-flash-preview`, single meal regen uses `gemini-2.5-flash-lite`
-- **Auth flow:** Anonymous users get a UUID stored in localStorage. On Clerk sign-in, anonymous data migrates to the authenticated user via `migrateAnonymousData()`
+- **Auth flow:** Anonymous users get a UUID stored in localStorage. On Supabase Auth sign-in, anonymous data migrates to the authenticated user via `migrateAnonymousData()`. Auth pages are at `/login` and `/signup`. Supports email/password + Google OAuth
 - **Persistence:** All data stored in Supabase. Contexts fetch on mount using `useUserIdentity()` hook
 - **Meal plan history:** All generated plans are saved. Users can view and restore past plans
 
@@ -137,8 +141,6 @@ PostHog tracks 5 high-level product metrics. **When adding new features or modif
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=              # Service role key for API routes (bypasses RLS)
-NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=
-CLERK_SECRET_KEY=
 GOOGLE_GENERATIVE_AI_API_KEY=
 NEXT_PUBLIC_POSTHOG_KEY=
 NEXT_PUBLIC_POSTHOG_HOST=

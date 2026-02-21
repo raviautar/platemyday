@@ -8,7 +8,6 @@ import { Sparkles, ArrowRight, User as UserIcon, LogIn, UtensilsCrossed, BookOpe
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
-import { SignInButton } from '@clerk/nextjs';
 import { useSettings } from '@/contexts/SettingsContext';
 
 export default function HomePage() {
@@ -261,15 +260,14 @@ export default function HomePage() {
             </p>
 
             <div className="flex flex-col w-full gap-3">
-              <SignInButton mode="modal" fallbackRedirectUrl="/meal-plan">
-                <button
-                  onClick={() => completeOnboarding()}
-                  className="w-full flex items-center justify-center gap-2 bg-gradient-to-br from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold px-6 py-4 rounded-xl shadow-lg shadow-emerald-600/25 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] text-lg"
-                >
-                  <LogIn className="w-5 h-5" />
-                  Sign In / Create Account
-                </button>
-              </SignInButton>
+              <Link
+                href="/login?redirect=/meal-plan"
+                onClick={() => completeOnboarding()}
+                className="w-full flex items-center justify-center gap-2 bg-gradient-to-br from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold px-6 py-4 rounded-xl shadow-lg shadow-emerald-600/25 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] text-lg"
+              >
+                <LogIn className="w-5 h-5" />
+                Sign In / Create Account
+              </Link>
 
               <button
                 onClick={() => completeOnboarding('/meal-plan')}

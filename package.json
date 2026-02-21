@@ -10,7 +10,6 @@
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.22",
-    "@clerk/nextjs": "^6.37.3",
     "@hello-pangea/dnd": "^18.0.1",
     "@stripe/stripe-js": "^8.7.0",
     "@supabase/ssr": "^0.8.0",

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { useUser } from '@clerk/nextjs';
+import { useUserIdentity } from '@/hooks/useUserIdentity';
 import { RecipeProvider } from '@/contexts/RecipeContext';
 import { MealPlanProvider } from '@/contexts/MealPlanContext';
 import { SettingsProvider, useSettings } from '@/contexts/SettingsContext';
@@ -19,18 +19,18 @@ import { posthog } from '@/lib/analytics/posthog-client';
 import { EVENTS } from '@/lib/analytics/events';
 
 function AnonymousMigration() {
-  const { user, isLoaded } = useUser();
+  const { userId, isAuthenticated, isLoaded } = useUserIdentity();
   const { refetch: refetchBilling } = useBilling();
   const supabase = useSupabase();
   const migrated = useRef(false);
 
   useEffect(() => {
-    if (!isLoaded || !user || migrated.current) return;
+    if (!isLoaded || !isAuthenticated || !userId || migrated.current) return;
     migrated.current = true;
 
     const anonymousId = getAnonymousId();
     if (anonymousId) {
-      migrateAnonymousData(supabase, anonymousId, user.id)
+      migrateAnonymousData(supabase, anonymousId, userId)
         .then(() => {
           posthog.capture(EVENTS.ANONYMOUS_DATA_MIGRATED, { previous_anonymous_id: anonymousId });
           posthog.capture(EVENTS.USER_SIGNED_UP);
@@ -39,7 +39,7 @@ function AnonymousMigration() {
         })
         .catch((err) => console.error('Migration failed:', err));
     }
-  }, [user, isLoaded, refetchBilling, supabase]);
+  }, [userId, isAuthenticated, isLoaded, refetchBilling, supabase]);
 
   return null;
 }
@@ -49,7 +49,7 @@ function OnboardingGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const { settings, isSettingsLoaded } = useSettings();
 
-  const isPublicPage = pathname === '/' || pathname === '/about';
+  const isPublicPage = pathname === '/' || pathname === '/about' || pathname === '/login' || pathname === '/signup' || pathname === '/privacy' || pathname === '/terms';
 
   useEffect(() => {
     if (isSettingsLoaded && !isPublicPage && !settings.preferences.onboardingCompleted) {
@@ -64,7 +64,7 @@ function OnboardingGuard({ children }: { children: React.ReactNode }) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isFullScreenPage = pathname === '/' || pathname === '/about';
+  const isFullScreenPage = pathname === '/' || pathname === '/about' || pathname === '/login' || pathname === '/signup' || pathname === '/privacy' || pathname === '/terms';
 
   return (
     <SettingsProvider>

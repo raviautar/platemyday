@@ -44,7 +44,7 @@ export async function POST(req: Request) {
   switch (event.type) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
-      const userId = session.metadata?.clerk_user_id;
+      const userId = session.metadata?.user_id || session.metadata?.clerk_user_id;
       if (!userId) break;
 
       if (session.mode === 'payment') {
@@ -99,7 +99,7 @@ export async function POST(req: Request) {
     case 'customer.subscription.created':
     case 'customer.subscription.updated': {
       const sub = event.data.object as Stripe.Subscription;
-      let userId: string | null = sub.metadata?.clerk_user_id ?? null;
+      let userId: string | null = sub.metadata?.user_id || sub.metadata?.clerk_user_id || null;
 
       if (!userId) {
         userId = await getUserIdFromCustomer(sb, sub.customer as string);

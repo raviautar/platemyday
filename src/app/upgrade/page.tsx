@@ -7,7 +7,7 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
 import { useBilling } from '@/contexts/BillingContext';
 import { EVENTS } from '@/lib/analytics/events';
-import { SignInButton } from '@clerk/nextjs';
+import Link from 'next/link';
 
 const features = [
   'Unlimited meal plan generations',
@@ -462,11 +462,9 @@ function UpgradeContent() {
               Manage Subscription
             </button>
           ) : !isAuthenticated ? (
-            <SignInButton mode="modal">
-              <button className="w-full bg-white text-primary hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors">
-                Sign in to Upgrade
-              </button>
-            </SignInButton>
+            <Link href="/login?redirect=/upgrade" className="w-full bg-white text-primary hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors text-center block">
+              Sign in to Upgrade
+            </Link>
           ) : (
             <button
               className="w-full bg-white text-primary hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
@@ -526,11 +524,9 @@ function UpgradeContent() {
               Current Plan
             </button>
           ) : !isAuthenticated ? (
-            <SignInButton mode="modal">
-              <button className="w-full bg-white text-emerald-600 hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors">
-                Sign in to Purchase
-              </button>
-            </SignInButton>
+            <Link href="/login?redirect=/upgrade" className="w-full bg-white text-emerald-600 hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors text-center block">
+              Sign in to Purchase
+            </Link>
           ) : (
             <button
               className="w-full bg-white text-emerald-600 hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"

@@ -1,4 +1,4 @@
-import { auth } from '@clerk/nextjs/server';
+import { getAuthUser } from '@/lib/supabase/auth';
 import { getStripe, STRIPE_PRICES } from '@/lib/stripe';
 import { createServiceClient } from '@/lib/supabase/server';
 
@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export async function POST(req: Request) {
   try {
-    const { userId } = await auth();
+    const { userId } = await getAuthUser();
     if (!userId) {
       return Response.json({ error: 'Sign in required to purchase a plan' }, { status: 401 });
     }
@@ -33,7 +33,7 @@ export async function POST(req: Request) {
 
     if (!customerId) {
       const customer = await getStripe().customers.create({
-        metadata: { clerk_user_id: userId },
+        metadata: { user_id: userId },
       });
       customerId = customer.id;
 
@@ -51,9 +51,9 @@ export async function POST(req: Request) {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${origin}/upgrade?success=true`,
       cancel_url: `${origin}/upgrade?canceled=true`,
-      metadata: { clerk_user_id: userId },
+      metadata: { user_id: userId },
       ...(mode === 'subscription' && {
-        subscription_data: { metadata: { clerk_user_id: userId } },
+        subscription_data: { metadata: { user_id: userId } },
       }),
     });
 

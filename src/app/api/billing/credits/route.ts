@@ -1,11 +1,11 @@
-import { auth } from '@clerk/nextjs/server';
+import { getAuthUser } from '@/lib/supabase/auth';
 import { getBillingInfo } from '@/lib/supabase/billing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
-  const { userId } = await auth();
+  const { userId } = await getAuthUser();
   const { searchParams } = new URL(req.url);
   const anonymousId = searchParams.get('anonymousId') || '';
 
