@@ -39,16 +39,6 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!isLoaded || !anonymousId) return;
 
-    // If the user is authenticated but we also have an anonymousId locally,
-    // a migration is about to happen in AppShell. We should NOT fetch settings
-    // yet, because we might get an empty result (default settings) and cache it
-    // right before the migration completes.
-    // Instead, we wait for AnonymousMigration to explicitly call refetchSettings.
-    if (userId && anonymousId) {
-      // Do nothing, just wait for the migration to call refetchSettings
-      return;
-    }
-
     let cancelled = false;
 
     fetchSettings(supabase, userId, anonymousId)

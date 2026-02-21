@@ -14,13 +14,18 @@ import { ToastProvider } from '@/components/ui/Toast';
 import { getAnonymousId, clearAnonymousId } from '@/lib/anonymous-id';
 import { migrateAnonymousData } from '@/lib/supabase/db';
 import { useSupabase } from '@/hooks/useSupabase';
-import { useBilling } from '@/contexts/BillingContext';
 import { posthog } from '@/lib/analytics/posthog-client';
 import { EVENTS } from '@/lib/analytics/events';
 
+/**
+ * Handles migrating anonymous user data to the authenticated user.
+ * Placed BEFORE OnboardingGuard so it always renders — even when
+ * settings haven't loaded yet or the user is on a full-screen page.
+ * BillingProvider will fetch fresh data on its own mount, so we
+ * only need to refetch settings here.
+ */
 function AnonymousMigration() {
   const { userId, isAuthenticated, isLoaded } = useUserIdentity();
-  const { refetch: refetchBilling } = useBilling();
   const { refetchSettings } = useSettings();
   const supabase = useSupabase();
   const migrated = useRef(false);
@@ -36,12 +41,11 @@ function AnonymousMigration() {
           posthog.capture(EVENTS.ANONYMOUS_DATA_MIGRATED, { previous_anonymous_id: anonymousId });
           posthog.capture(EVENTS.USER_SIGNED_UP);
           clearAnonymousId();
-          refetchBilling();
           refetchSettings();
         })
         .catch((err) => console.error('Migration failed:', err));
     }
-  }, [userId, isAuthenticated, isLoaded, refetchBilling, refetchSettings, supabase]);
+  }, [userId, isAuthenticated, isLoaded, refetchSettings, supabase]);
 
   return null;
 }
@@ -70,6 +74,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SettingsProvider>
+      <AnonymousMigration />
       <OnboardingGuard>
         <ToastProvider>
           {isFullScreenPage ? (
@@ -83,7 +88,6 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             <RecipeProvider>
               <BillingProvider>
                 <MealPlanProvider>
-                  <AnonymousMigration />
                   <div className="min-h-screen bg-background">
                     <TopBanner />
                     <Sidebar />
