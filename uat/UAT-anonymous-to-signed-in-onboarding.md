@@ -7,7 +7,10 @@ In PlateMyDay, anonymous users interact with the app via an anonymous session. W
 - **CRITICAL DEPENDENCY**: This test requires a COMPLETELY new user that has never been registered in the database before, one who successfully converts from an anonymous session to a signed-in state.
 - Ensure the application is running locally (e.g., `bun run dev`).
 - Test in an incognito or private browsing window, or clear local storage and cookies to ensure a clean state before starting.
-- Use a brand new, unique email address for the signup step (one not currently in the Supabase database) or a fresh Google OAuth login.
+- **Unique Fake Email + Service Role Cleanup Pattern**:
+  - Generate a unique test email using a timestamp (e.g. `test+${Date.now()}@test.com`) for signup instead of real accounts.
+  - Ensure `ENABLE_EMAIL_CONFIRMATION` is set to `false` in Supabase config or the testing environment.
+  - Run the cleanup API script (`/api/admin/teardown-user`) with your `SUPABASE_SERVICE_ROLE_KEY` after the test to restore a clean state.
 
 ## Test Workflow
 
@@ -23,8 +26,9 @@ In PlateMyDay, anonymous users interact with the app via an anonymous session. W
 
 ### Step 3: Convert to a Signed-in User
 1. Navigate to the sign-up or log-in page (`/signup` or `/login`).
-2. Create a new account using a new email address and password, or use Google OAuth to sign up.
-3. Wait for the authentication and redirection process to complete. (Under the hood, `migrateAnonymousData()` should be called).
+2. Create a new account using the generated fake email (e.g., `test+123456789@test.com`) and a default password.
+3. Wait for the authentication and redirection process to complete. (Under the hood, `migrateAnonymousData()` should be called and the user logged in directly since email confirmation is disabled).
+
 
 ### Step 4: Verify Onboarding Persistence
 1. After landing on the authenticated view, observe the UI.
@@ -36,8 +40,13 @@ In PlateMyDay, anonymous users interact with the app via an anonymous session. W
 1. Perform a hard refresh of the browser (Cmd+Shift+R or Ctrl+F5).
 2. **Expected Result:** When the application reloads and hydrates the user identity, it should still recognize that the onboarding is completed. The onboarding flow must not randomly reappear.
 
+### Step 6: Teardown (Cleanup)
+1. Send a POST request to `/api/admin/teardown-user` with the fake email used in step 3.
+2. Verify that the user along with their data is successfully deleted from Supabase.
+
 ## Acceptance Criteria
 - [ ] Onboarding state is correctly saved for the anonymous user.
 - [ ] Upon account creation, the `onboardingCompleted` status (along with other anonymous data) is successfully migrated to the new authenticated user's record in Supabase.
 - [ ] The user is seamlessly transitioned to the main app view without being prompted to repeat onboarding.
 - [ ] The state persists reliably across page refreshes after authentication.
+- [ ] Test user account is cleanly deleted using the admin teardown route.

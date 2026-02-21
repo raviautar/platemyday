@@ -16,10 +16,12 @@ AI-powered meal planning app built with Next.js 16.
 ## Dev Commands
 
 ```bash
+bunx supabase start  # Start local Supabase instance (requires Docker)
 bun run dev          # Start dev server (Turbopack)
 bun run build        # Production build (uses --webpack flag)
 bun run start        # Start production server
 bun run lint         # ESLint
+bunx supabase stop   # Stop local Supabase instance
 
 # Required for testing payment flows locally:
 stripe listen --forward-to localhost:3001/api/webhooks/stripe
@@ -137,10 +139,12 @@ PostHog tracks 5 high-level product metrics. **When adding new features or modif
 
 ## Environment Variables
 
+We use local Supabase for development rather than connecting directly to production. The production credentials should be commented out in `.env.local` and swapped with local keys.
+
 ```
-NEXT_PUBLIC_SUPABASE_URL=
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
-SUPABASE_SERVICE_ROLE_KEY=              # Service role key for API routes (bypasses RLS)
+NEXT_PUBLIC_SUPABASE_URL=               # Local: http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=   # Local string from `bunx supabase status`
+SUPABASE_SERVICE_ROLE_KEY=              # Service role key for API routes (bypasses RLS). Local string from `bunx supabase status`
 GOOGLE_GENERATIVE_AI_API_KEY=
 NEXT_PUBLIC_POSTHOG_KEY=
 NEXT_PUBLIC_POSTHOG_HOST=
@@ -160,3 +164,4 @@ ADMIN_SECRET_KEY=                   # Secret for /api/admin/* routes
 - Do not open the browser to test the app, unless explicitly asked.
 - Always run bun run build after implementing changes to check for errors.
 - Never use the term "AI" in user-facing text (UI labels, descriptions, error messages). Use alternatives like "personalized", "tailored", "generated", or "smart" instead. Internal code comments and variable names are fine.
+- Check after each feature implementation if tests need to be updated and state changes need to be added.
