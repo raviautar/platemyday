@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { WeekView } from '@/components/meal-plan/WeekView';
@@ -8,7 +8,7 @@ import { MealPlanControls } from '@/components/meal-plan/MealPlanControls';
 import { MealPlanHistory } from '@/components/meal-plan/MealPlanHistory';
 import { ShoppingList } from '@/components/meal-plan/ShoppingList';
 import { NutritionSummary } from '@/components/meal-plan/NutritionSummary';
-import { GeneratingAnimation } from '@/components/ui/GeneratingAnimation';
+import { GeneratingAnimation, ACTION_IMAGES } from '@/components/ui/GeneratingAnimation';
 import { StreamingMealView } from '@/components/meal-plan/StreamingMealView';
 import { PieChartIcon } from '@/components/ui/PieChartIcon';
 import { useMealPlanGeneration } from '@/hooks/useMealPlanGeneration';
@@ -41,6 +41,14 @@ export default function MealPlanPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
   const [nutritionOpen, setNutritionOpen] = useState(false);
+
+  // Prefetch generating animation images
+  useEffect(() => {
+    ACTION_IMAGES.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, []);
 
   const suggestedRecipes = useMemo(() => weekPlan?.suggestedRecipes || {}, [weekPlan?.suggestedRecipes]);
 

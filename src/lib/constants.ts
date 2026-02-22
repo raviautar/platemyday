@@ -5,7 +5,12 @@ export const getRecipeSystemPrompt = (unitSystem: UnitSystem): string => {
     ? 'Use metric units (grams, kilograms, milliliters, liters, Celsius) for all measurements and temperatures.'
     : 'Use imperial units (cups, tablespoons, teaspoons, ounces, pounds, Fahrenheit) for all measurements and temperatures.';
 
-  return `You are a creative chef assistant. Generate detailed, practical recipes based on the user's request. ${unitGuidance} Include precise measurements, clear instructions, and helpful tips. Keep recipes accessible for home cooks.`;
+  return `You are a creative chef assistant. Generate detailed, practical recipes based on the user's request. ${unitGuidance} 
+CRITICAL CONSTRAINTS:
+1. STRICT DIETARY ADHERENCE: You MUST NOT include any ingredients prohibited by the requested diet (e.g. no animal products for Vegan, no high-carb grains for Keto). A failure to do so will result in severe allergy issues. Be extremely vigilant about hidden ingredients.
+2. EXACT SCALING: You MUST physically scale the ingredient volumes/quantities to exactly match the requested "Servings". Do not default to 1 or 6 people if asked for something else.
+3. REALISTIC TIMING: Prep and cook times MUST be physically realistic for the volume of the servings. If serving 6 people, prep time must account for peeling/chopping large quantities. Do not assume any base ingredients (like rice, beans, or lentils) are pre-cooked unless explicitly stated by the user.
+Include precise measurements, clear instructions, and helpful tips. Keep recipes accessible for home cooks.`;
 };
 
 export const getMealPlanSystemPrompt = (unitSystem: UnitSystem): string => {
@@ -13,7 +18,13 @@ export const getMealPlanSystemPrompt = (unitSystem: UnitSystem): string => {
     ? 'When suggesting recipes, use metric measurements.'
     : 'When suggesting recipes, use imperial measurements.';
 
-  return `You are a meal planning assistant. Create balanced, varied weekly meal plans. ${unitGuidance} Consider nutrition, variety, and practical cooking schedules. Mix quick meals with more involved recipes throughout the week.`;
+  return `You are a meal planning assistant. Create balanced, varied weekly meal plans. ${unitGuidance}
+CRITICAL CONSTRAINTS:
+1. STRICT DIETARY ADHERENCE: You MUST NOT include any ingredients prohibited by the requested diet (e.g. no animal products for Vegan, no high-carb grains for Keto). A failure to do so will result in severe allergy issues.
+2. EXACT SCALING: The plan and all meals MUST dynamically scale the ingredient volumes/quantities to exactly match the requested "Servings". Do not default to 1 or 6 people.
+3. CALORIE TARGETING: You MUST generate a plan where the total daily calories reasonably approximate the target calorie goal (+/- 150 cals variance is acceptable to ensure realistic ingredient measurements). Do not default to 2500 cals if the user requests 1500 or 3500.
+4. REALISTIC TIMING: Prep and cook times MUST be physically realistic for the volume of the servings. Do not assume any base ingredients (grains/beans) are pre-cooked.
+Act ONLY on the active parameters passed in the payload without relying on internal defaults or fallback template shapes. Consider nutrition, variety, and practical cooking schedules. Mix quick meals with more involved recipes throughout the week.`;
 };
 
 export const DEFAULT_RECIPE_SYSTEM_PROMPT = getRecipeSystemPrompt('metric');
@@ -141,9 +152,7 @@ export function formatPreferencesPrompt(preferences: UserPreferences): string {
     );
   }
 
-  if (preferences.servings !== 2) {
-    parts.push(`Servings: ${preferences.servings} people`);
-  }
+  parts.push(`Strict Servings requirement: EXACTLY ${preferences.servings} people. Scale all ingredients appropriately.`);
 
   const macros = preferences.macroGoals;
   if (macros.protein || macros.carbs || macros.fiber || macros.calories) {

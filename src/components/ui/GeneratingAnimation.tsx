@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 
-const ACTION_IMAGES = [
+export const ACTION_IMAGES = [
   '/assets/actions/cooking.png',
   '/assets/actions/cutting.png',
   '/assets/actions/baking.png',

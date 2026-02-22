@@ -6,12 +6,26 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { FeatureTour } from '@/components/home/FeatureTour';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
 
+const TOUR_IMAGES = [
+    '/assets/tour/meal-plan.png',
+    '/assets/tour/recipes.png',
+    '/assets/tour/preferences.png'
+];
+
 export default function OnboardingPage() {
     const [view, setView] = useState<'feature1' | 'feature2' | 'feature3' | 'auth'>('feature1');
     const [isTransitioning, setIsTransitioning] = useState(false);
     const router = useRouter();
     const { settings, updateSettings, isSettingsLoaded } = useSettings();
     const { isLoaded: isAuthLoaded, isAuthenticated } = useUserIdentity();
+
+    // Prefetch tour images
+    useEffect(() => {
+        TOUR_IMAGES.forEach((src) => {
+            const img = new Image();
+            img.src = src;
+        });
+    }, []);
 
     // Redirect if already onboarded
     useEffect(() => {
