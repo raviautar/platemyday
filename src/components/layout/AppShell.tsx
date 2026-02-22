@@ -50,18 +50,11 @@ function AnonymousMigration() {
   return null;
 }
 
-function OnboardingGuard({ children }: { children: React.ReactNode }) {
+function SettingsGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const router = useRouter();
-  const { settings, isSettingsLoaded } = useSettings();
+  const { isSettingsLoaded } = useSettings();
 
-  const isPublicPage = pathname === '/' || pathname === '/about' || pathname === '/login' || pathname === '/signup' || pathname === '/privacy' || pathname === '/terms';
-
-  useEffect(() => {
-    if (isSettingsLoaded && !isPublicPage && !settings.preferences.onboardingCompleted) {
-      router.replace('/');
-    }
-  }, [isSettingsLoaded, isPublicPage, settings.preferences.onboardingCompleted, router]);
+  const isPublicPage = pathname === '/' || pathname === '/about' || pathname === '/login' || pathname === '/signup' || pathname === '/privacy' || pathname === '/terms' || pathname === '/onboarding';
 
   if (!isSettingsLoaded && !isPublicPage) return null;
 
@@ -70,12 +63,12 @@ function OnboardingGuard({ children }: { children: React.ReactNode }) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isFullScreenPage = pathname === '/' || pathname === '/about' || pathname === '/login' || pathname === '/signup' || pathname === '/privacy' || pathname === '/terms';
+  const isFullScreenPage = pathname === '/' || pathname === '/about' || pathname === '/login' || pathname === '/signup' || pathname === '/privacy' || pathname === '/terms' || pathname === '/onboarding';
 
   return (
     <SettingsProvider>
       <AnonymousMigration />
-      <OnboardingGuard>
+      <SettingsGuard>
         <ToastProvider>
           {isFullScreenPage ? (
             <div className="min-h-screen bg-background">
@@ -103,7 +96,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </RecipeProvider>
           )}
         </ToastProvider>
-      </OnboardingGuard>
+      </SettingsGuard>
     </SettingsProvider>
   );
 }

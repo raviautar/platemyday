@@ -13,10 +13,11 @@ test.describe('Anonymous to Signed-in User Onboarding', () => {
 
         // Click 'Let's Plan!' or similar starting button
         await page.waitForLoadState('networkidle');
-        await page.waitForTimeout(500); // Give hydration a moment
+        await page.waitForTimeout(1000); // Give hydration a moment
         await page.getByRole('button', { name: /let's plan!/i }).click();
 
         // Should redirect to onboarding
+        await page.waitForURL(/.*onboarding.*/, { timeout: 10000 });
         await expect(page).toHaveURL(/.*onboarding.*/);
 
         // 1. Feature 1 -> Next
