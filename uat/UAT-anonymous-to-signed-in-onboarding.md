@@ -17,12 +17,13 @@ In PlateMyDay, anonymous users interact with the app via an anonymous session. W
 ### Step 1: Initial Anonymous State
 1. Open the application landing page.
 2. Verify that you are not logged in (anonymous state).
-3. Verify that the "Get Started" button (or the beginning of the onboarding flow) is visible on the page.
+3. Verify that the "Let's Plan!" button is visible on the page.
 
 ### Step 2: Complete Onboarding as Anonymous User
-1. Click the "Get Started" button.
-2. Progress through and complete all the required steps of the onboarding flow (e.g., dietary preferences, household size, etc.).
-3. Once completed, verify that you land on the main homepage/meal plan view and that the "Get Started" button is no longer visible.
+1. Click the "Let's Plan!" button.
+2. Verify that the URL changes to `/onboarding`.
+3. Progress through and complete all the required steps of the onboarding flow.
+4. Once completed, verify that you land on the main homepage/meal plan view (`/meal-plan`).
 
 ### Step 3: Convert to a Signed-in User
 1. Navigate to the sign-up or log-in page (`/signup` or `/login`).
@@ -31,10 +32,11 @@ In PlateMyDay, anonymous users interact with the app via an anonymous session. W
 
 
 ### Step 4: Verify Onboarding Persistence
-1. After landing on the authenticated view, observe the UI.
-2. **Expected Result:** You MUST NOT see the "Get Started" onboarding page or prompt.
-3. **Expected Result:** You MUST see the normal homepage / meal planner view as a user who has already completed onboarding.
-4. **Expected Result:** Any settings or preferences chosen during the anonymous onboarding should be preserved in the user's current settings/profile.
+1. After landing on the authenticated view, observe the UI (`/meal-plan`).
+2. Navigate back to the landing page (`/`).
+3. **Expected Result:** Click the "Let's Plan!" button. It MUST redirect directly to `/meal-plan`, NOT `/onboarding`.
+4. **Expected Result:** You MUST NOT see the `/onboarding` page again.
+5. **Expected Result:** Any settings or preferences chosen during the anonymous onboarding should be preserved in the user's current settings/profile.
 
 ### Step 5: Refresh the Application
 1. Perform a hard refresh of the browser (Cmd+Shift+R or Ctrl+F5).

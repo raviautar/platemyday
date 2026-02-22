@@ -94,21 +94,39 @@ Rules:
         let lastSendTime = 0;
         try {
           for await (const partial of result.partialObjectStream) {
+            if (req.signal.aborted) break;
             const now = Date.now();
             if (now - lastSendTime >= 500) {
-              controller.enqueue(encoder.encode(JSON.stringify(partial) + '\n'));
-              lastSendTime = now;
+              try {
+                controller.enqueue(encoder.encode(JSON.stringify(partial) + '\n'));
+                lastSendTime = now;
+              } catch (e: any) {
+                if (e?.code === 'ERR_INVALID_STATE' || e?.message?.includes('closed')) break;
+                throw e;
+              }
             }
           }
-          const finalObject = await result.object;
-          controller.enqueue(encoder.encode('DONE:' + JSON.stringify(finalObject) + '\n'));
-          controller.close();
-        } catch (error) {
+
+          if (!req.signal.aborted) {
+            const finalObject = await result.object;
+            try {
+              controller.enqueue(encoder.encode('DONE:' + JSON.stringify(finalObject) + '\n'));
+              controller.close();
+            } catch (e) {
+              // ignore
+            }
+          }
+        } catch (error: any) {
+          if (error?.name === 'AbortError' || req.signal.aborted) return;
           console.error('Shopping list streaming error:', error);
-          controller.enqueue(encoder.encode('ERROR:' + JSON.stringify({
-            error: 'Failed to consolidate shopping list.',
-          }) + '\n'));
-          controller.close();
+          try {
+            controller.enqueue(encoder.encode('ERROR:' + JSON.stringify({
+              error: 'Failed to consolidate shopping list.',
+            }) + '\n'));
+            controller.close();
+          } catch (e) {
+            // ignore
+          }
         }
       },
     });

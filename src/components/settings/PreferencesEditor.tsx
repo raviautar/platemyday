@@ -4,11 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/components/ui/Toast';
 import { UserPreferences } from '@/types';
-import { DIET_OPTIONS, ALLERGY_OPTIONS, CUISINE_OPTIONS, MEAL_TYPE_LABELS, DEFAULT_USER_PREFERENCES } from '@/lib/constants';
+import { DIET_OPTIONS, ALLERGY_OPTIONS, CUISINE_OPTIONS, MEAL_TYPE_LABELS, DEFAULT_USER_PREFERENCES, MACRO_PRESET_GRAMS } from '@/lib/constants';
 import { DIET_ICON_MAP } from '@/lib/diet-icons';
 import { FaFire } from 'react-icons/fa';
 import { GiMeat, GiBread, GiWheat } from 'react-icons/gi';
-import { Plus, X, ChevronDown, Zap, Flame, Leaf, ChefHat, UtensilsCrossed, Package } from 'lucide-react';
+import { Plus, X, ChevronDown, Zap, Flame, Leaf, ChefHat, UtensilsCrossed, Package, Check } from 'lucide-react';
 import { searchIngredients } from '@/lib/ingredients';
 
 const MEAL_TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -95,6 +95,7 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
   });
   const [customAllergyInput, setCustomAllergyInput] = useState('');
   const [customCuisineInput, setCustomCuisineInput] = useState('');
+  const [focusedNoteIndex, setFocusedNoteIndex] = useState<number | null>(null);
 
   // Pantry ingredient state
   const [ingredientInput, setIngredientInput] = useState('');
@@ -324,39 +325,66 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
         compact={compact}
       >
         <div className="space-y-2">
-          {(prefs.mealNotes || []).map((note, index) => (
-            <div key={index} className="flex items-center gap-2 min-w-0">
-              <input
-                type="text"
-                value={note}
-                onChange={(e) => {
-                  const updated = [...(prefs.mealNotes || [])];
-                  updated[index] = e.target.value;
-                  handleUpdate({ mealNotes: updated }, false);
-                }}
-                onBlur={() => {
-                  const updated = (prefs.mealNotes || []).filter(n => n.trim() !== '');
-                  if (updated.length !== (prefs.mealNotes || []).length) {
-                    handleUpdate({ mealNotes: updated });
-                  } else if (!compact) {
-                    showToast('Preferences updated');
-                  }
-                }}
-                placeholder="e.g., No cilantro in my dishes"
-                className="min-w-0 flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-              />
-              <button
-                onClick={() => {
-                  const updated = (prefs.mealNotes || []).filter((_, i) => i !== index);
-                  handleUpdate({ mealNotes: updated });
-                }}
-                className="p-1.5 text-muted hover:text-foreground transition-colors"
-                aria-label="Remove note"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-          ))}
+          {(prefs.mealNotes || []).map((note, index) => {
+            const isFocused = focusedNoteIndex === index;
+            const saveNote = () => {
+              const updated = (prefs.mealNotes || []).filter(n => n.trim() !== '');
+              if (updated.length !== (prefs.mealNotes || []).length) {
+                handleUpdate({ mealNotes: updated });
+              } else if (!compact) {
+                showToast('Preferences updated');
+              }
+            };
+            const handleBlur = () => {
+              setFocusedNoteIndex(null);
+              saveNote();
+            };
+            return (
+              <div key={index} className="flex items-center gap-2 min-w-0">
+                <input
+                  type="text"
+                  value={note}
+                  onChange={(e) => {
+                    const updated = [...(prefs.mealNotes || [])];
+                    updated[index] = e.target.value;
+                    handleUpdate({ mealNotes: updated }, false);
+                  }}
+                  onFocus={() => setFocusedNoteIndex(index)}
+                  onBlur={handleBlur}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      (e.target as HTMLInputElement).blur();
+                    }
+                  }}
+                  placeholder="e.g., No cilantro in my dishes"
+                  className="min-w-0 flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+                />
+                {isFocused ? (
+                  <button
+                    type="button"
+                    onClick={() => (document.activeElement as HTMLElement | null)?.blur()}
+                    className="p-1.5 text-primary hover:text-primary/80 transition-colors"
+                    aria-label="Save"
+                  >
+                    <Check className="w-5 h-5" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const updated = (prefs.mealNotes || []).filter((_, i) => i !== index);
+                      handleUpdate({ mealNotes: updated });
+                    }}
+                    className="p-1.5 text-muted hover:text-foreground transition-colors"
+                    aria-label="Remove note"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+            );
+          })}
           <button
             onClick={() => handleUpdate({ mealNotes: [...(prefs.mealNotes || []), ''] })}
             className="w-full px-3 py-2 border-2 border-dashed border-border rounded-lg text-sm text-muted hover:text-foreground hover:border-primary/50 transition-colors flex items-center justify-center gap-2"
@@ -663,34 +691,76 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
             fiber: { icon: GiWheat, color: 'text-primary', unit: 'g' },
           }[macro];
           const Icon = macroConfig.icon;
+          const presets = (['low', 'moderate', 'high'] as const).map(key => ({
+            key,
+            grams: MACRO_PRESET_GRAMS[macro][key],
+          }));
 
           return (
             <div key={macro} className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium capitalize flex items-center gap-2">
-                  <Icon className={`w-5 h-5 ${macroConfig.color}`} />
-                  {macro}
-                </label>
+              <label className="text-sm font-medium capitalize flex items-center gap-2">
+                <Icon className={`w-5 h-5 ${macroConfig.color}`} />
+                {macro}
+              </label>
+              <div className="flex flex-wrap items-center gap-1.5">
                 <button
+                  type="button"
+                  onClick={() =>
+                    handleUpdate({
+                      macroGoals: { ...prefs.macroGoals, [macro]: undefined },
+                    })
+                  }
+                  className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium transition-all border whitespace-nowrap ${
+                    currentValue === undefined && !isCustom
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-white text-muted hover:border-primary/50 hover:bg-primary/5'
+                  }`}
+                >
+                  —
+                </button>
+                {presets.map(({ key, grams }) => {
+                  const selected = !isCustom && currentValue === key;
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      onClick={() => {
+                        setMacroMode({ ...macroMode, [macro]: 'preset' });
+                        handleUpdate({
+                          macroGoals: { ...prefs.macroGoals, [macro]: key },
+                        });
+                      }}
+                      className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium transition-all border whitespace-nowrap ${
+                        selected
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border bg-white text-foreground hover:border-primary/50 hover:bg-primary/5'
+                      }`}
+                    >
+                      {grams}g
+                    </button>
+                  );
+                })}
+                <button
+                  type="button"
                   onClick={() => {
-                    const newMode = macroMode[macro] === 'preset' ? 'custom' : 'preset';
-                    setMacroMode({ ...macroMode, [macro]: newMode });
-                    if (newMode === 'preset') {
+                    setMacroMode({ ...macroMode, [macro]: 'custom' });
+                    if (typeof currentValue !== 'number') {
                       handleUpdate({
-                        macroGoals: {
-                          ...prefs.macroGoals,
-                          [macro]: undefined,
-                        },
+                        macroGoals: { ...prefs.macroGoals, [macro]: undefined },
                       });
                     }
                   }}
-                  className="text-xs text-muted hover:text-foreground underline"
+                  className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium transition-all border whitespace-nowrap ${
+                    isCustom
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-white text-foreground hover:border-primary/50 hover:bg-primary/5'
+                  }`}
                 >
-                  {isCustom ? 'Use preset' : 'Custom amount'}
+                  Custom
                 </button>
               </div>
-              {isCustom ? (
-                <div className="flex items-center gap-2 min-w-0">
+              {isCustom && (
+                <div className="flex items-center gap-2 min-w-0 pt-1">
                   <input
                     type="number"
                     min="0"
@@ -700,10 +770,7 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
                     onChange={(e) => {
                       const numValue = e.target.value === '' ? undefined : Number(e.target.value);
                       handleUpdate({
-                        macroGoals: {
-                          ...prefs.macroGoals,
-                          [macro]: numValue,
-                        },
+                        macroGoals: { ...prefs.macroGoals, [macro]: numValue },
                       }, false);
                     }}
                     onBlur={() => {
@@ -713,24 +780,6 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
                   />
                   <span className="text-sm text-muted">{macroConfig.unit}</span>
                 </div>
-              ) : (
-                <select
-                  value={typeof currentValue === 'string' ? currentValue : ''}
-                  onChange={(e) =>
-                    handleUpdate({
-                      macroGoals: {
-                        ...prefs.macroGoals,
-                        [macro]: e.target.value || undefined,
-                      },
-                    })
-                  }
-                  className="w-full px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                >
-                  <option value="">Not specified</option>
-                  <option value="low">Low</option>
-                  <option value="moderate">Moderate</option>
-                  <option value="high">High</option>
-                </select>
               )}
             </div>
           );
@@ -738,37 +787,77 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
 
         {/* Calories */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
-            <label className="text-sm font-medium flex items-center gap-2">
-              <FaFire className="w-5 h-5 text-orange-500" />
-              Calories
-            </label>
+          <label className="text-sm font-medium flex items-center gap-2">
+            <FaFire className="w-5 h-5 text-orange-500" />
+            Calories
+          </label>
+          <div className="flex flex-wrap items-center gap-1.5">
             <button
+              type="button"
               onClick={() => {
-                const newMode = macroMode.calories === 'preset' ? 'custom' : 'preset';
-                setMacroMode({ ...macroMode, calories: newMode });
-                if (newMode === 'preset') {
+                setMacroMode({ ...macroMode, calories: 'preset' });
+                handleUpdate({
+                  macroGoals: { ...prefs.macroGoals, calories: undefined },
+                });
+              }}
+              className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium transition-all border whitespace-nowrap ${
+                prefs.macroGoals.calories === undefined && macroMode.calories !== 'custom'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-white text-muted hover:border-primary/50 hover:bg-primary/5'
+              }`}
+            >
+              —
+            </button>
+            {([1200, 2000, 2500] as const).map(kcal => {
+              const selected = macroMode.calories !== 'custom' && prefs.macroGoals.calories === kcal;
+              return (
+                <button
+                  key={kcal}
+                  type="button"
+                  onClick={() => {
+                    setMacroMode({ ...macroMode, calories: 'preset' });
+                    handleUpdate({
+                      macroGoals: { ...prefs.macroGoals, calories: kcal },
+                    });
+                  }}
+                  className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium transition-all border whitespace-nowrap ${
+                    selected
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-white text-foreground hover:border-primary/50 hover:bg-primary/5'
+                  }`}
+                >
+                  {kcal}
+                </button>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => {
+                setMacroMode({ ...macroMode, calories: 'custom' });
+                const cal = prefs.macroGoals.calories;
+                if (cal === undefined || [1200, 2000, 2500].includes(cal)) {
                   handleUpdate({
-                    macroGoals: {
-                      ...prefs.macroGoals,
-                      calories: undefined,
-                    },
+                    macroGoals: { ...prefs.macroGoals, calories: undefined },
                   });
                 }
               }}
-              className="text-xs text-muted hover:text-foreground underline"
+              className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium transition-all border whitespace-nowrap ${
+                macroMode.calories === 'custom'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border bg-white text-foreground hover:border-primary/50 hover:bg-primary/5'
+              }`}
             >
-              {macroMode.calories === 'custom' ? 'Use preset' : 'Custom amount'}
+              Custom
             </button>
           </div>
-          {macroMode.calories === 'custom' ? (
-            <div className="flex items-center gap-2 min-w-0">
+          {macroMode.calories === 'custom' && (
+            <div className="flex items-center gap-2 min-w-0 pt-1">
               <input
                 type="number"
                 min="0"
                 step="50"
                 placeholder="Enter daily calories"
-                value={prefs.macroGoals.calories || ''}
+                value={prefs.macroGoals.calories ?? ''}
                 onChange={(e) => {
                   const numValue = e.target.value === '' ? undefined : Number(e.target.value);
                   handleUpdate({
@@ -785,30 +874,8 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
               />
               <span className="text-sm text-muted">kcal</span>
             </div>
-          ) : (
-            <select
-              value={prefs.macroGoals.calories || ''}
-              onChange={(e) =>
-                handleUpdate({
-                  macroGoals: {
-                    ...prefs.macroGoals,
-                    calories: e.target.value ? Number(e.target.value) : undefined,
-                  },
-                })
-              }
-              className="w-full px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            >
-              <option value="">Not specified</option>
-              <option value="1200">1200 kcal</option>
-              <option value="1500">1500 kcal</option>
-              <option value="2000">2000 kcal</option>
-              <option value="2500">2500 kcal</option>
-            </select>
           )}
         </div>
-        <p className="text-xs text-muted italic">
-          These goals help us tailor recipe suggestions to your nutritional needs
-        </p>
       </CollapsibleSection>
     </div>
   );

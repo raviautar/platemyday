@@ -104,6 +104,23 @@ export const MEAL_TYPE_COLORS: Record<string, string> = {
   snack: 'bg-surface-dark text-muted',
 };
 
+export type MacroPresetKey = 'low' | 'moderate' | 'high';
+
+export const MACRO_PRESET_GRAMS: Record<'protein' | 'carbs' | 'fiber', Record<MacroPresetKey, number>> = {
+  protein: { low: 50, moderate: 100, high: 150 },
+  carbs: { low: 100, moderate: 200, high: 300 },
+  fiber: { low: 15, moderate: 25, high: 35 },
+};
+
+export function getMacroGramValue(
+  macro: 'protein' | 'carbs' | 'fiber',
+  value: 'low' | 'moderate' | 'high' | number | undefined
+): number | undefined {
+  if (value === undefined) return undefined;
+  if (typeof value === 'number') return value;
+  return MACRO_PRESET_GRAMS[macro][value];
+}
+
 /**
  * Formats user preferences into a string for AI prompts
  */
@@ -131,22 +148,18 @@ export function formatPreferencesPrompt(preferences: UserPreferences): string {
   const macros = preferences.macroGoals;
   if (macros.protein || macros.carbs || macros.fiber || macros.calories) {
     const macroDesc = [];
-    if (macros.protein) {
-      const proteinValue = typeof macros.protein === 'number' ? `${macros.protein}g` : macros.protein;
-      macroDesc.push(`${proteinValue} protein`);
-    }
-    if (macros.carbs) {
-      const carbsValue = typeof macros.carbs === 'number' ? `${macros.carbs}g` : macros.carbs;
-      macroDesc.push(`${carbsValue} carbs`);
-    }
-    if (macros.fiber) {
-      const fiberValue = typeof macros.fiber === 'number' ? `${macros.fiber}g` : macros.fiber;
-      macroDesc.push(`${fiberValue} fiber`);
-    }
+    const proteinG = getMacroGramValue('protein', macros.protein);
+    if (proteinG !== undefined) macroDesc.push(`${proteinG}g protein`);
+    const carbsG = getMacroGramValue('carbs', macros.carbs);
+    if (carbsG !== undefined) macroDesc.push(`${carbsG}g carbs`);
+    const fiberG = getMacroGramValue('fiber', macros.fiber);
+    if (fiberG !== undefined) macroDesc.push(`${fiberG}g fiber`);
     if (macros.calories) {
       macroDesc.push(`${macros.calories} calories per day`);
     }
-    parts.push(`Macro goals: ${macroDesc.join(', ')}`);
+    if (macroDesc.length > 0) {
+      parts.push(`Macro goals: ${macroDesc.join(', ')}`);
+    }
   }
 
   if (preferences.mealNotes.length > 0) {

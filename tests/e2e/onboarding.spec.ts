@@ -11,29 +11,36 @@ test.describe('Anonymous to Signed-in User Onboarding', () => {
         // ----------------------------------------------------------------------
         await page.goto('http://127.0.0.1:3000/');
 
-        // Click 'Get Started' or similar starting button
-        await page.getByRole('button', { name: /get started/i }).click();
+        // Click 'Let's Plan!' or similar starting button
+        await page.waitForLoadState('networkidle');
+        await page.waitForTimeout(500); // Give hydration a moment
+        await page.getByRole('button', { name: /let's plan!/i }).click();
+
+        // Should redirect to onboarding
+        await expect(page).toHaveURL(/.*onboarding.*/);
 
         // 1. Feature 1 -> Next
-        await page.getByRole('button', { name: /^Next/i }).click();
+        await page.waitForTimeout(500);
+        await page.getByRole('button', { name: /Next/i }).click();
         // 2. Feature 2 -> Next
-        await page.getByRole('button', { name: /^Next/i }).click();
+        await page.waitForTimeout(500);
+        await page.getByRole('button', { name: /Next/i }).click();
         // 3. Feature 3 -> Continue
-        await page.getByRole('button', { name: /^Continue/i }).click();
+        await page.waitForTimeout(500);
+        await page.getByText('Continue', { exact: true }).click();
 
-        // 4. Save your progress screen -> Sign In / Create Account
-        await page.getByRole('link', { name: /Sign In \/ Create Account/i }).click();
+        // 4. Save your progress screen -> Continue without account for now
+        await page.getByRole('button', { name: /Continue without account for now/i }).click();
 
-        // Land on login page
-        await expect(page).toHaveURL(/.*login.*/);
+        // Land on meal plan page
+        await expect(page).toHaveURL(/.*meal-plan.*/);
 
         // ----------------------------------------------------------------------
         // Step 2: Convert to Signed-in User
         // ----------------------------------------------------------------------
-        // Click on "Sign up" to go to the signup page
-        await page.getByRole('link', { name: /^Sign up$/i }).click();
-
-        await expect(page).toHaveURL(/.*signup.*/);
+        // Click on User Menu to sign up
+        // Assuming there is a user menu or login link in the AppShell header
+        await page.goto('http://127.0.0.1:3000/signup');
 
         // Fill in signup form
         await page.getByLabel(/email/i).fill(testEmail);
@@ -50,14 +57,17 @@ test.describe('Anonymous to Signed-in User Onboarding', () => {
         // ----------------------------------------------------------------------
         // Step 3: Verify Persistence
         // ----------------------------------------------------------------------
-        await expect(page.getByRole('button', { name: /get started/i })).toBeHidden();
+        await page.goto('http://127.0.0.1:3000/');
+        await page.getByRole('button', { name: /let's plan!/i }).click();
+
+        // Should redirect directly to meal-plan, NOT onboarding
+        await expect(page).toHaveURL(/.*meal-plan.*/);
 
         // ----------------------------------------------------------------------
         // Step 4: Refresh and Re-verify
         // ----------------------------------------------------------------------
         await page.reload();
         await expect(page).toHaveURL(/.*meal-plan.*/);
-        await expect(page.getByRole('button', { name: /get started/i })).toBeHidden();
 
     });
 
