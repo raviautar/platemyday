@@ -81,6 +81,7 @@ export default function RecipesPage() {
   const handleSave = (data: Omit<Recipe, 'id' | 'createdAt'>) => {
     if (editingRecipe) {
       updateRecipe(editingRecipe.id, data);
+      track(EVENTS.RECIPE_EDITED, { recipe_title: data.title, is_ai_generated: editingRecipe.isAIGenerated });
       showToast('Recipe updated!');
     } else {
       track(EVENTS.RECIPE_CREATED, { is_manual: true, title: data.title });
@@ -100,6 +101,8 @@ export default function RecipesPage() {
   };
 
   const handleDelete = (id: string) => {
+    const recipe = recipes.find(r => r.id === id);
+    track(EVENTS.RECIPE_DELETED, { recipe_title: recipe?.title, is_ai_generated: recipe?.isAIGenerated });
     deleteRecipe(id);
     showToast('Recipe deleted');
   };
@@ -137,6 +140,7 @@ export default function RecipesPage() {
         track(EVENTS.FIRST_RECIPE_CREATED);
       }
       addRecipe(newRecipe);
+      track(EVENTS.AI_RECIPE_SAVED, { recipe_title: recipeData.title });
       showToast('Recipe generated and saved!');
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Something went wrong';

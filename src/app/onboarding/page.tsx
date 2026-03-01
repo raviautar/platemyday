@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useSettings } from '@/contexts/SettingsContext';
 import { FeatureTour } from '@/components/home/FeatureTour';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 
 const TOUR_IMAGES = [
     '/assets/tour/meal-plan.png',
@@ -18,6 +20,12 @@ export default function OnboardingPage() {
     const router = useRouter();
     const { settings, updateSettings, isSettingsLoaded } = useSettings();
     const { isLoaded: isAuthLoaded, isAuthenticated } = useUserIdentity();
+    const { track } = useAnalytics();
+
+    // Track onboarding started
+    useEffect(() => {
+        track(EVENTS.ONBOARDING_STARTED);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
     // Prefetch tour images
     useEffect(() => {
@@ -37,6 +45,7 @@ export default function OnboardingPage() {
     }, [isSettingsLoaded, isAuthLoaded, settings.preferences.onboardingCompleted, isAuthenticated, router]);
 
     const changeView = (nextView: 'feature2' | 'feature3' | 'auth') => {
+        track(EVENTS.ONBOARDING_STEP_COMPLETED, { step: view, next_step: nextView });
         setIsTransitioning(true);
         setTimeout(() => {
             setView(nextView);
@@ -56,6 +65,7 @@ export default function OnboardingPage() {
     }, [view]);
 
     const completeOnboarding = (redirectPath?: string) => {
+        track(EVENTS.ONBOARDING_COMPLETED, { completed_from: view });
         if (!settings.preferences.onboardingCompleted) {
             updateSettings({ preferences: { ...settings.preferences, onboardingCompleted: true } });
         }

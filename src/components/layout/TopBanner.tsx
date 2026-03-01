@@ -5,10 +5,13 @@ import { Crown, UserCircle, Check } from 'lucide-react';
 import Link from 'next/link';
 import { useBilling } from '@/contexts/BillingContext';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 import { UserMenu } from './UserMenu';
 
 function CreditBadgeCrown() {
   const { unlimited, creditsRemaining, loading } = useBilling();
+  const { track } = useAnalytics();
 
   const badge = (() => {
     if (loading) return null;
@@ -36,6 +39,7 @@ function CreditBadgeCrown() {
   return (
     <Link
       href="/upgrade"
+      onClick={() => track(EVENTS.UPGRADE_CTA_CLICKED, { source: 'top_banner' })}
       className="group relative p-1.5 sm:p-2 rounded-full hover:bg-white/10 transition-all duration-200 flex-shrink-0"
       aria-label="Upgrade"
     >

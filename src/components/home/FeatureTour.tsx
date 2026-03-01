@@ -15,6 +15,11 @@ interface FeatureTourProps {
 function AuthStep({ onComplete }: { onComplete: (redirectPath?: string) => void }) {
     const { track } = useAnalytics();
 
+    const handleSkip = () => {
+        track(EVENTS.ONBOARDING_SKIPPED, { skipped_at: 'auth' });
+        onComplete('/meal-plan');
+    };
+
     return (
         <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto">
             <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-outfit)] text-foreground">Save your progress</h2>
@@ -30,7 +35,7 @@ function AuthStep({ onComplete }: { onComplete: (redirectPath?: string) => void 
                 onAuthAttempt={(method, mode) => track(EVENTS.ONBOARDING_AUTH_ATTEMPTED, { method, mode })}
                 emailConfirmationAction={
                     <button
-                        onClick={() => onComplete('/meal-plan')}
+                        onClick={handleSkip}
                         className="text-primary font-medium hover:underline underline-offset-4 text-sm"
                     >
                         Continue for now
@@ -40,7 +45,7 @@ function AuthStep({ onComplete }: { onComplete: (redirectPath?: string) => void 
 
             {/* Continue without account */}
             <button
-                onClick={() => onComplete('/meal-plan')}
+                onClick={handleSkip}
                 className="w-full flex items-center justify-center pb-2 pt-4 text-muted-foreground hover:text-foreground font-medium transition-colors hover:underline underline-offset-4 text-sm"
             >
                 Continue without account for now

@@ -5,6 +5,8 @@ import { usePathname } from 'next/navigation';
 import { Heart, Calendar, Settings, Crown, Check } from 'lucide-react';
 import { useMealPlan } from '@/contexts/MealPlanContext';
 import { useBilling } from '@/contexts/BillingContext';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 
 const navItems = [
   { href: '/meal-plan', label: 'Meal Plan', icon: Calendar },
@@ -47,6 +49,7 @@ function CreditBadge({ isActive }: { isActive: boolean }) {
 export function Sidebar() {
   const pathname = usePathname();
   const { generating } = useMealPlan();
+  const { track } = useAnalytics();
 
   return (
     <aside className="hidden md:flex md:flex-col md:w-56 md:fixed md:top-14 md:bottom-0 md:left-0 bg-surface/95 backdrop-blur-sm border-r border-border">
@@ -60,6 +63,7 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              onClick={item.href === '/upgrade' ? () => track(EVENTS.UPGRADE_CTA_CLICKED, { source: 'sidebar' }) : undefined}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
                 isActive
                   ? 'bg-primary text-white shadow-sm'

@@ -26,6 +26,7 @@ export const EVENTS = {
   // Pageviews handled automatically by PostHog
   RECIPE_CREATED: 'recipe_created',
   RECIPE_VIEWED: 'recipe_viewed',
+  RECIPE_EDITED: 'recipe_edited',
   MEAL_PLAN_RESTORED: 'meal_plan_restored',
 
   // ── Metric 4: Feature Depth ───────────────────────────────────────
@@ -38,10 +39,14 @@ export const EVENTS = {
   MEAL_MOVED: 'meal_moved',
   MEAL_REPLACED_FROM_LIBRARY: 'meal_replaced_from_library',
   MEAL_REGENERATED: 'meal_regenerated',
+  MEAL_DETAIL_VIEWED: 'meal_detail_viewed',
+  MEAL_REMOVED: 'meal_removed',
+  RECIPE_DELETED: 'recipe_deleted',
   RECIPE_SEARCH_USED: 'recipe_search_used',
   RECIPE_FILTERED: 'recipe_filtered',
 
   // ── Metric 5: Conversion Funnel ───────────────────────────────────
+  USER_SIGNED_IN: 'user_signed_in',
   USER_SIGNED_UP: 'user_signed_up',
   PREFERENCES_COMPLETED: 'preferences_completed',
   ANONYMOUS_DATA_MIGRATED: 'anonymous_data_migrated',
@@ -50,6 +55,7 @@ export const EVENTS = {
   LANDING_CTA_CLICKED: 'landing_cta_clicked',
   ONBOARDING_AUTH_ATTEMPTED: 'onboarding_auth_attempted',
   PAYWALL_HIT: 'paywall_hit',
+  UPGRADE_PLAN_SELECTED: 'upgrade_plan_selected',
   CHECKOUT_STARTED: 'checkout_started',
   SUBSCRIPTION_ACTIVATED: 'subscription_activated',
   SUBSCRIPTION_CANCELED: 'subscription_canceled',

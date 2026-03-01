@@ -17,10 +17,10 @@ In PlateMyDay, anonymous users interact with the app via an anonymous session. W
 ### Step 1: Initial Anonymous State
 1. Open the application landing page.
 2. Verify that you are not logged in (anonymous state).
-3. Verify that the "Let's Plan!" button is visible on the page.
+3. Verify that the "Start Planning" button is visible on the page.
 
 ### Step 2: Complete Onboarding as Anonymous User
-1. Click the "Let's Plan!" button.
+1. Click the "Start Planning" button.
 2. Verify that the URL changes to `/onboarding`.
 3. Progress through and complete all the required steps of the onboarding flow.
 4. Once completed, verify that you land on the main homepage/meal plan view (`/meal-plan`).
@@ -34,7 +34,7 @@ In PlateMyDay, anonymous users interact with the app via an anonymous session. W
 ### Step 4: Verify Onboarding Persistence
 1. After landing on the authenticated view, observe the UI (`/meal-plan`).
 2. Navigate back to the landing page (`/`).
-3. **Expected Result:** Click the "Let's Plan!" button. It MUST redirect directly to `/meal-plan`, NOT `/onboarding`.
+3. **Expected Result:** Click the "Start Planning" button. It MUST redirect directly to `/meal-plan`, NOT `/onboarding`.
 4. **Expected Result:** You MUST NOT see the `/onboarding` page again.
 5. **Expected Result:** Any settings or preferences chosen during the anonymous onboarding should be preserved in the user's current settings/profile.
 

@@ -199,6 +199,10 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
           if (!abortController.signal.aborted) {
             setShoppingList(data.categories || []);
             setShoppingPantryItems(data.pantryItems || []);
+            track(EVENTS.SHOPPING_LIST_AUTO_CONSOLIDATED, {
+              category_count: (data.categories || []).length,
+              item_count: (data.categories || []).reduce((sum: number, c: { items?: unknown[] }) => sum + (c.items?.length || 0), 0),
+            });
             if (wasGeneratingRef.current) {
               setShoppingListUpdated(true);
               setNutritionUpdated(true);
@@ -257,6 +261,10 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
         if (!abortController.signal.aborted && finalData) {
           setShoppingList(finalData.categories || []);
           setShoppingPantryItems(finalData.pantryItems || []);
+          track(EVENTS.SHOPPING_LIST_AUTO_CONSOLIDATED, {
+            category_count: (finalData.categories || []).length,
+            item_count: (finalData.categories || []).reduce((sum: number, c: { items?: unknown[] }) => sum + (c.items?.length || 0), 0),
+          });
           if (wasGeneratingRef.current) {
             setShoppingListUpdated(true);
             setNutritionUpdated(true);

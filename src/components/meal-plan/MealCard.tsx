@@ -50,7 +50,13 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
   const handleCardClick = (e: React.MouseEvent) => {
     const target = e.target as HTMLElement;
     if (target.closest('button')) return;
+    track(EVENTS.MEAL_DETAIL_VIEWED, { meal_type: meal.mealType, is_suggested: isUnmatched, has_recipe: isInLibrary });
     setIsDetailOpen(true);
+  };
+
+  const handleRemove = () => {
+    track(EVENTS.MEAL_REMOVED, { meal_type: meal.mealType, recipe_title: title });
+    onRemove?.();
   };
 
   const handleReplaceFromLibrary = (recipeId: string) => {
@@ -188,7 +194,7 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
                 weekDays={weekDays}
                 currentDayIndex={currentDayIndex}
                 onMoveTo={(targetDayIndex) => onMoveTo?.(targetDayIndex)}
-                onRemove={onRemove}
+                onRemove={handleRemove}
                 onReplaceFromLibrary={() => setIsReplaceOpen(true)}
                 onRegenerate={handleRegenerate}
                 isRegenerating={isRegenerating}

@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Sparkles, UtensilsCrossed, BookOpen, SlidersHorizontal, UserCircle } from 'lucide-react';
+import { UtensilsCrossed, BookOpen, SlidersHorizontal, UserCircle, ArrowRight } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
@@ -19,7 +19,7 @@ export default function HomePage() {
   const isOnboarded = (isSettingsLoaded && settings.preferences.onboardingCompleted) || (isAuthLoaded && isAuthenticated);
 
   const handleStart = () => {
-    track(EVENTS.LANDING_CTA_CLICKED, { cta: 'hero_let_s_plan' });
+    track(EVENTS.LANDING_CTA_CLICKED, { cta: 'hero_start_planning' });
     if (isOnboarded) {
       router.push('/meal-plan');
     } else {
@@ -126,8 +126,8 @@ export default function HomePage() {
                 onClick={handleStart}
                 className="inline-flex items-center justify-center gap-2 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] text-lg w-full sm:w-auto min-w-[200px]"
               >
-                <Sparkles className="w-5 h-5" />
-                Let&apos;s Plan!
+                Start Planning
+                <ArrowRight className="w-5 h-5" />
               </button>
             </>
           ) : (
@@ -135,8 +135,8 @@ export default function HomePage() {
               onClick={handleStart}
               className="inline-flex items-center justify-center gap-2 bg-gradient-to-br from-primary to-emerald-600 hover:from-primary-dark hover:to-emerald-700 text-white font-semibold px-8 py-4 rounded-xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] text-lg w-full sm:w-auto min-w-[200px]"
             >
-              <Sparkles className="w-5 h-5" />
-              Let&apos;s Plan!
+              Start Planning
+              <ArrowRight className="w-5 h-5" />
             </button>
           )}
         </div>

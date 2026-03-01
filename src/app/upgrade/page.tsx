@@ -384,7 +384,7 @@ function UpgradeContent() {
         <div className="flex justify-center mb-6">
           <div className="inline-flex bg-surface rounded-lg p-1 border border-border">
             <button
-              onClick={() => setBillingPeriod('monthly')}
+              onClick={() => { setBillingPeriod('monthly'); track(EVENTS.UPGRADE_PLAN_SELECTED, { plan: 'monthly' }); }}
               className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${billingPeriod === 'monthly'
                   ? 'bg-white text-foreground shadow-sm'
                   : 'text-muted hover:text-foreground'
@@ -393,7 +393,7 @@ function UpgradeContent() {
               Monthly
             </button>
             <button
-              onClick={() => setBillingPeriod('annual')}
+              onClick={() => { setBillingPeriod('annual'); track(EVENTS.UPGRADE_PLAN_SELECTED, { plan: 'annual' }); }}
               className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${billingPeriod === 'annual'
                   ? 'bg-white text-foreground shadow-sm'
                   : 'text-muted hover:text-foreground'

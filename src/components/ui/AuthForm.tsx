@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, LogIn, UserPlus, CheckCircle } from 'lucide-react';
 import { createBrowserClient } from '@/lib/supabase/client';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 
 interface AuthFormProps {
     /** Which tab to show initially */
@@ -31,6 +33,7 @@ export function AuthForm({
     emailConfirmationAction,
 }: AuthFormProps) {
     const supabase = createBrowserClient();
+    const { track } = useAnalytics();
     const [tab, setTab] = useState<'signin' | 'signup'>(defaultTab);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -69,6 +72,7 @@ export function AuthForm({
                 setLoading(false);
                 return;
             }
+            track(EVENTS.USER_SIGNED_IN, { method: 'email' });
             onSuccess(redirect);
         } else {
             const { error, data } = await supabase.auth.signUp({

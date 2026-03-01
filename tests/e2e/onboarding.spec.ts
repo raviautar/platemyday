@@ -11,10 +11,10 @@ test.describe('Anonymous to Signed-in User Onboarding', () => {
         // ----------------------------------------------------------------------
         await page.goto('http://127.0.0.1:3000/');
 
-        // Click 'Let's Plan!' or similar starting button
+        // Click 'Start Planning' or similar starting button
         await page.waitForLoadState('networkidle');
         await page.waitForTimeout(1000); // Give hydration a moment
-        await page.getByRole('button', { name: /let's plan!/i }).click();
+        await page.getByRole('button', { name: /start planning/i }).click();
 
         // Should redirect to onboarding
         await page.waitForURL(/.*onboarding.*/, { timeout: 10000 });

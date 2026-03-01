@@ -10,6 +10,8 @@ import { FaFire } from 'react-icons/fa';
 import { GiMeat, GiBread, GiWheat } from 'react-icons/gi';
 import { Plus, X, ChevronDown, Zap, Flame, Leaf, ChefHat, UtensilsCrossed, Package, Check } from 'lucide-react';
 import { searchIngredients } from '@/lib/ingredients';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 
 const MEAL_TYPE_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   'Quick & Easy': Zap,
@@ -79,6 +81,7 @@ function CollapsibleSection({
 export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compact = false }: PreferencesEditorProps) {
   const { settings, updateSettings } = useSettings();
   const { showToast } = useToast();
+  const { track } = useAnalytics();
   const rawPrefs = settings.preferences;
   const prefs: UserPreferences = { ...DEFAULT_USER_PREFERENCES, ...rawPrefs };
 
@@ -143,6 +146,7 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
     });
     if (showNotification && !compact) {
       showToast('Preferences updated');
+      track(EVENTS.PREFERENCES_COMPLETED, { changed_fields: Object.keys(updates) });
     }
   };
 

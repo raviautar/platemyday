@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Outfit } from "next/font/google";
 import "./globals.css";
 import { AppShell } from "@/components/layout/AppShell";
 import { PostHogProvider } from "@/components/providers/PostHogProvider";
+import { UserbackProvider } from "@/components/providers/UserbackProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -54,7 +55,9 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
       >
         <PostHogProvider>
-          <AppShell>{children}</AppShell>
+          <UserbackProvider>
+            <AppShell>{children}</AppShell>
+          </UserbackProvider>
         </PostHogProvider>
       </body>
     </html>

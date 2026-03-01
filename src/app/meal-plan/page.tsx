@@ -13,6 +13,8 @@ import { StreamingMealView } from '@/components/meal-plan/StreamingMealView';
 import { PieChartIcon } from '@/components/ui/PieChartIcon';
 import { useMealPlanGeneration } from '@/hooks/useMealPlanGeneration';
 import { useBilling } from '@/contexts/BillingContext';
+import { useAnalytics } from '@/hooks/useAnalytics';
+import { EVENTS } from '@/lib/analytics/events';
 import Link from 'next/link';
 import { History, ShoppingCart, AlertTriangle, RefreshCw, Trash2, Crown, Settings2, Sparkles } from 'lucide-react';
 
@@ -37,6 +39,7 @@ export default function MealPlanPage() {
     clearWeekPlan,
   } = useMealPlanGeneration();
   const { unlimited, creditsRemaining, loading: billingLoading } = useBilling();
+  const { track } = useAnalytics();
 
   const [historyOpen, setHistoryOpen] = useState(false);
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
@@ -152,6 +155,7 @@ export default function MealPlanPage() {
               </p>
               <Link
                 href="/upgrade"
+                onClick={() => track(EVENTS.UPGRADE_CTA_CLICKED, { source: 'paywall' })}
                 className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white font-medium text-sm hover:from-amber-600 hover:to-orange-600 shadow-sm hover:shadow-md transition-all"
               >
                 <Crown className="w-4 h-4" />
