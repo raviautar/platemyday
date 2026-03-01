@@ -12,7 +12,7 @@ interface DayColumnProps {
   weekDays: DayPlan[];
   onRemoveMeal: (dayIndex: number, mealId: string) => void;
   onMoveMeal: (mealId: string, sourceDayIndex: number, targetDayIndex: number) => void;
-  onReplaceMeal: (dayIndex: number, mealId: string, newMeal: MealSlot) => void;
+  onReplaceMeal: (dayIndex: number, mealId: string, newMeal: MealSlot, newSuggestedRecipe?: SuggestedRecipe) => void;
   suggestedRecipes: Record<string, SuggestedRecipe>;
   onAddToLibrary: (recipe: SuggestedRecipe) => void;
 }
@@ -55,7 +55,7 @@ export function DayColumn({ day, dayIndex, weekDays, onRemoveMeal, onMoveMeal, o
                         weekDays={weekDays}
                         onRemove={() => onRemoveMeal(dayIndex, meal.id)}
                         onMoveTo={(targetDayIndex) => onMoveMeal(meal.id, dayIndex, targetDayIndex)}
-                        onReplaceMeal={(newMeal) => onReplaceMeal(dayIndex, meal.id, newMeal)}
+                        onReplaceMeal={(newMeal, newSuggestedRecipe) => onReplaceMeal(dayIndex, meal.id, newMeal, newSuggestedRecipe)}
                         suggestedRecipe={suggestedRecipe}
                         onAddToLibrary={onAddToLibrary}
                       />

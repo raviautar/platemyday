@@ -27,7 +27,7 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
   if (suggestedRecipe) {
     return (
       <Modal isOpen={isOpen} onClose={onClose} title={suggestedRecipe.title} fullscreen>
-        <div className="bg-gradient-to-br from-white to-surface/50 rounded-xl border border-border/60 shadow-lg overflow-hidden flex flex-col max-h-full">
+        <div className="bg-gradient-to-br from-white to-surface/50 md:rounded-xl md:border md:border-border/60 md:shadow-lg overflow-hidden flex flex-col max-h-full">
           <div className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent px-4 py-4 border-b border-border/40 shrink-0">
             <div className="flex items-center gap-2 mb-3">
               <span className="inline-flex items-center gap-1 text-[10px] bg-secondary/20 text-secondary-dark px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
@@ -123,7 +123,7 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
   if (isUnmatched) {
     return (
       <Modal isOpen={isOpen} onClose={onClose} title={title || 'New Recipe'} fullscreen>
-        <div className="bg-gradient-to-br from-white to-surface/50 rounded-xl border border-border/60 shadow-lg overflow-hidden flex flex-col max-h-full">
+        <div className="bg-gradient-to-br from-white to-surface/50 md:rounded-xl md:border md:border-border/60 md:shadow-lg overflow-hidden flex flex-col max-h-full">
           <div className="px-4 py-4 space-y-4">
             <div className="flex items-center gap-2">
               <span className="inline-flex items-center gap-1 text-[10px] bg-secondary/20 text-secondary-dark px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
@@ -135,9 +135,14 @@ export function MealDetail({ meal, isOpen, onClose, suggestedRecipe, onAddToLibr
               </span>
             </div>
 
-            <div className="bg-secondary/10 border border-secondary rounded-lg p-3">
+            {meal.estimatedNutrition && (
+              <NutritionGrid nutrition={meal.estimatedNutrition} />
+            )}
+
+            <div className="bg-surface/50 border border-border/40 rounded-lg p-3">
               <p className="text-sm text-muted">
-                This is a suggested recipe. Recipe details are not available.
+                Full recipe details will appear after your next plan generation.
+                You can also regenerate this meal to see complete ingredients and instructions.
               </p>
             </div>
           </div>

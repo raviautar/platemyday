@@ -43,7 +43,7 @@ interface MealPlanContextType {
   removeMeal: (dayIndex: number, mealId: string) => void;
   addMealToDay: (dayIndex: number, meal: MealSlot) => void;
   clearWeekPlan: () => void;
-  replaceMeal: (dayIndex: number, mealId: string, newMeal: MealSlot) => void;
+  replaceMeal: (dayIndex: number, mealId: string, newMeal: MealSlot, newSuggestedRecipe?: SuggestedRecipe) => void;
   mealPlanHistory: WeekPlan[];
   loadHistory: () => Promise<void>;
   restoreMealPlan: (planId: string) => Promise<void>;
@@ -143,6 +143,27 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
 
     return () => { cancelled = true; };
   }, [userId, anonymousId, isLoaded, supabase]);
+
+  // Auto-save local plan mutations to DB (debounced)
+  const isInitialLoadRef = useRef(true);
+  useEffect(() => {
+    // Skip saving during initial load and during generation
+    if (!weekPlan || generating || !isLoaded || !anonymousId) return;
+    if (isInitialLoadRef.current) {
+      isInitialLoadRef.current = false;
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        await saveMealPlanDb(supabase, weekPlan, userId, anonymousId, weekPlan.suggestedRecipes);
+      } catch (err) {
+        console.error('Failed to auto-save meal plan:', err);
+      }
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [weekPlan, generating, isLoaded, userId, anonymousId, supabase]);
 
   // Clear stale shopping list when a new generation starts
   useEffect(() => {
@@ -336,7 +357,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     });
   }, [updateLocalPlan]);
 
-  const replaceMeal = useCallback((dayIndex: number, mealId: string, newMeal: MealSlot) => {
+  const replaceMeal = useCallback((dayIndex: number, mealId: string, newMeal: MealSlot, newSuggestedRecipe?: SuggestedRecipe) => {
     updateLocalPlan(prev => {
       const newDays = prev.days.map((d, i) => {
         if (i !== dayIndex) return d;
@@ -345,7 +366,16 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
           meals: d.meals.map(m => m.id === mealId ? newMeal : m),
         };
       });
-      return { ...prev, days: newDays };
+
+      let updatedSuggested = prev.suggestedRecipes;
+      if (newSuggestedRecipe && newMeal.recipeTitleFallback) {
+        updatedSuggested = {
+          ...(prev.suggestedRecipes || {}),
+          [newMeal.recipeTitleFallback]: newSuggestedRecipe,
+        };
+      }
+
+      return { ...prev, days: newDays, suggestedRecipes: updatedSuggested };
     });
   }, [updateLocalPlan]);
 

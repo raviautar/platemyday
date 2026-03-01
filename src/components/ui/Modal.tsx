@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -11,6 +11,10 @@ interface ModalProps {
 }
 
 export function Modal({ isOpen, onClose, title, children, fullscreen = false }: ModalProps) {
+  const historyPushedRef = useRef(false);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
@@ -19,6 +23,28 @@ export function Modal({ isOpen, onClose, title, children, fullscreen = false }: 
     }
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
+
+  // Handle browser back button for fullscreen modals
+  useEffect(() => {
+    if (!fullscreen || !isOpen) return;
+
+    window.history.pushState({ modal: true }, '');
+    historyPushedRef.current = true;
+
+    const handlePopState = () => {
+      historyPushedRef.current = false;
+      onCloseRef.current();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      if (historyPushedRef.current) {
+        historyPushedRef.current = false;
+        window.history.back();
+      }
+    };
+  }, [isOpen, fullscreen]);
 
   if (!isOpen) return null;
 
@@ -31,8 +57,8 @@ export function Modal({ isOpen, onClose, title, children, fullscreen = false }: 
         />
         <div className="relative bg-white w-full h-full overflow-hidden flex flex-col animate-fade-in">
           {title && (
-            <div className="flex items-center justify-between px-6 md:px-8 py-4 md:py-5 border-b border-border/60 bg-gradient-to-r from-white via-surface/20 to-white">
-              <h2 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">{title}</h2>
+            <div className="flex items-center justify-between px-4 md:px-8 py-3 md:py-5 border-b border-border/60 bg-gradient-to-r from-white via-surface/20 to-white">
+              <h2 className="text-xl md:text-3xl font-bold text-foreground tracking-tight">{title}</h2>
               <button
                 onClick={onClose}
                 className="text-muted hover:text-foreground hover:bg-surface/50 rounded-lg p-2 transition-all duration-200 text-3xl leading-none w-10 h-10 flex items-center justify-center"
@@ -42,7 +68,7 @@ export function Modal({ isOpen, onClose, title, children, fullscreen = false }: 
               </button>
             </div>
           )}
-          <div className="p-6 md:p-8 lg:p-10 overflow-y-auto flex-1">{children}</div>
+          <div className="p-4 md:p-8 lg:p-10 overflow-y-auto flex-1">{children}</div>
         </div>
       </div>
     );

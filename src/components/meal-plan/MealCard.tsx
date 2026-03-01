@@ -22,7 +22,7 @@ interface MealCardProps {
   weekDays?: DayPlan[];
   onRemove?: () => void;
   onMoveTo?: (targetDayIndex: number) => void;
-  onReplaceMeal?: (newMeal: MealSlot) => void;
+  onReplaceMeal?: (newMeal: MealSlot, newSuggestedRecipe?: SuggestedRecipe) => void;
   suggestedRecipe?: SuggestedRecipe;
   onAddToLibrary?: (recipe: SuggestedRecipe) => void;
 }
@@ -110,13 +110,25 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
 
       const newRecipeData = await response.json();
 
+      const newSuggestedRecipe: SuggestedRecipe = {
+        title: newRecipeData.title,
+        description: newRecipeData.description || '',
+        ingredients: newRecipeData.ingredients || [],
+        instructions: newRecipeData.instructions || [],
+        servings: newRecipeData.servings,
+        prepTimeMinutes: newRecipeData.prepTimeMinutes,
+        cookTimeMinutes: newRecipeData.cookTimeMinutes,
+        tags: newRecipeData.tags || [],
+        estimatedNutrition: newRecipeData.estimatedNutrition,
+      };
+
       onReplaceMeal({
         id: meal.id,
         recipeId: '',
         mealType: meal.mealType,
         recipeTitleFallback: newRecipeData.title,
         estimatedNutrition: newRecipeData.estimatedNutrition,
-      });
+      }, newSuggestedRecipe);
 
       track(EVENTS.MEAL_REGENERATED, {
         meal_type: meal.mealType,

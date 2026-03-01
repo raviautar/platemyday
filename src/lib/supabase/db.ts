@@ -200,6 +200,7 @@ export async function saveMealPlan(
       meal_type: meal.mealType,
       recipe_title_fallback: meal.recipeTitleFallback || null,
       meal_index: mealIdx,
+      estimated_nutrition: meal.estimatedNutrition || null,
     }))
   );
 
@@ -222,6 +223,7 @@ export async function saveMealPlan(
       prep_time_minutes: sr.prepTimeMinutes || 0,
       cook_time_minutes: sr.cookTimeMinutes || 0,
       tags: sr.tags,
+      estimated_nutrition: sr.estimatedNutrition || null,
     }));
 
     const { error: sugError } = await supabase
@@ -276,6 +278,7 @@ function mapDbMealPlan(row: any): WeekPlan {
       prepTimeMinutes: sr.prep_time_minutes,
       cookTimeMinutes: sr.cook_time_minutes,
       tags: sr.tags || [],
+      estimatedNutrition: sr.estimated_nutrition || undefined,
     };
   });
 
@@ -292,6 +295,7 @@ function mapDbMealPlan(row: any): WeekPlan {
         recipeId: meal.recipe_id || '',
         mealType: meal.meal_type,
         recipeTitleFallback: meal.recipe_title_fallback || undefined,
+        estimatedNutrition: meal.estimated_nutrition || undefined,
       })),
     };
   });

@@ -10,7 +10,7 @@ interface WeekViewProps {
   weekPlan: WeekPlan;
   onMoveMeal: (mealId: string, sourceDayIndex: number, destDayIndex: number, destMealIndex: number) => void;
   onRemoveMeal: (dayIndex: number, mealId: string) => void;
-  onReplaceMeal: (dayIndex: number, mealId: string, newMeal: MealSlot) => void;
+  onReplaceMeal: (dayIndex: number, mealId: string, newMeal: MealSlot, newSuggestedRecipe?: SuggestedRecipe) => void;
   suggestedRecipes: Record<string, SuggestedRecipe>;
   onAddToLibrary: (recipe: SuggestedRecipe) => void;
 }

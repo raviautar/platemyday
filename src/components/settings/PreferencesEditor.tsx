@@ -33,6 +33,7 @@ function CollapsibleSection({
   defaultOpen,
   compact,
   prominent,
+  onClear,
   children,
 }: {
   id: string;
@@ -41,6 +42,7 @@ function CollapsibleSection({
   defaultOpen: boolean;
   compact?: boolean;
   prominent?: boolean;
+  onClear?: () => void;
   children: React.ReactNode;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
@@ -51,10 +53,12 @@ function CollapsibleSection({
         ? 'bg-primary/3 border-primary/30'
         : 'bg-white border-border'
     } ${compact ? 'p-3' : 'p-4'}`}>
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between gap-2"
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setIsOpen(!isOpen); } }}
+        className="w-full flex items-center justify-between gap-2 cursor-pointer"
       >
         <div className="text-left">
           <h2 className={`font-semibold text-foreground ${compact ? 'text-sm' : 'text-base'}`}>
@@ -65,10 +69,23 @@ function CollapsibleSection({
             <p className="text-xs text-muted mt-0.5">{description}</p>
           )}
         </div>
-        <ChevronDown
-          className={`w-4 h-4 text-muted shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-        />
-      </button>
+        <div className="flex items-center gap-1">
+          {onClear && isOpen && (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); onClear(); }}
+              className="p-1 rounded-md text-muted hover:text-red-500 hover:bg-red-50 transition-colors"
+              aria-label={`Clear ${title}`}
+              title="Clear all"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+          <ChevronDown
+            className={`w-4 h-4 text-muted shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+          />
+        </div>
+      </div>
       {isOpen && (
         <div className={`space-y-3 ${compact ? 'mt-2' : 'mt-3'}`}>
           {children}
@@ -252,6 +269,7 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
         defaultOpen={isExpanded('pantry')}
         compact={compact}
         prominent
+        onClear={prefs.pantryIngredients.length > 0 ? () => handleUpdate({ pantryIngredients: [] }) : undefined}
       >
         <div className="relative">
           <div className="flex gap-1.5">
@@ -267,7 +285,7 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
                   setSelectedSuggestionIndex(-1);
                 }, 200);
               }}
-              placeholder="e.g., chicken, rice, broccoli..."
+              placeholder="Type any ingredient..."
               className={`flex-1 px-3 rounded-lg border border-primary/30 bg-white text-foreground placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary ${compact ? 'py-2 text-sm' : 'py-2.5 text-base'}`}
             />
             <button
@@ -297,9 +315,19 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
                   {suggestion}
                 </button>
               ))}
+              {ingredientInput.trim() && !ingredientSuggestions.some(s => s.toLowerCase() === ingredientInput.trim().toLowerCase()) && (
+                <button
+                  type="button"
+                  onClick={() => addIngredient(ingredientInput.trim())}
+                  className="w-full text-left px-3 py-2 text-sm text-primary border-t border-border/40 hover:bg-primary/5 transition-colors font-medium"
+                >
+                  Add &quot;{ingredientInput.trim()}&quot;
+                </button>
+              )}
             </div>
           )}
         </div>
+        <p className="text-xs text-muted">Type any ingredient and press Enter to add</p>
         {prefs.pantryIngredients.length > 0 && (
           <div className="flex flex-wrap gap-1.5">
             {prefs.pantryIngredients.map(ing => (
@@ -327,6 +355,7 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
         description="Anything else you'd like to add?"
         defaultOpen={isExpanded('notes')}
         compact={compact}
+        onClear={(prefs.mealNotes || []).length > 0 ? () => handleUpdate({ mealNotes: [] }) : undefined}
       >
         <div className="space-y-2">
           {(prefs.mealNotes || []).map((note, index) => {
@@ -406,6 +435,7 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
         description="What types of meals do you prefer?"
         defaultOpen={isExpanded('mealTypes')}
         compact={compact}
+        onClear={prefs.mealTypes.length > 0 ? () => handleUpdate({ mealTypes: [] }) : undefined}
       >
         <div className="flex flex-wrap gap-1.5">
           {MEAL_TYPE_LABELS.map(label => {
@@ -436,6 +466,7 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
         description="Select your dietary preference"
         defaultOpen={isExpanded('dietary')}
         compact={compact}
+        onClear={prefs.dietaryType ? () => handleUpdate({ dietaryType: null }) : undefined}
       >
         <div className="flex flex-wrap gap-2">
           {DIET_OPTIONS.map(option => {
@@ -501,6 +532,7 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
         description="Select any allergies or dietary restrictions"
         defaultOpen={isExpanded('allergies')}
         compact={compact}
+        onClear={prefs.allergies.length > 0 ? () => handleUpdate({ allergies: [] }) : undefined}
       >
         <div className="flex flex-wrap gap-2">
           {ALLERGY_OPTIONS.map(option => {
@@ -583,6 +615,7 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
         description="Select cuisines you enjoy. We'll include more of these but still mix in variety."
         defaultOpen={isExpanded('cuisines')}
         compact={compact}
+        onClear={(prefs.cuisinePreferences || []).length > 0 ? () => handleUpdate({ cuisinePreferences: [] }) : undefined}
       >
         <div className="flex flex-wrap gap-2">
           {CUISINE_OPTIONS.map(cuisine => {
@@ -685,6 +718,7 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
         title="Daily Macro Goals"
         defaultOpen={isExpanded('macros')}
         compact={compact}
+        onClear={Object.values(prefs.macroGoals).some(v => v !== undefined) ? () => handleUpdate({ macroGoals: {} }) : undefined}
       >
         {(['protein', 'carbs', 'fiber'] as const).map(macro => {
           const currentValue = prefs.macroGoals[macro];
@@ -881,6 +915,22 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
           )}
         </div>
       </CollapsibleSection>
+
+      {/* Reset all preferences */}
+      <button
+        type="button"
+        onClick={() => {
+          handleUpdate({
+            ...DEFAULT_USER_PREFERENCES,
+            onboardingCompleted: prefs.onboardingCompleted,
+            onboardingDismissed: prefs.onboardingDismissed,
+          });
+          track(EVENTS.PREFERENCES_COMPLETED, { changed_fields: ['reset_all'] });
+        }}
+        className="w-full px-3 py-2 text-sm text-muted hover:text-red-500 hover:bg-red-50 rounded-lg border border-border/40 hover:border-red-200 transition-colors"
+      >
+        Reset all preferences
+      </button>
     </div>
   );
 }

@@ -44,6 +44,7 @@ const currentMealSchema = z.object({
 
 export const generateRecipeRequestSchema = z.object({
   prompt: z.string().trim().min(3).max(2000),
+  strictIngredients: z.boolean().optional().default(false),
   systemPrompt: optionalSystemPromptSchema,
   userId: optionalActorIdSchema,
   anonymousId: optionalActorIdSchema,

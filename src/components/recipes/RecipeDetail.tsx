@@ -54,7 +54,7 @@ export function RecipeDetail({ recipe, isOpen, onClose, onEdit, onDelete }: Reci
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={recipe.title} fullscreen>
-      <div className="bg-gradient-to-br from-white to-surface/50 rounded-xl border border-border/60 shadow-lg overflow-hidden flex flex-col max-h-full">
+      <div className="bg-gradient-to-br from-white to-surface/50 md:rounded-xl md:border md:border-border/60 md:shadow-lg overflow-hidden flex flex-col max-h-full">
         <div className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent px-4 py-4 border-b border-border/40 shrink-0">
           <p className="text-sm text-muted leading-snug">{recipe.description}</p>
           <div className="flex gap-2 mt-4 pt-4 border-t border-border/40">

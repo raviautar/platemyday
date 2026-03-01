@@ -25,6 +25,7 @@ export default function RecipesPage() {
   const [showForm, setShowForm] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
+  const [pendingRecipe, setPendingRecipe] = useState<Recipe | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
@@ -107,8 +108,9 @@ export default function RecipesPage() {
     showToast('Recipe deleted');
   };
 
-  const handleGenerateAI = async (prompt: string) => {
+  const handleGenerateAI = async (prompt: string, strictIngredients?: boolean): Promise<Recipe | null> => {
     setIsGeneratingAI(true);
+    setPendingRecipe(null);
     const startTime = Date.now();
 
     try {
@@ -117,6 +119,7 @@ export default function RecipesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           prompt,
+          strictIngredients: strictIngredients || false,
           systemPrompt: settings.recipeSystemPrompt,
           userId,
           anonymousId,
@@ -134,22 +137,40 @@ export default function RecipesPage() {
         generation_time_ms: Date.now() - startTime,
       });
 
-      const newRecipe = { ...recipeData, isAIGenerated: true };
-
-      if (recipes.length === 0) {
-        track(EVENTS.FIRST_RECIPE_CREATED);
-      }
-      addRecipe(newRecipe);
-      track(EVENTS.AI_RECIPE_SAVED, { recipe_title: recipeData.title });
-      showToast('Recipe generated and saved!');
+      const newRecipe: Recipe = {
+        ...recipeData,
+        isAIGenerated: true,
+        id: crypto.randomUUID(),
+        createdAt: new Date().toISOString(),
+      };
+      setPendingRecipe(newRecipe);
+      return newRecipe;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Something went wrong';
       track(EVENTS.RECIPE_GENERATION_FAILED, { error_message: message });
       showToast(`Failed to generate recipe: ${message}`);
+      return null;
     } finally {
       setIsGeneratingAI(false);
     }
   };
+
+  const handleKeepRecipe = useCallback(() => {
+    if (pendingRecipe) {
+      if (recipes.length === 0) track(EVENTS.FIRST_RECIPE_CREATED);
+      addRecipe(pendingRecipe);
+      track(EVENTS.AI_RECIPE_SAVED, { recipe_title: pendingRecipe.title });
+      showToast('Recipe saved to library!');
+      setPendingRecipe(null);
+    }
+  }, [pendingRecipe, recipes.length, track, addRecipe, showToast]);
+
+  const handleDiscardRecipe = useCallback(() => {
+    if (pendingRecipe) {
+      track(EVENTS.AI_RECIPE_DISCARDED, { recipe_title: pendingRecipe.title });
+    }
+    setPendingRecipe(null);
+  }, [pendingRecipe, track]);
 
   const toggleTag = (tag: string) => {
     setFilters(prev => ({
@@ -253,7 +274,6 @@ export default function RecipesPage() {
           recipes={recipes}
           searchQuery={searchQuery}
           filters={filters}
-          isGenerating={isGeneratingAI}
           onSelectRecipe={handleSelectRecipe}
           onCreateRecipe={() => setShowAI(true)}
         />
@@ -286,6 +306,10 @@ export default function RecipesPage() {
         isOpen={showAI}
         onClose={() => setShowAI(false)}
         onGenerate={handleGenerateAI}
+        isGenerating={isGeneratingAI}
+        lastGeneratedRecipe={pendingRecipe}
+        onKeepRecipe={handleKeepRecipe}
+        onDiscardRecipe={handleDiscardRecipe}
       />
 
     </div>

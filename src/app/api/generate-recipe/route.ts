@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     });
     if (validation instanceof Response) return validation;
 
-    const { prompt, systemPrompt, userId, anonymousId } = validation.data;
+    const { prompt, strictIngredients, systemPrompt, userId, anonymousId } = validation.data;
 
     if (!isFoodRelated(prompt)) {
       return Response.json(
@@ -44,9 +44,13 @@ export async function POST(req: Request) {
     }
 
     const prefsPrompt = await getUserPreferencesPrompt(userId, anonymousId);
-    const enhancedPrompt = prefsPrompt
-      ? `${prompt}\n\nUser preferences: ${prefsPrompt}`
-      : prompt;
+    let enhancedPrompt = prompt;
+    if (strictIngredients) {
+      enhancedPrompt += '\n\nIMPORTANT: Use ONLY the ingredients mentioned above. Do not add extra ingredients beyond basic seasonings (salt, pepper, oil). Keep the recipe simple and focused on these ingredients.';
+    }
+    if (prefsPrompt) {
+      enhancedPrompt += `\n\nUser preferences: ${prefsPrompt}`;
+    }
 
     const result = await generateText({
       model: google('gemini-3-flash-preview'),
