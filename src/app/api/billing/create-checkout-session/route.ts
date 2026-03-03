@@ -12,14 +12,14 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Sign in required to purchase a plan' }, { status: 401 });
     }
 
-    const { plan } = await req.json() as { plan: 'monthly' | 'annual' | 'lifetime' };
+    const { plan } = await req.json() as { plan: 'monthly' | 'annual' | 'lifetime' | 'lifetimeAppsumo' };
 
     const priceId = STRIPE_PRICES[plan];
     if (!priceId) {
       return Response.json({ error: 'Invalid plan' }, { status: 400 });
     }
 
-    const mode = plan === 'lifetime' ? 'payment' as const : 'subscription' as const;
+    const mode = (plan === 'lifetime' || plan === 'lifetimeAppsumo') ? 'payment' as const : 'subscription' as const;
 
     // Get or create Stripe customer
     const sb = createServiceClient();

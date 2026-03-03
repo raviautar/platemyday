@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Recipe } from '@/types';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
@@ -8,7 +9,6 @@ import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
 import { Plus, Sparkles, RefreshCw, Pencil, Heart, ChefHat } from 'lucide-react';
-import { RecipePreferencesModal } from './RecipePreferencesModal';
 import { RecipeIngredientsAndInstructions } from './RecipeIngredientsAndInstructions';
 
 interface AIRecipeGeneratorProps {
@@ -48,11 +48,28 @@ const ingredientSuggestions = [
   'cilantro',
 ];
 
+const RECIPE_FORM_STATE_KEY = 'recipe-generator-form-state';
+
 export function AIRecipeGenerator({ isOpen, onClose, onGenerate, isGenerating, lastGeneratedRecipe, onKeepRecipe, onDiscardRecipe }: AIRecipeGeneratorProps) {
   const { track } = useAnalytics();
+  const router = useRouter();
   const [prompt, setPrompt] = useState('');
   const [strictIngredients, setStrictIngredients] = useState(false);
-  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      const savedState = sessionStorage.getItem(RECIPE_FORM_STATE_KEY);
+      if (savedState) {
+        try {
+          const { prompt, strictIngredients } = JSON.parse(savedState);
+          setPrompt(prompt || '');
+          setStrictIngredients(strictIngredients || false);
+          sessionStorage.removeItem(RECIPE_FORM_STATE_KEY);
+        } catch (e) {
+        }
+      }
+    }
+  }, [isOpen]);
 
   const handleAddIngredient = (ingredient: string) => {
     const currentText = prompt.trim();
@@ -96,8 +113,9 @@ export function AIRecipeGenerator({ isOpen, onClose, onGenerate, isGenerating, l
     onClose();
   };
 
-  const handleOnboardingComplete = () => {
-    setShowOnboarding(false);
+  const handlePreferencesClick = () => {
+    sessionStorage.setItem(RECIPE_FORM_STATE_KEY, JSON.stringify({ prompt, strictIngredients }));
+    router.push('/customize');
   };
 
   const showResult = !isGenerating && lastGeneratedRecipe;
@@ -155,7 +173,7 @@ export function AIRecipeGenerator({ isOpen, onClose, onGenerate, isGenerating, l
               <div className="flex flex-col sm:flex-row gap-3 pt-6 border-t border-border/40">
                 <Button
                   variant="ghost"
-                  onClick={() => setShowOnboarding(true)}
+                  onClick={handlePreferencesClick}
                   className="flex items-center justify-center gap-2 border-2 border-primary/30 hover:bg-primary/10 hover:border-primary/50 px-6 py-3 text-base"
                 >
                   <Sparkles className="w-5 h-5" />
@@ -264,12 +282,6 @@ export function AIRecipeGenerator({ isOpen, onClose, onGenerate, isGenerating, l
           )}
         </div>
       </Modal>
-
-      <RecipePreferencesModal
-        isOpen={showOnboarding}
-        onClose={() => setShowOnboarding(false)}
-        onSave={handleOnboardingComplete}
-      />
     </>
   );
 }

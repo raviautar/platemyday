@@ -92,7 +92,7 @@ export interface SuggestedRecipe {
 
 // ─── Billing ──────────────────────────────────────────────────
 
-export type PlanId = 'free' | 'pro_monthly' | 'pro_annual' | 'lifetime';
+export type PlanId = 'free' | 'pro_monthly' | 'pro_annual' | 'lifetime' | 'lifetime_appsumo';
 
 export interface BillingInfo {
   plan: PlanId;

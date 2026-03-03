@@ -20,6 +20,7 @@ function getPlanIdFromPriceId(priceId: string): string {
   if (priceId === process.env.STRIPE_PRICE_MONTHLY) return 'pro_monthly';
   if (priceId === process.env.STRIPE_PRICE_ANNUAL) return 'pro_annual';
   if (priceId === process.env.STRIPE_PRICE_LIFETIME) return 'lifetime';
+  if (priceId === process.env.STRIPE_PRICE_LIFETIME_APPSUMO) return 'lifetime_appsumo';
   return 'free';
 }
 

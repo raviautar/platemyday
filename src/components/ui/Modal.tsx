@@ -41,7 +41,7 @@ export function Modal({ isOpen, onClose, title, children, fullscreen = false }: 
       window.removeEventListener('popstate', handlePopState);
       if (historyPushedRef.current) {
         historyPushedRef.current = false;
-        window.history.back();
+        window.history.replaceState(null, '');
       }
     };
   }, [isOpen, fullscreen]);

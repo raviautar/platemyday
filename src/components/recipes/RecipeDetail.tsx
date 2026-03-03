@@ -54,16 +54,16 @@ export function RecipeDetail({ recipe, isOpen, onClose, onEdit, onDelete }: Reci
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title={recipe.title} fullscreen>
-      <div className="bg-gradient-to-br from-white to-surface/50 md:rounded-xl md:border md:border-border/60 md:shadow-lg overflow-hidden flex flex-col max-h-full">
-        <div className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent px-4 py-4 border-b border-border/40 shrink-0">
-          <p className="text-sm text-muted leading-snug">{recipe.description}</p>
-          <div className="flex gap-2 mt-4 pt-4 border-t border-border/40">
-            <Button variant="ghost" size="sm" onClick={() => onEdit(recipe)} className="flex-1 text-sm py-1.5 h-auto">Edit Recipe</Button>
-            <Button variant="danger" size="sm" onClick={() => { onDelete(recipe.id); onClose(); }} className="flex-1 text-sm py-1.5 h-auto">Delete</Button>
+      <div className="bg-gradient-to-br from-white to-surface/50 md:rounded-xl md:border md:border-border/60 md:shadow-lg overflow-hidden">
+        <div className="px-4 py-4 space-y-5 w-full">
+          <div className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent -mx-4 px-4 py-4 border-b border-border/40">
+            <p className="text-sm text-muted leading-snug">{recipe.description}</p>
+            <div className="flex gap-2 mt-4 pt-4 border-t border-border/40">
+              <Button variant="ghost" size="sm" onClick={() => onEdit(recipe)} className="flex-1 text-sm py-1.5 h-auto">Edit Recipe</Button>
+              <Button variant="danger" size="sm" onClick={() => { onDelete(recipe.id); onClose(); }} className="flex-1 text-sm py-1.5 h-auto">Delete</Button>
+            </div>
           </div>
-        </div>
 
-        <div className="px-4 py-4 space-y-5 overflow-y-auto w-full">
           <div className="flex flex-wrap gap-2">
             {recipe.prepTimeMinutes > 0 && (
               <div className="flex items-center gap-1.5 bg-white/80 px-2.5 py-1.5 rounded-lg border border-border/40 shadow-sm">

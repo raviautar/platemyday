@@ -205,14 +205,14 @@ function SuccessCelebration({ isActivePaid }: { isActivePaid: boolean }) {
 }
 
 function UpgradeContent() {
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('annual');
-  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [checkoutLoading, setCheckoutLoading] = useState<boolean>(false);
+  const [priceInfo, setPriceInfo] = useState<{ amount: number; currency: string; formatted: string } | null>(null);
   const { track } = useAnalytics();
   const { isAuthenticated } = useUserIdentity();
   const { plan, unlimited, creditsUsed, creditsLimit, refetch } = useBilling();
   const searchParams = useSearchParams();
 
-  const isActivePaid = plan === 'lifetime' || plan === 'pro_monthly' || plan === 'pro_annual';
+  const isActivePaid = plan === 'lifetime' || plan === 'lifetime_appsumo' || plan === 'pro_monthly' || plan === 'pro_annual';
   const success = searchParams.get('success') === 'true';
   const canceled = searchParams.get('canceled') === 'true';
 
@@ -224,6 +224,21 @@ function UpgradeContent() {
   useEffect(() => {
     track(EVENTS.UPGRADE_PAGE_VIEWED);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    async function fetchPriceInfo() {
+      try {
+        const res = await fetch('/api/billing/price-info');
+        if (res.ok) {
+          const data = await res.json();
+          setPriceInfo(data);
+        }
+      } catch (error) {
+        console.error('Failed to fetch price info:', error);
+      }
+    }
+    fetchPriceInfo();
+  }, []);
 
   // Poll billing data after successful checkout — webhook may not have processed yet
   useEffect(() => {
@@ -237,7 +252,7 @@ function UpgradeContent() {
       const data = await refetchRef.current();
       attempts++;
       // Stop polling once the plan is recognized as active
-      if (data && (data.plan === 'lifetime' || data.plan === 'pro_monthly' || data.plan === 'pro_annual')) {
+      if (data && (data.plan === 'lifetime' || data.plan === 'lifetime_appsumo' || data.plan === 'pro_monthly' || data.plan === 'pro_annual')) {
         stopped = true;
         clearInterval(interval);
       }
@@ -256,26 +271,26 @@ function UpgradeContent() {
     return () => clearInterval(interval);
   }, [success]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  async function handleCheckout(selectedPlan: 'monthly' | 'annual' | 'lifetime') {
-    track(EVENTS.CHECKOUT_STARTED, { plan: selectedPlan });
+  async function handleCheckout() {
+    track(EVENTS.CHECKOUT_STARTED, { plan: 'lifetimeAppsumo' });
 
-    setCheckoutLoading(selectedPlan);
+    setCheckoutLoading(true);
     try {
       const res = await fetch('/api/billing/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: selectedPlan }),
+        body: JSON.stringify({ plan: 'lifetimeAppsumo' }),
       });
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
       } else {
         alert(data.error || 'Failed to start checkout');
-        setCheckoutLoading(null);
+        setCheckoutLoading(false);
       }
     } catch {
       alert('Failed to start checkout. Please try again.');
-      setCheckoutLoading(null);
+      setCheckoutLoading(false);
     }
   }
 
@@ -313,7 +328,7 @@ function UpgradeContent() {
               <div>
                 <p className="text-sm text-muted">Your current plan</p>
                 <p className="text-xl font-bold text-foreground">
-                  {plan === 'lifetime' ? 'Lifetime Premium' : plan === 'pro_annual' ? 'Premium Annual' : 'Premium Monthly'}
+                  {plan === 'lifetime' || plan === 'lifetime_appsumo' ? 'Lifetime Premium' : plan === 'pro_annual' ? 'Premium Annual' : 'Premium Monthly'}
                 </p>
                 <p className="text-sm text-primary font-medium">Unlimited meal plan generation</p>
               </div>
@@ -373,126 +388,31 @@ function UpgradeContent() {
             </p>
             {!unlimited && (
               <p className="text-sm text-muted mt-1.5">
-                You&apos;ve used <span className="font-semibold text-foreground">{creditsUsed}</span> of <span className="font-semibold text-foreground">{creditsLimit}</span> free meal plan generations
+                <span className="font-semibold text-foreground">{creditsLimit - creditsUsed}</span> of <span className="font-semibold text-foreground">{creditsLimit}</span> free meal plan generations remaining
               </p>
             )}
           </>
         )}
       </div>
 
-      {!isActivePaid && (
-        <div className="flex justify-center mb-6">
-          <div className="inline-flex bg-surface rounded-lg p-1 border border-border">
-            <button
-              onClick={() => { setBillingPeriod('monthly'); track(EVENTS.UPGRADE_PLAN_SELECTED, { plan: 'monthly' }); }}
-              className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${billingPeriod === 'monthly'
-                  ? 'bg-white text-foreground shadow-sm'
-                  : 'text-muted hover:text-foreground'
-                }`}
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => { setBillingPeriod('annual'); track(EVENTS.UPGRADE_PLAN_SELECTED, { plan: 'annual' }); }}
-              className={`px-6 py-2 rounded-md text-sm font-medium transition-all ${billingPeriod === 'annual'
-                  ? 'bg-white text-foreground shadow-sm'
-                  : 'text-muted hover:text-foreground'
-                }`}
-            >
-              Annual
-              <span className="ml-2 text-xs text-accent font-semibold">Save 16%</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto mb-12">
-        {/* Premium tier */}
-        <div className="bg-gradient-to-br from-primary to-primary-dark rounded-xl p-6 flex flex-col relative overflow-hidden shadow-xl">
+      <div className="max-w-md mx-auto mb-12">
+        <div className="bg-gradient-to-br from-primary to-primary-dark rounded-xl p-8 flex flex-col relative overflow-hidden shadow-xl">
           <div className="absolute top-4 right-4">
             <div className="bg-accent text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
-              <Zap className="w-3 h-3" />
-              POPULAR
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <h3 className="text-lg font-semibold text-white mb-2">Premium</h3>
-            {billingPeriod === 'monthly' ? (
-              <div className="flex items-baseline gap-1 mb-2">
-                <span className="text-4xl font-bold text-white">&euro;2.99</span>
-                <span className="text-white/80">/month</span>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-4xl font-bold text-white">&euro;29.99</span>
-                  <span className="text-white/80">/year</span>
-                </div>
-                <div className="text-sm text-white/90 mb-2">
-                  <span className="line-through text-white/60">&euro;35.88</span>
-                  <span className="ml-2 font-semibold">Save &euro;5.89</span>
-                </div>
-              </>
-            )}
-          </div>
-
-          <ul className="space-y-2.5 mb-6 flex-1">
-            {features.map((feature, idx) => {
-              const text = typeof feature === 'string' ? feature : feature.text;
-              const comingSoon = typeof feature !== 'string' && feature.comingSoon;
-              return (
-                <li key={idx} className="flex items-start gap-2 text-sm">
-                  <Check className="w-4 h-4 text-white flex-shrink-0 mt-0.5" />
-                  <span className="text-white">
-                    {text}
-                    {comingSoon && <span className="ml-1.5 text-[10px] font-medium text-white/60 uppercase tracking-wide">(soon)</span>}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
-
-          {(plan === 'pro_monthly' || plan === 'pro_annual') ? (
-            <button
-              className="w-full bg-white/20 text-white font-semibold px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2"
-              onClick={handleManageSubscription}
-            >
-              <ExternalLink className="w-4 h-4" />
-              Manage Subscription
-            </button>
-          ) : !isAuthenticated ? (
-            <Link href="/login?redirect=/upgrade" className="w-full bg-white text-primary hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors text-center block">
-              Sign in to Upgrade
-            </Link>
-          ) : (
-            <button
-              className="w-full bg-white text-primary hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
-              onClick={() => handleCheckout(billingPeriod)}
-              disabled={!!checkoutLoading || isActivePaid}
-            >
-              {checkoutLoading === billingPeriod ? 'Redirecting...' : 'Get Premium'}
-            </button>
-          )}
-          <p className="text-xs text-white/70 text-center mt-3">
-            Cancel anytime
-          </p>
-        </div>
-
-        {/* Lifetime tier */}
-        <div className="bg-gradient-to-br from-emerald-400 to-teal-600 rounded-xl p-6 flex flex-col relative overflow-hidden shadow-lg">
-          <div className="absolute top-4 right-4">
-            <div className="bg-yellow-300 text-emerald-900 text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
               <Crown className="w-3 h-3" />
-              LIMITED TIME
+              APPSUMO EXCLUSIVE
             </div>
           </div>
 
           <div className="mb-6">
-            <h3 className="text-lg font-semibold text-white mb-2">Lifetime</h3>
+            <h3 className="text-xl font-semibold text-white mb-2">Lifetime Premium</h3>
             <div className="flex items-baseline gap-1 mb-2">
-              <span className="text-4xl font-bold text-white">&euro;99.99</span>
-              <span className="text-white/80">one-time</span>
+              {priceInfo ? (
+                <span className="text-5xl font-bold text-white">{priceInfo.formatted}</span>
+              ) : (
+                <span className="text-5xl font-bold text-white">&euro;40</span>
+              )}
+              <span className="text-white/80 text-lg">one-time</span>
             </div>
           </div>
 
@@ -511,29 +431,29 @@ function UpgradeContent() {
               );
             })}
             <li className="flex items-start gap-2 text-sm pt-2 border-t border-white/20">
-              <Check className="w-4 h-4 text-yellow-200 flex-shrink-0 mt-0.5" />
+              <Check className="w-4 h-4 text-secondary flex-shrink-0 mt-0.5" />
               <span className="text-white font-semibold">All future updates</span>
             </li>
           </ul>
 
-          {plan === 'lifetime' ? (
+          {(plan === 'lifetime' || plan === 'lifetime_appsumo') ? (
             <button
-              className="w-full bg-white/20 text-white font-semibold px-4 py-2 rounded-lg"
+              className="w-full bg-white/20 text-white font-semibold px-4 py-3 rounded-lg"
               disabled
             >
               Current Plan
             </button>
           ) : !isAuthenticated ? (
-            <Link href="/login?redirect=/upgrade" className="w-full bg-white text-emerald-600 hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors text-center block">
+            <Link href="/login?redirect=/upgrade" className="w-full bg-white text-primary hover:bg-white/90 font-semibold px-4 py-3 rounded-lg transition-colors text-center block">
               Sign in to Purchase
             </Link>
           ) : (
             <button
-              className="w-full bg-white text-emerald-600 hover:bg-white/90 font-semibold px-4 py-2 rounded-lg transition-colors disabled:opacity-50"
-              onClick={() => handleCheckout('lifetime')}
-              disabled={!!checkoutLoading || isActivePaid}
+              className="w-full bg-white text-primary hover:bg-white/90 font-semibold px-4 py-3 rounded-lg transition-colors disabled:opacity-50"
+              onClick={handleCheckout}
+              disabled={checkoutLoading || isActivePaid}
             >
-              {checkoutLoading === 'lifetime' ? 'Redirecting...' : 'Get Lifetime'}
+              {checkoutLoading ? 'Redirecting...' : 'Get Lifetime Premium'}
             </button>
           )}
           <p className="text-xs text-white/70 text-center mt-3">
