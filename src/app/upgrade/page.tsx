@@ -11,8 +11,6 @@ import Link from 'next/link';
 
 const features = [
   'Unlimited meal plan generations',
-  'Unlimited shopping lists',
-  { text: 'Import recipes from URL', comingSoon: true },
 ];
 
 const freeFeatures = [

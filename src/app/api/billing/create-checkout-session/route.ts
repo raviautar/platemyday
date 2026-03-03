@@ -15,8 +15,9 @@ export async function POST(req: Request) {
     const { plan } = await req.json() as { plan: 'monthly' | 'annual' | 'lifetime' | 'lifetimeAppsumo' };
 
     const priceId = STRIPE_PRICES[plan];
+    
     if (!priceId) {
-      return Response.json({ error: 'Invalid plan' }, { status: 400 });
+      return Response.json({ error: 'Invalid plan', details: { plan, availablePlans: Object.keys(STRIPE_PRICES) } }, { status: 400 });
     }
 
     const mode = (plan === 'lifetime' || plan === 'lifetimeAppsumo') ? 'payment' as const : 'subscription' as const;

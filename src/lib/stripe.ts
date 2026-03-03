@@ -11,9 +11,9 @@ export function getStripe(): Stripe {
   return _stripe;
 }
 
-export const STRIPE_PRICES = {
+export const STRIPE_PRICES: Record<string, string> = {
   monthly: process.env.STRIPE_PRICE_MONTHLY!,
   annual: process.env.STRIPE_PRICE_ANNUAL!,
   lifetime: process.env.STRIPE_PRICE_LIFETIME!,
   lifetimeAppsumo: process.env.STRIPE_PRICE_LIFETIME_APPSUMO!,
-} as const;
+};
