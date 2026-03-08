@@ -7,6 +7,7 @@ import {
   generateMealPlanRequestSchema,
   validateAndRateLimit,
   getUserPreferencesPrompt,
+  getUserPantryIngredients,
 } from '@/lib/ai-guardrails';
 import { checkCredits, consumeCredit } from '@/lib/supabase/billing';
 
@@ -23,7 +24,7 @@ export async function POST(req: Request) {
     });
     if (validation instanceof Response) return validation;
 
-    const { recipes, systemPrompt, preferences, weekStartDay, userId, anonymousId } = validation.data;
+    const { recipes, systemPrompt, preferences, recipeMix, weekStartDay, userId, anonymousId } = validation.data;
 
     // Credit check — only meal plan generation costs credits
     const creditCheck = await checkCredits(userId ?? null, anonymousId ?? '');
@@ -43,7 +44,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const prefsPrompt = await getUserPreferencesPrompt(userId, anonymousId) || preferences || '';
+    const [prefsPrompt, pantryIngredients] = await Promise.all([
+      getUserPreferencesPrompt(userId, anonymousId),
+      getUserPantryIngredients(userId, anonymousId),
+    ]);
+    const effectivePrefs = prefsPrompt || preferences || '';
 
     const recipesForPrompt = recipes.slice(0, 200);
     const hasRecipes = recipesForPrompt.length > 0;
@@ -58,17 +63,41 @@ export async function POST(req: Request) {
     const startIndex = daysOrder.indexOf(weekStartDay);
     const orderedDays = [...daysOrder.slice(startIndex), ...daysOrder.slice(0, startIndex)];
 
+    // Build pantry-first prompt section
+    const hasPantry = pantryIngredients.length > 0;
+    const pantrySection = hasPantry
+      ? `\n## PANTRY INGREDIENTS (TOP PRIORITY)
+The user has these ingredients on hand that MUST be used as much as possible: ${pantryIngredients.join(', ')}
+
+This is the #1 priority: design meals around these ingredients to minimize food waste. Every ingredient listed should appear in at least one meal. Build recipes that creatively combine these pantry items. Only add additional grocery items when necessary to complete a recipe.`
+      : '';
+
+    // Build recipe mix instructions
+    const recipeMixInstructions: Record<string, string> = {
+      all_new: 'Create ALL new recipes. Do not use any existing recipes from the library.',
+      mostly_new: 'Strongly favor creating new recipes. Use at most 20-25% existing library recipes.',
+      balanced: hasRecipes
+        ? 'Use a balanced mix of existing library recipes and new recipes (roughly 50/50).'
+        : 'Create all new recipes since the user has no library yet.',
+      mostly_existing: 'Strongly favor existing library recipes. Create new recipes only when needed to fill gaps (at most 20-25% new).',
+      all_existing: 'Use ONLY existing recipes from the library. Do not create any new recipes unless the library lacks enough variety for a full week.',
+    };
+    const mixInstruction = recipeMixInstructions[recipeMix] || recipeMixInstructions.balanced;
+
     const prompt = `Create a complete 7-day meal plan starting from ${weekStartDay} with full recipe details.
 
 IMPORTANT: The days array MUST start with ${weekStartDay} and follow this exact order: ${orderedDays.join(', ')}
+${pantrySection}
 
 ${hasRecipes ? `${recipes.length > recipesForPrompt.length ? `NOTE: Only the first ${recipesForPrompt.length} recipes are included to keep generation stable.\n` : ''}Available recipes in user's library:\n${recipeList}` : 'The user has no recipes in their library yet. Create ALL new recipes with complete details.'}
 
-${prefsPrompt ? `User preferences: ${prefsPrompt}` : ''}
+${effectivePrefs ? `User preferences: ${effectivePrefs}` : ''}
 ${preferences ? `Additional context for this week: ${preferences}` : ''}
 
+RECIPE MIX: ${mixInstruction}
+
 IMPORTANT:
-${hasRecipes ? '1. Use existing recipes from the library when appropriate (include their IDs)' : '1. Create all new recipes since the user has no library yet'}
+${hasRecipes ? `1. ${mixInstruction} When using existing recipes, include their IDs.` : '1. Create all new recipes since the user has no library yet.'}
 2. For any NEW recipes not in the library, provide COMPLETE details including:
    - Full list of ingredients with measurements
    - Step-by-step cooking instructions
@@ -79,7 +108,8 @@ ${hasRecipes ? '1. Use existing recipes from the library when appropriate (inclu
 4. Snacks should be varied and nutritious (e.g., yogurt parfait, hummus with veggies, trail mix, fruit smoothie, etc.)
 5. Make sure recipe titles in meals exactly match titles in newRecipes array
 6. Days must be in this exact order: ${orderedDays.join(', ')}
-7. For EVERY meal, include estimatedNutrition with realistic calorie and macro estimates per serving`;
+7. For EVERY meal, include estimatedNutrition with realistic calorie and macro estimates per serving
+${hasPantry ? `8. PANTRY PRIORITY: Recipes MUST incorporate the pantry ingredients (${pantryIngredients.join(', ')}). Spread them across the entire week. The shopping list should be minimal beyond these items.` : ''}`;
 
     const generationStart = Date.now();
 

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { MoreVertical, ArrowRight, Trash2, RefreshCw, BookOpen } from 'lucide-react';
+import { MoreVertical, ArrowRight, Trash2, RefreshCw, BookOpen, BookPlus } from 'lucide-react';
 import { DayPlan } from '@/types';
 
 interface MealOptionsMenuProps {
@@ -12,9 +12,10 @@ interface MealOptionsMenuProps {
   onReplaceFromLibrary: () => void;
   onRegenerate: () => void;
   isRegenerating?: boolean;
+  onAddToRecipes?: () => void;
 }
 
-export function MealOptionsMenu({ weekDays, currentDayIndex, onMoveTo, onRemove, onReplaceFromLibrary, onRegenerate, isRegenerating }: MealOptionsMenuProps) {
+export function MealOptionsMenu({ weekDays, currentDayIndex, onMoveTo, onRemove, onReplaceFromLibrary, onRegenerate, isRegenerating, onAddToRecipes }: MealOptionsMenuProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [showMoveToSubmenu, setShowMoveToSubmenu] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -71,6 +72,12 @@ export function MealOptionsMenu({ weekDays, currentDayIndex, onMoveTo, onRemove,
     setIsOpen(false);
   };
 
+  const handleAddToRecipes = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    onAddToRecipes?.();
+    setIsOpen(false);
+  };
+
   return (
     <div className="relative" ref={menuRef}>
       <button
@@ -112,6 +119,16 @@ export function MealOptionsMenu({ weekDays, currentDayIndex, onMoveTo, onRemove,
                   </button>
                 ))}
               </div>
+            )}
+
+            {onAddToRecipes && (
+              <button
+                onClick={handleAddToRecipes}
+                className="w-full px-4 py-2 text-left text-sm hover:bg-surface transition-colors flex items-center gap-2 border-t border-border"
+              >
+                <BookPlus className="w-4 h-4" />
+                Add to recipe library
+              </button>
             )}
 
             <button

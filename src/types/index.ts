@@ -10,6 +10,7 @@ export interface Recipe {
   tags: string[];
   createdAt: string;
   isAIGenerated: boolean;
+  estimatedNutrition?: NutritionInfo;
 }
 
 export interface RecipeFilters {

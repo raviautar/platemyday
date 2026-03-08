@@ -153,6 +153,12 @@ export async function saveMealPlan(
   anonymousId: string,
   suggestedRecipes?: Record<string, SuggestedRecipe>
 ): Promise<WeekPlan> {
+  // If the plan already has an ID, update it instead of creating a new one
+  if (weekPlan.id) {
+    await updateMealPlan(supabase, weekPlan, suggestedRecipes);
+    return weekPlan;
+  }
+
   // Deactivate all existing active plans for this user
   const owner = ownerFilter(userId, anonymousId);
   await supabase
@@ -234,6 +240,79 @@ export async function saveMealPlan(
 
   // Return the full plan
   return { ...weekPlan, id: plan.id, createdAt: plan.created_at };
+}
+
+export async function updateMealPlan(
+  supabase: SupabaseClient,
+  weekPlan: WeekPlan,
+  suggestedRecipes?: Record<string, SuggestedRecipe>
+): Promise<void> {
+  if (!weekPlan.id) throw new Error('Cannot update meal plan without ID');
+
+  // Get existing day IDs
+  const { data: existingDays, error: daysError } = await supabase
+    .from('meal_plan_days')
+    .select('id, day_index')
+    .eq('meal_plan_id', weekPlan.id)
+    .order('day_index', { ascending: true });
+
+  if (daysError) throw daysError;
+
+  // Delete all existing meals
+  if (existingDays && existingDays.length > 0) {
+    const dayIds = existingDays.map(d => d.id);
+    await supabase
+      .from('meal_plan_meals')
+      .delete()
+      .in('day_id', dayIds);
+  }
+
+  // Insert updated meals
+  const mealsToInsert = weekPlan.days.flatMap((day, dayIdx) => {
+    const dayId = existingDays?.[dayIdx]?.id;
+    if (!dayId) return [];
+    return day.meals.map((meal, mealIdx) => ({
+      day_id: dayId,
+      recipe_id: meal.recipeId || null,
+      meal_type: meal.mealType,
+      recipe_title_fallback: meal.recipeTitleFallback || null,
+      meal_index: mealIdx,
+      estimated_nutrition: meal.estimatedNutrition || null,
+    }));
+  });
+
+  if (mealsToInsert.length > 0) {
+    const { error: mealsError } = await supabase
+      .from('meal_plan_meals')
+      .insert(mealsToInsert);
+    if (mealsError) throw mealsError;
+  }
+
+  // Update suggested recipes: delete old ones and insert new ones
+  await supabase
+    .from('suggested_recipes')
+    .delete()
+    .eq('meal_plan_id', weekPlan.id);
+
+  if (suggestedRecipes && Object.keys(suggestedRecipes).length > 0) {
+    const suggestedToInsert = Object.values(suggestedRecipes).map(sr => ({
+      meal_plan_id: weekPlan.id,
+      title: sr.title,
+      description: sr.description || '',
+      ingredients: sr.ingredients,
+      instructions: sr.instructions,
+      servings: sr.servings || 4,
+      prep_time_minutes: sr.prepTimeMinutes || 0,
+      cook_time_minutes: sr.cookTimeMinutes || 0,
+      tags: sr.tags,
+      estimated_nutrition: sr.estimatedNutrition || null,
+    }));
+
+    const { error: sugError } = await supabase
+      .from('suggested_recipes')
+      .insert(suggestedToInsert);
+    if (sugError) throw sugError;
+  }
 }
 
 export async function restoreMealPlanDb(

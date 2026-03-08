@@ -9,6 +9,8 @@ export const EVENTS = {
   RECIPE_GENERATION_STARTED: 'recipe_generation_started',
   RECIPE_GENERATION_COMPLETED: 'recipe_generation_completed',
   RECIPE_GENERATION_FAILED: 'recipe_generation_failed',
+  RECIPE_EDIT_COMPLETED: 'recipe_edit_completed',
+  RECIPE_EDIT_FAILED: 'recipe_edit_failed',
   MEAL_REGENERATION_COMPLETED: 'meal_regeneration_completed',
   AI_RECIPE_SAVED: 'ai_recipe_saved',
   AI_RECIPE_DISCARDED: 'ai_recipe_discarded',

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useCallback, useState, useEffect, useRef, useMemo } from 'react';
-import { WeekPlan, MealSlot, SuggestedRecipe } from '@/types';
+import { WeekPlan, MealSlot, SuggestedRecipe, NutritionInfo } from '@/types';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
 import { useSupabase } from '@/hooks/useSupabase';
 import { useRecipes } from '@/contexts/RecipeContext';
@@ -44,6 +44,7 @@ interface MealPlanContextType {
   addMealToDay: (dayIndex: number, meal: MealSlot) => void;
   clearWeekPlan: () => void;
   replaceMeal: (dayIndex: number, mealId: string, newMeal: MealSlot, newSuggestedRecipe?: SuggestedRecipe) => void;
+  updateMealNutrition: (recipeId: string, nutrition: NutritionInfo) => void;
   mealPlanHistory: WeekPlan[];
   loadHistory: () => Promise<void>;
   restoreMealPlan: (planId: string) => Promise<void>;
@@ -64,7 +65,7 @@ interface MealPlanContextType {
   isPaywalled: boolean;
   partialPlan: PartialPlan | null;
   isStreaming: boolean;
-  startGeneration: (preferences: string, systemPrompt?: string) => void;
+  startGeneration: (preferences: string, systemPrompt?: string, recipeMix?: string) => void;
   retryGeneration: () => void;
   clearGenerationError: () => void;
 }
@@ -379,6 +380,18 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     });
   }, [updateLocalPlan]);
 
+  const updateMealNutrition = useCallback((recipeId: string, nutrition: NutritionInfo) => {
+    updateLocalPlan(prev => {
+      const newDays = prev.days.map(d => ({
+        ...d,
+        meals: d.meals.map(m =>
+          m.recipeId === recipeId ? { ...m, estimatedNutrition: nutrition } : m
+        ),
+      }));
+      return { ...prev, days: newDays };
+    });
+  }, [updateLocalPlan]);
+
   const clearWeekPlan = useCallback(() => {
     setWeekPlanState(null);
   }, []);
@@ -505,7 +518,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     };
   }, [getWeekStartDate, settings.weekStartDay]);
 
-  const startGeneration = useCallback((preferences: string, systemPrompt?: string) => {
+  const startGeneration = useCallback((preferences: string, systemPrompt?: string, recipeMix?: string) => {
     setGenerating(true);
     setGenerationError(null);
     setIsPaywalled(false);
@@ -530,6 +543,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
           recipes: recipes.map(r => ({ id: r.id, title: r.title, tags: r.tags })),
           systemPrompt: systemPrompt || settings.mealPlanSystemPrompt,
           preferences,
+          recipeMix: recipeMix || 'balanced',
           weekStartDay: settings.weekStartDay,
           userId,
           anonymousId,
@@ -686,6 +700,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     addMealToDay,
     clearWeekPlan,
     replaceMeal,
+    updateMealNutrition,
     mealPlanHistory,
     loadHistory,
     restoreMealPlan,
@@ -710,7 +725,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     clearGenerationError,
   }), [
     weekPlan, setWeekPlan, moveMeal, removeMeal, addMealToDay, clearWeekPlan,
-    replaceMeal, mealPlanHistory, loadHistory, restoreMealPlan, deleteMealPlan,
+    replaceMeal, updateMealNutrition, mealPlanHistory, loadHistory, restoreMealPlan, deleteMealPlan,
     historyLoading, loading, shoppingList, shoppingPantryItems, shoppingListLoading,
     shoppingListUpdated, nutritionUpdated, dismissShoppingListUpdated, dismissNutritionUpdated,
     addPantryItemToShoppingList,

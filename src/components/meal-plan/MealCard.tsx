@@ -1,18 +1,18 @@
 'use client';
 
 import { useState, memo } from 'react';
-import { MealSlot, MealType, SuggestedRecipe, DayPlan, NutritionInfo } from '@/types';
+import { MealSlot, SuggestedRecipe, DayPlan, NutritionInfo } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
 import { MEAL_TYPE_COLORS } from '@/lib/constants';
-import { Sparkles, Heart, Flame } from 'lucide-react';
-import { MealDetail } from './MealDetail';
+import { Sparkles, Flame } from 'lucide-react';
 import { MealOptionsMenu } from './MealOptionsMenu';
 import { ReplaceFromRecipes } from './ReplaceFromRecipes';
-import { RecipeForm } from '@/components/recipes/RecipeForm';
+import { RecipeDetailView } from '@/components/recipes/RecipeDetailView';
+import { useMealPlan } from '@/contexts/MealPlanContext';
 import { useToast } from '@/components/ui/Toast';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 
@@ -29,13 +29,13 @@ interface MealCardProps {
 
 const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, onReplaceMeal, suggestedRecipe, onAddToLibrary }: MealCardProps) => {
   const { getRecipe, updateRecipe } = useRecipes();
+  const { updateMealNutrition } = useMealPlan();
   const { settings } = useSettings();
   const { userId, anonymousId } = useUserIdentity();
   const { track } = useAnalytics();
   const { showToast } = useToast();
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isReplaceOpen, setIsReplaceOpen] = useState(false);
-  const [isEditOpen, setIsEditOpen] = useState(false);
   const [isRegenerating, setIsRegenerating] = useState(false);
   const recipe = meal.recipeId ? getRecipe(meal.recipeId) : null;
 
@@ -68,13 +68,6 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
       });
       track(EVENTS.MEAL_REPLACED_FROM_LIBRARY, { meal_type: meal.mealType });
       showToast('Meal replaced!');
-    }
-  };
-
-  const handleSaveToLibrary = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (suggestedRecipe && onAddToLibrary) {
-      onAddToLibrary(suggestedRecipe);
     }
   };
 
@@ -187,20 +180,6 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
           </div>
           <div className="flex items-start gap-0.5">
             {/* Save to library button */}
-            {isUnmatched && suggestedRecipe && onAddToLibrary && (
-              <button
-                onClick={handleSaveToLibrary}
-                className="p-1 rounded-md hover:bg-accent/10 transition-colors"
-                title="Save to recipe library"
-              >
-                <Heart className="w-3.5 h-3.5 text-accent" />
-              </button>
-            )}
-            {isInLibrary && (
-              <div className="p-1" title="In your recipe library">
-                <Heart className="w-3.5 h-3.5 text-accent fill-accent" />
-              </div>
-            )}
             {onRemove && weekDays && currentDayIndex !== undefined && (
               <MealOptionsMenu
                 weekDays={weekDays}
@@ -210,32 +189,26 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
                 onReplaceFromLibrary={() => setIsReplaceOpen(true)}
                 onRegenerate={handleRegenerate}
                 isRegenerating={isRegenerating}
+                onAddToRecipes={isUnmatched && suggestedRecipe && onAddToLibrary ? () => { onAddToLibrary(suggestedRecipe); showToast('Added to recipe library!'); } : undefined}
               />
             )}
           </div>
         </div>
       </div>
 
-      <MealDetail
-        meal={meal}
+      <RecipeDetailView
+        mealSlot={meal}
         isOpen={isDetailOpen}
         onClose={() => setIsDetailOpen(false)}
         suggestedRecipe={suggestedRecipe}
         onAddToLibrary={onAddToLibrary}
-        onEdit={recipe ? () => setIsEditOpen(true) : undefined}
+        onRecipeUpdated={(recipeId, updates) => {
+          updateRecipe(recipeId, updates);
+          if (updates.estimatedNutrition) {
+            updateMealNutrition(recipeId, updates.estimatedNutrition);
+          }
+        }}
       />
-
-      {recipe && (
-        <RecipeForm
-          isOpen={isEditOpen}
-          onClose={() => setIsEditOpen(false)}
-          onSave={(updated) => {
-            updateRecipe(recipe.id, updated);
-            showToast('Recipe updated!');
-          }}
-          editingRecipe={recipe}
-        />
-      )}
 
       <ReplaceFromRecipes
         isOpen={isReplaceOpen}

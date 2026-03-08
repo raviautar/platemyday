@@ -54,6 +54,7 @@ export const generateMealPlanRequestSchema = z.object({
   recipes: z.array(recipeRefSchema).max(500).default([]),
   systemPrompt: optionalSystemPromptSchema,
   preferences: z.string().trim().max(4000).optional(),
+  recipeMix: z.enum(['all_new', 'mostly_new', 'balanced', 'mostly_existing', 'all_existing']).optional().default('balanced'),
   weekStartDay: z.enum(DAYS_OF_WEEK).optional().default('Monday'),
   userId: optionalActorIdSchema,
   anonymousId: optionalActorIdSchema,
@@ -225,6 +226,29 @@ export async function parseJsonBody(request: Request): Promise<unknown | null> {
   }
 }
 
+export const editRecipeRequestSchema = z.object({
+  currentRecipe: z.object({
+    title: z.string().trim().min(1).max(300),
+    description: z.string().trim().max(2000),
+    ingredients: z.array(z.string().trim().max(500)).max(100),
+    instructions: z.array(z.string().trim().max(2000)).max(50),
+    servings: z.number().int().min(1).max(100),
+    prepTimeMinutes: z.number().int().min(0).max(1440),
+    cookTimeMinutes: z.number().int().min(0).max(1440),
+    tags: z.array(z.string().trim().max(120)).max(40).default([]),
+    estimatedNutrition: z.object({
+      calories: z.number(),
+      protein: z.number(),
+      carbs: z.number(),
+      fat: z.number(),
+    }).optional(),
+  }),
+  editPrompt: z.string().trim().min(3).max(2000),
+  systemPrompt: optionalSystemPromptSchema,
+  userId: optionalActorIdSchema,
+  anonymousId: optionalActorIdSchema,
+});
+
 export const consolidateShoppingListRequestSchema = z.object({
   mealPlanId: z.string().trim().min(1),
   userId: optionalActorIdSchema,
@@ -278,4 +302,17 @@ export async function getUserPreferencesPrompt(
   const supabase = createServiceClient();
   const settings = await getSettings(supabase, userId ?? null, anonymousId ?? '');
   return settings ? formatPreferencesPrompt(settings.preferences) : '';
+}
+
+/**
+ * Fetches user pantry ingredients separately for priority prompting.
+ */
+export async function getUserPantryIngredients(
+  userId?: string,
+  anonymousId?: string
+): Promise<string[]> {
+  if (!userId && !anonymousId) return [];
+  const supabase = createServiceClient();
+  const settings = await getSettings(supabase, userId ?? null, anonymousId ?? '');
+  return settings?.preferences?.pantryIngredients ?? [];
 }

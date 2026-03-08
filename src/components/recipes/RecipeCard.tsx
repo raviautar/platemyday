@@ -2,6 +2,7 @@
 
 import { Recipe } from '@/types';
 import { getTagDotColor } from '@/lib/tag-colors';
+import { Flame } from 'lucide-react';
 
 interface RecipeCardProps {
   recipe: Recipe;
@@ -21,6 +22,12 @@ export function RecipeCard({ recipe, onClick }: RecipeCardProps) {
       <div className="flex items-center gap-3 mt-3 text-xs text-muted">
         {totalTime > 0 && <span>{totalTime} min</span>}
         {recipe.servings > 0 && <span>{recipe.servings} servings</span>}
+        {recipe.estimatedNutrition?.calories && (
+          <span className="flex items-center gap-0.5">
+            <Flame className="w-3 h-3" />
+            {recipe.estimatedNutrition.calories} cal
+          </span>
+        )}
       </div>
       {recipe.tags.length > 0 && (
         <div className="flex flex-wrap gap-1.5 mt-2">

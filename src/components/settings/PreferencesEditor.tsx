@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/components/ui/Toast';
 import { UserPreferences } from '@/types';
@@ -8,8 +8,7 @@ import { DIET_OPTIONS, ALLERGY_OPTIONS, CUISINE_OPTIONS, MEAL_TYPE_LABELS, DEFAU
 import { DIET_ICON_MAP } from '@/lib/diet-icons';
 import { FaFire } from 'react-icons/fa';
 import { GiMeat, GiBread, GiWheat } from 'react-icons/gi';
-import { Plus, X, ChevronDown, Zap, Flame, Leaf, ChefHat, UtensilsCrossed, Package, Check } from 'lucide-react';
-import { searchIngredients } from '@/lib/ingredients';
+import { Plus, X, ChevronDown, Zap, Flame, Leaf, ChefHat, UtensilsCrossed, Check } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
 
@@ -32,7 +31,6 @@ function CollapsibleSection({
   description,
   defaultOpen,
   compact,
-  prominent,
   onClear,
   children,
 }: {
@@ -41,18 +39,13 @@ function CollapsibleSection({
   description?: string;
   defaultOpen: boolean;
   compact?: boolean;
-  prominent?: boolean;
   onClear?: () => void;
   children: React.ReactNode;
 }) {
   const [isOpen, setIsOpen] = useState(defaultOpen);
 
   return (
-    <div className={`rounded-xl border transition-colors ${
-      prominent
-        ? 'bg-primary/3 border-primary/30'
-        : 'bg-white border-border'
-    } ${compact ? 'p-3' : 'p-4'}`}>
+    <div className={`rounded-xl border transition-colors bg-white border-border ${compact ? 'p-3' : 'p-4'}`}>
       <div
         role="button"
         tabIndex={0}
@@ -62,7 +55,6 @@ function CollapsibleSection({
       >
         <div className="text-left">
           <h2 className={`font-semibold text-foreground ${compact ? 'text-sm' : 'text-base'}`}>
-            {prominent && <Package className="w-4 h-4 inline mr-1.5 text-primary" />}
             {title}
           </h2>
           {description && !compact && (
@@ -117,13 +109,6 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
   const [customCuisineInput, setCustomCuisineInput] = useState('');
   const [focusedNoteIndex, setFocusedNoteIndex] = useState<number | null>(null);
 
-  // Pantry ingredient state
-  const [ingredientInput, setIngredientInput] = useState('');
-  const [ingredientSuggestions, setIngredientSuggestions] = useState<string[]>([]);
-  const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1);
-  const ingredientInputRef = useRef<HTMLInputElement>(null);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     setMacroMode({
       protein: typeof prefs.macroGoals.protein === 'number' ? 'custom' : 'preset',
@@ -142,17 +127,6 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
       setCustomDietInput('');
     }
   }, [prefs.dietaryType, isCustomDiet]);
-
-  useEffect(() => {
-    if (ingredientInput.trim()) {
-      const suggestions = searchIngredients(ingredientInput, 8);
-      setIngredientSuggestions(suggestions);
-      setSelectedSuggestionIndex(-1);
-    } else {
-      setIngredientSuggestions([]);
-      setSelectedSuggestionIndex(-1);
-    }
-  }, [ingredientInput]);
 
   const handleUpdate = (updates: Partial<UserPreferences>, showNotification = true) => {
     updateSettings({
@@ -203,51 +177,6 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
     }
   };
 
-  // Pantry ingredient helpers
-  const addIngredient = (ingredient?: string) => {
-    const trimmed = (ingredient || ingredientInput).trim();
-    if (trimmed && !prefs.pantryIngredients.includes(trimmed)) {
-      handleUpdate({ pantryIngredients: [...prefs.pantryIngredients, trimmed] });
-      setIngredientInput('');
-      setIngredientSuggestions([]);
-      setSelectedSuggestionIndex(-1);
-    }
-  };
-
-  const removeIngredient = (ingredient: string) => {
-    handleUpdate({ pantryIngredients: prefs.pantryIngredients.filter(i => i !== ingredient) });
-  };
-
-  const handleIngredientKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (ingredientSuggestions.length === 0) {
-      if (e.key === 'Enter') {
-        e.preventDefault();
-        addIngredient();
-      }
-      return;
-    }
-
-    if (e.key === 'ArrowDown') {
-      e.preventDefault();
-      setSelectedSuggestionIndex(prev =>
-        prev < ingredientSuggestions.length - 1 ? prev + 1 : prev
-      );
-    } else if (e.key === 'ArrowUp') {
-      e.preventDefault();
-      setSelectedSuggestionIndex(prev => prev > 0 ? prev - 1 : -1);
-    } else if (e.key === 'Enter') {
-      e.preventDefault();
-      if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < ingredientSuggestions.length) {
-        addIngredient(ingredientSuggestions[selectedSuggestionIndex]);
-      } else {
-        addIngredient();
-      }
-    } else if (e.key === 'Escape') {
-      setIngredientSuggestions([]);
-      setSelectedSuggestionIndex(-1);
-    }
-  };
-
   // Meal type helpers
   const toggleMealType = (type: string) => {
     const current = prefs.mealTypes;
@@ -261,93 +190,6 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
 
   return (
     <div className={`space-y-3 ${compact ? 'max-h-[60vh] overflow-y-auto pr-1' : ''}`}>
-      {/* Pantry Ingredients - prominent section */}
-      <CollapsibleSection
-        id="pantry"
-        title="Pantry Ingredients"
-        description="Add ingredients you'd like to use up this week"
-        defaultOpen={isExpanded('pantry')}
-        compact={compact}
-        prominent
-        onClear={prefs.pantryIngredients.length > 0 ? () => handleUpdate({ pantryIngredients: [] }) : undefined}
-      >
-        <div className="relative">
-          <div className="flex gap-1.5">
-            <input
-              ref={ingredientInputRef}
-              type="text"
-              value={ingredientInput}
-              onChange={e => setIngredientInput(e.target.value)}
-              onKeyDown={handleIngredientKeyDown}
-              onBlur={() => {
-                setTimeout(() => {
-                  setIngredientSuggestions([]);
-                  setSelectedSuggestionIndex(-1);
-                }, 200);
-              }}
-              placeholder="Type any ingredient..."
-              className={`flex-1 px-3 rounded-lg border border-primary/30 bg-white text-foreground placeholder:text-muted/60 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary ${compact ? 'py-2 text-sm' : 'py-2.5 text-base'}`}
-            />
-            <button
-              onClick={() => addIngredient()}
-              className={`rounded-lg bg-primary/10 text-primary hover:bg-primary/15 transition-colors ${compact ? 'px-2.5 py-2' : 'px-3 py-2.5'}`}
-            >
-              <Plus className="w-4 h-4" />
-            </button>
-          </div>
-          {ingredientSuggestions.length > 0 && (
-            <div
-              ref={suggestionsRef}
-              className="absolute z-10 w-full mt-1 bg-white border border-border/60 rounded-lg shadow-lg max-h-48 overflow-y-auto"
-            >
-              {ingredientSuggestions.map((suggestion, index) => (
-                <button
-                  key={suggestion}
-                  type="button"
-                  onClick={() => addIngredient(suggestion)}
-                  onMouseEnter={() => setSelectedSuggestionIndex(index)}
-                  className={`w-full text-left px-3 py-2 text-sm transition-colors ${
-                    index === selectedSuggestionIndex
-                      ? 'bg-primary/10 text-primary'
-                      : 'text-foreground hover:bg-surface/50'
-                  }`}
-                >
-                  {suggestion}
-                </button>
-              ))}
-              {ingredientInput.trim() && !ingredientSuggestions.some(s => s.toLowerCase() === ingredientInput.trim().toLowerCase()) && (
-                <button
-                  type="button"
-                  onClick={() => addIngredient(ingredientInput.trim())}
-                  className="w-full text-left px-3 py-2 text-sm text-primary border-t border-border/40 hover:bg-primary/5 transition-colors font-medium"
-                >
-                  Add &quot;{ingredientInput.trim()}&quot;
-                </button>
-              )}
-            </div>
-          )}
-        </div>
-        <p className="text-xs text-muted">Type any ingredient and press Enter to add</p>
-        {prefs.pantryIngredients.length > 0 && (
-          <div className="flex flex-wrap gap-1.5">
-            {prefs.pantryIngredients.map(ing => (
-              <span
-                key={ing}
-                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary/8 text-primary text-sm border border-primary/20 font-medium"
-              >
-                {ing}
-                <button onClick={() => removeIngredient(ing)} className="hover:text-primary-dark">
-                  <X className="w-3 h-3" />
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
-        {prefs.pantryIngredients.length === 0 && (
-          <p className="text-xs text-muted italic text-center py-1">No ingredients added yet</p>
-        )}
-      </CollapsibleSection>
-
       {/* Additional Meal Preferences */}
       <CollapsibleSection
         id="notes"

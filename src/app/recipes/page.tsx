@@ -7,8 +7,7 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
 import { useToast } from '@/components/ui/Toast';
 import { RecipeList } from '@/components/recipes/RecipeList';
-import { RecipeForm } from '@/components/recipes/RecipeForm';
-import { RecipeDetail } from '@/components/recipes/RecipeDetail';
+import { RecipeDetailView } from '@/components/recipes/RecipeDetailView';
 import { AIRecipeGenerator } from '@/components/recipes/AIRecipeGenerator';
 import { Input } from '@/components/ui/Input';
 import { RecipeFilters } from '@/types';
@@ -22,12 +21,10 @@ export default function RecipesPage() {
   const { recipes, addRecipe, updateRecipe, deleteRecipe } = useRecipes();
   const { track } = useAnalytics();
   const { showToast } = useToast();
-  const [showForm, setShowForm] = useState(false);
   const [showAI, setShowAI] = useState(false);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [pendingRecipe, setPendingRecipe] = useState<Recipe | null>(null);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
-  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
@@ -79,27 +76,9 @@ export default function RecipesPage() {
     track(EVENTS.RECIPE_VIEWED, { recipe_title: recipe.title, is_ai_generated: recipe.isAIGenerated });
   }, [track]);
 
-  const handleSave = (data: Omit<Recipe, 'id' | 'createdAt'>) => {
-    if (editingRecipe) {
-      updateRecipe(editingRecipe.id, data);
-      track(EVENTS.RECIPE_EDITED, { recipe_title: data.title, is_ai_generated: editingRecipe.isAIGenerated });
-      showToast('Recipe updated!');
-    } else {
-      track(EVENTS.RECIPE_CREATED, { is_manual: true, title: data.title });
-      if (recipes.length === 0) {
-        track(EVENTS.FIRST_RECIPE_CREATED);
-      }
-      addRecipe(data);
-      showToast('Recipe created!');
-    }
-    setEditingRecipe(null);
-  };
-
-  const handleEdit = (recipe: Recipe) => {
-    setSelectedRecipe(null);
-    setEditingRecipe(recipe);
-    setShowForm(true);
-  };
+  const handleRecipeUpdated = useCallback((recipeId: string, updates: Partial<Recipe>) => {
+    updateRecipe(recipeId, updates);
+  }, [updateRecipe]);
 
   const handleDelete = (id: string) => {
     const recipe = recipes.find(r => r.id === id);
@@ -287,19 +266,12 @@ export default function RecipesPage() {
         <Plus className="w-8 h-8" strokeWidth={2.5} />
       </button>
 
-      <RecipeForm
-        isOpen={showForm}
-        onClose={() => { setShowForm(false); setEditingRecipe(null); }}
-        onSave={handleSave}
-        editingRecipe={editingRecipe}
-      />
-
-      <RecipeDetail
+      <RecipeDetailView
         recipe={selectedRecipe}
         isOpen={!!selectedRecipe}
         onClose={() => setSelectedRecipe(null)}
-        onEdit={handleEdit}
         onDelete={handleDelete}
+        onRecipeUpdated={handleRecipeUpdated}
       />
 
       <AIRecipeGenerator

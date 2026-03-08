@@ -7,6 +7,7 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
 import { useToast } from '@/components/ui/Toast';
 import { SuggestedRecipe, WeekPlan } from '@/types';
+import type { RecipeMix } from '@/components/meal-plan/MealPlanControls';
 
 export type { PartialPlan } from '@/contexts/MealPlanContext';
 
@@ -25,8 +26,8 @@ export function useMealPlanGeneration() {
   const { track } = useAnalytics();
   const { showToast } = useToast();
 
-  const handleGenerate = useCallback(async () => {
-    startGeneration('');
+  const handleGenerate = useCallback(async (recipeMix?: RecipeMix) => {
+    startGeneration('', undefined, recipeMix);
   }, [startGeneration]);
 
   const handleAddToLibrary = useCallback(async (suggestedRecipe: SuggestedRecipe) => {

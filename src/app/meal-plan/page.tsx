@@ -128,7 +128,7 @@ export default function MealPlanPage() {
       </div>
 
       <MealPlanControls
-        onGenerate={handleGenerate}
+        onGenerate={(recipeMix) => handleGenerate(recipeMix)}
         hasExistingPlan={!!weekPlan}
         loading={loading}
       />
@@ -198,11 +198,11 @@ export default function MealPlanPage() {
                   <div className="flex items-center justify-center gap-1.5 text-slate-400">
                     <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
                     <span className="text-base sm:text-lg md:text-xl font-semibold font-[family-name:var(--font-outfit)]">
-                      Set preferences
+                      Add your pantry
                     </span>
                   </div>
                   <p className="text-xs sm:text-sm text-slate-400/80 mt-1 font-[family-name:var(--font-outfit)]">
-                    Set your diet, cuisines, and ingredients you want to use up
+                    Tell us what ingredients you have on hand
                   </p>
                 </div>
                 <svg viewBox="0 0 80 200" className="w-12 sm:w-14 md:w-16 h-auto" fill="none">
