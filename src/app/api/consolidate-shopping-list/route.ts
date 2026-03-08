@@ -11,7 +11,7 @@ import { Recipe, WeekPlan } from '@/types';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 function collectIngredients(
   weekPlan: WeekPlan,
@@ -136,6 +136,7 @@ Rules:
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
         'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       },
     });
   } catch (error) {

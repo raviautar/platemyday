@@ -41,8 +41,8 @@ src/
 │   ├── customize/page.tsx          # Settings
 │   ├── upgrade/page.tsx            # Premium features + Stripe checkout
 │   └── api/
-│       ├── generate-recipe/        # Single recipe generation (Gemini 3 Flash)
-│       ├── generate-meal-plan/     # Full meal plan generation (Gemini 3 Flash, streaming, credit-gated)
+│       ├── generate-recipe/        # Single recipe generation (Gemini 2.5 Flash)
+│       ├── generate-meal-plan/     # Full meal plan generation (Gemini 2.5 Flash, streaming, credit-gated)
 │       ├── regenerate-meal/        # Single meal replacement (Gemini 2.5 Flash Lite)
 │       ├── consolidate-shopping-list/ # Shopping list consolidation (Gemini 2.5 Flash, auto-triggered on plan changes)
 │       ├── billing/
@@ -94,7 +94,7 @@ supabase/
 - **Tailwind v4:** Custom colors defined via `@theme inline` in `globals.css` (not tailwind.config)
 - **Color palette:** primary=#4CAF50, secondary=#FFD54F, accent=#F48FB1, bg=#FAFFF5
 - **AI routes:** Use `generateText()` with `Output.object({ schema })` for structured output. All routes use `validateAndRateLimit()` from `ai-guardrails.ts` for request parsing, validation, and rate limiting
-- **Models:** Main generation uses `gemini-3-flash-preview`, single meal regen uses `gemini-2.5-flash-lite`
+- **Models:** Main generation uses `gemini-2.5-flash`, single meal regen uses `gemini-2.5-flash-lite`
 - **Auth flow:** Anonymous users get a UUID stored in localStorage. On Supabase Auth sign-in, anonymous data migrates to the authenticated user via `migrateAnonymousData()`. Auth pages are at `/login` and `/signup`. Supports email/password + Google OAuth
 - **Persistence:** All data stored in Supabase. Contexts fetch on mount using `useUserIdentity()` hook
 - **Meal plan history:** All generated plans are saved. Users can view and restore past plans

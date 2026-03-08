@@ -12,7 +12,7 @@ import { checkCredits, consumeCredit } from '@/lib/supabase/billing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 export async function POST(req: Request) {
   try {
@@ -84,7 +84,7 @@ ${hasRecipes ? '1. Use existing recipes from the library when appropriate (inclu
     const generationStart = Date.now();
 
     const result = streamObject({
-      model: google('gemini-3-flash-preview'),
+      model: google('gemini-2.5-flash'),
       schema: mealPlanWithDetailsSchema,
       system: systemPrompt,
       prompt,
@@ -140,6 +140,7 @@ ${hasRecipes ? '1. Use existing recipes from the library when appropriate (inclu
         'Content-Type': 'text/plain; charset=utf-8',
         'Transfer-Encoding': 'chunked',
         'Cache-Control': 'no-cache',
+        'Connection': 'keep-alive',
       },
     });
   } catch (error) {
