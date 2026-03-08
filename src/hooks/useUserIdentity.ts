@@ -26,13 +26,10 @@ export function useUserIdentity(): UserIdentity {
   useEffect(() => {
     const supabase = supabaseRef.current;
 
-    // Get initial user
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user);
-      setIsLoaded(true);
-    });
-
-    // Listen for auth state changes (sign-in, sign-out, token refresh)
+    // Use onAuthStateChange as the single source of truth.
+    // INITIAL_SESSION fires from the cookie-based session (already refreshed
+    // by middleware), avoiding the race condition with a separate getUser()
+    // network call that could resolve with null before cookies are hydrated.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (_event, session) => {
         setUser(session?.user ?? null);

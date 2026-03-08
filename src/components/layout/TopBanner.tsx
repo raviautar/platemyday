@@ -56,7 +56,7 @@ function CreditBadgeCrown() {
 export function TopBanner() {
   const pathname = usePathname();
   const isHomePage = pathname === '/';
-  const { isAuthenticated } = useUserIdentity();
+  const { isAuthenticated, isLoaded } = useUserIdentity();
 
   const handleLogoClick = () => {
     if (isHomePage) {
@@ -109,7 +109,11 @@ export function TopBanner() {
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
         <CreditBadgeCrown />
 
-        {!isAuthenticated ? (
+        {!isLoaded ? (
+          <div className="p-1.5 sm:p-2 flex-shrink-0">
+            <div className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" />
+          </div>
+        ) : !isAuthenticated ? (
           <Link
             href={`/login?redirect=${encodeURIComponent(pathname)}`}
             className="p-1.5 sm:p-2 bg-white text-emerald-600 hover:bg-emerald-50 rounded-full transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 flex-shrink-0"

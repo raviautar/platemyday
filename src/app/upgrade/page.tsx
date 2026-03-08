@@ -206,7 +206,7 @@ function UpgradeContent() {
   const [checkoutLoading, setCheckoutLoading] = useState<boolean>(false);
   const [priceInfo, setPriceInfo] = useState<{ amount: number; currency: string; formatted: string } | null>(null);
   const { track } = useAnalytics();
-  const { isAuthenticated } = useUserIdentity();
+  const { isAuthenticated, isLoaded } = useUserIdentity();
   const { plan, unlimited, creditsUsed, creditsLimit, refetch } = useBilling();
   const searchParams = useSearchParams();
 
@@ -415,19 +415,12 @@ function UpgradeContent() {
           </div>
 
           <ul className="space-y-2.5 mb-6 flex-1">
-            {features.map((feature, idx) => {
-              const text = typeof feature === 'string' ? feature : feature.text;
-              const comingSoon = typeof feature !== 'string' && feature.comingSoon;
-              return (
-                <li key={idx} className="flex items-start gap-2 text-sm">
-                  <Check className="w-4 h-4 text-white flex-shrink-0 mt-0.5" />
-                  <span className="text-white">
-                    {text}
-                    {comingSoon && <span className="ml-1.5 text-[10px] font-medium text-white/60 uppercase tracking-wide">(soon)</span>}
-                  </span>
-                </li>
-              );
-            })}
+            {features.map((feature, idx) => (
+              <li key={idx} className="flex items-start gap-2 text-sm">
+                <Check className="w-4 h-4 text-white flex-shrink-0 mt-0.5" />
+                <span className="text-white">{feature}</span>
+              </li>
+            ))}
             <li className="flex items-start gap-2 text-sm pt-2 border-t border-white/20">
               <Check className="w-4 h-4 text-secondary flex-shrink-0 mt-0.5" />
               <span className="text-white font-semibold">All future updates</span>
@@ -440,6 +433,13 @@ function UpgradeContent() {
               disabled
             >
               Current Plan
+            </button>
+          ) : !isLoaded ? (
+            <button
+              className="w-full bg-white/50 text-primary/50 font-semibold px-4 py-3 rounded-lg cursor-default"
+              disabled
+            >
+              Loading...
             </button>
           ) : !isAuthenticated ? (
             <Link href="/login?redirect=/upgrade" className="w-full bg-white text-primary hover:bg-white/90 font-semibold px-4 py-3 rounded-lg transition-colors text-center block">

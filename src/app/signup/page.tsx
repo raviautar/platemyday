@@ -1,15 +1,25 @@
 'use client';
 
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { AuthForm } from '@/components/ui/AuthForm';
+import { useUserIdentity } from '@/hooks/useUserIdentity';
 
 function SignUpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/meal-plan';
+  const { isAuthenticated, isLoaded } = useUserIdentity();
+
+  useEffect(() => {
+    if (isLoaded && isAuthenticated) {
+      router.replace(redirect);
+    }
+  }, [isLoaded, isAuthenticated, redirect, router]);
+
+  if (!isLoaded || isAuthenticated) return null;
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-white">
