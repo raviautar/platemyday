@@ -2,21 +2,30 @@
 
 import { Recipe } from '@/types';
 import { getTagDotColor } from '@/lib/tag-colors';
-import { Flame } from 'lucide-react';
+import { Flame, Sparkles } from 'lucide-react';
 
 interface RecipeCardProps {
   recipe: Recipe;
   onClick: () => void;
+  isNew?: boolean;
 }
 
-export function RecipeCard({ recipe, onClick }: RecipeCardProps) {
+export function RecipeCard({ recipe, onClick, isNew }: RecipeCardProps) {
   const totalTime = recipe.prepTimeMinutes + recipe.cookTimeMinutes;
 
   return (
     <button
       onClick={onClick}
-      className="w-full text-left bg-white rounded-xl border border-border p-4 hover:shadow-md hover:border-primary/30 transition-all"
+      className={`w-full text-left bg-white rounded-xl border p-4 hover:shadow-md hover:border-primary/30 transition-all relative ${
+        isNew ? 'border-primary/40 ring-1 ring-primary/20' : 'border-border'
+      }`}
     >
+      {isNew && (
+        <span className="absolute -top-2 -right-2 inline-flex items-center gap-0.5 text-[10px] font-semibold bg-primary text-white px-2 py-0.5 rounded-full shadow-sm">
+          <Sparkles className="w-2.5 h-2.5" />
+          New
+        </span>
+      )}
       <h3 className="font-semibold text-foreground line-clamp-1">{recipe.title}</h3>
       <p className="text-sm text-muted mt-1 line-clamp-2">{recipe.description}</p>
       <div className="flex items-center gap-3 mt-3 text-xs text-muted">

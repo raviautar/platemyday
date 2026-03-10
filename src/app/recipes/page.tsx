@@ -15,6 +15,21 @@ import { Plus, Search, SlidersHorizontal } from 'lucide-react';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
 
+const UNSEEN_RECIPES_KEY = 'platemyday-unseen-recipes';
+
+function getUnseenRecipeIds(): Set<string> {
+  try {
+    const stored = localStorage.getItem(UNSEEN_RECIPES_KEY);
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  } catch {
+    return new Set();
+  }
+}
+
+function saveUnseenRecipeIds(ids: Set<string>) {
+  localStorage.setItem(UNSEEN_RECIPES_KEY, JSON.stringify([...ids]));
+}
+
 export default function RecipesPage() {
   const { settings } = useSettings();
   const { userId, anonymousId } = useUserIdentity();
@@ -22,15 +37,20 @@ export default function RecipesPage() {
   const { track } = useAnalytics();
   const { showToast } = useToast();
   const [showAI, setShowAI] = useState(false);
-  const [isGeneratingAI, setIsGeneratingAI] = useState(false);
-  const [pendingRecipe, setPendingRecipe] = useState<Recipe | null>(null);
+  const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState<RecipeFilters>({ tags: [], maxPrepTimeMinutes: null });
+  const [unseenRecipeIds, setUnseenRecipeIds] = useState<Set<string>>(new Set());
   const filterRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Load unseen recipe IDs from localStorage on mount
+  useEffect(() => {
+    setUnseenRecipeIds(getUnseenRecipeIds());
+  }, []);
 
   const allTags = Array.from(new Set(recipes.flatMap(r => r.tags))).sort();
 
@@ -71,10 +91,21 @@ export default function RecipesPage() {
     }
   }, [filterOpen]);
 
+  const markRecipeSeen = useCallback((recipeId: string) => {
+    setUnseenRecipeIds(prev => {
+      if (!prev.has(recipeId)) return prev;
+      const next = new Set(prev);
+      next.delete(recipeId);
+      saveUnseenRecipeIds(next);
+      return next;
+    });
+  }, []);
+
   const handleSelectRecipe = useCallback((recipe: Recipe) => {
     setSelectedRecipe(recipe);
+    markRecipeSeen(recipe.id);
     track(EVENTS.RECIPE_VIEWED, { recipe_title: recipe.title, is_ai_generated: recipe.isAIGenerated });
-  }, [track]);
+  }, [track, markRecipeSeen]);
 
   const handleRecipeUpdated = useCallback((recipeId: string, updates: Partial<Recipe>) => {
     updateRecipe(recipeId, updates);
@@ -84,12 +115,13 @@ export default function RecipesPage() {
     const recipe = recipes.find(r => r.id === id);
     track(EVENTS.RECIPE_DELETED, { recipe_title: recipe?.title, is_ai_generated: recipe?.isAIGenerated });
     deleteRecipe(id);
+    // Clean up unseen tracking
+    markRecipeSeen(id);
     showToast('Recipe deleted');
   };
 
-  const handleGenerateAI = async (prompt: string, strictIngredients?: boolean): Promise<Recipe | null> => {
-    setIsGeneratingAI(true);
-    setPendingRecipe(null);
+  const handleGenerateAI = async (prompt: string, strictIngredients?: boolean) => {
+    setIsGeneratingRecipe(true);
     const startTime = Date.now();
 
     try {
@@ -116,40 +148,75 @@ export default function RecipesPage() {
         generation_time_ms: Date.now() - startTime,
       });
 
-      const newRecipe: Recipe = {
+      // Auto-save the generated recipe
+      const savedRecipe = await addRecipe({
         ...recipeData,
         isAIGenerated: true,
-        id: crypto.randomUUID(),
-        createdAt: new Date().toISOString(),
-      };
-      setPendingRecipe(newRecipe);
-      return newRecipe;
+      });
+
+      if (recipes.length === 0) track(EVENTS.FIRST_RECIPE_CREATED);
+      track(EVENTS.AI_RECIPE_SAVED, { recipe_title: savedRecipe.title });
+
+      // Mark as unseen so the card shows the "new" indicator
+      setUnseenRecipeIds(prev => {
+        const next = new Set(prev);
+        next.add(savedRecipe.id);
+        saveUnseenRecipeIds(next);
+        return next;
+      });
+
+      showToast(`"${savedRecipe.title}" saved to library!`);
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Something went wrong';
       track(EVENTS.RECIPE_GENERATION_FAILED, { error_message: message });
-      showToast(`Failed to generate recipe: ${message}`);
-      return null;
+      showToast(`Failed to generate recipe: ${message}`, 'error');
     } finally {
-      setIsGeneratingAI(false);
+      setIsGeneratingRecipe(false);
     }
   };
 
-  const handleKeepRecipe = useCallback(() => {
-    if (pendingRecipe) {
-      if (recipes.length === 0) track(EVENTS.FIRST_RECIPE_CREATED);
-      addRecipe(pendingRecipe);
-      track(EVENTS.AI_RECIPE_SAVED, { recipe_title: pendingRecipe.title });
-      showToast('Recipe saved to library!');
-      setPendingRecipe(null);
-    }
-  }, [pendingRecipe, recipes.length, track, addRecipe, showToast]);
+  const handleRegenerateRecipe = useCallback(async (recipeId: string) => {
+    const recipe = recipes.find(r => r.id === recipeId);
+    if (!recipe) return;
 
-  const handleDiscardRecipe = useCallback(() => {
-    if (pendingRecipe) {
-      track(EVENTS.AI_RECIPE_DISCARDED, { recipe_title: pendingRecipe.title });
+    try {
+      const res = await fetch('/api/generate-recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: `${recipe.title}${recipe.description ? ': ' + recipe.description : ''}`,
+          systemPrompt: settings.recipeSystemPrompt,
+          userId,
+          anonymousId,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to regenerate recipe');
+      }
+
+      const recipeData = await res.json();
+
+      updateRecipe(recipeId, {
+        title: recipeData.title,
+        description: recipeData.description,
+        ingredients: recipeData.ingredients,
+        instructions: recipeData.instructions,
+        servings: recipeData.servings,
+        prepTimeMinutes: recipeData.prepTimeMinutes,
+        cookTimeMinutes: recipeData.cookTimeMinutes,
+        tags: recipeData.tags,
+        estimatedNutrition: recipeData.estimatedNutrition,
+      });
+
+      showToast(`Recipe regenerated: "${recipeData.title}"`);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Something went wrong';
+      showToast(`Failed to regenerate: ${message}`, 'error');
+      throw err; // Re-throw so RecipeDetailView can handle loading state
     }
-    setPendingRecipe(null);
-  }, [pendingRecipe, track]);
+  }, [recipes, settings.recipeSystemPrompt, userId, anonymousId, updateRecipe, showToast]);
 
   const toggleTag = (tag: string) => {
     setFilters(prev => ({
@@ -255,6 +322,8 @@ export default function RecipesPage() {
           filters={filters}
           onSelectRecipe={handleSelectRecipe}
           onCreateRecipe={() => setShowAI(true)}
+          isGenerating={isGeneratingRecipe}
+          unseenRecipeIds={unseenRecipeIds}
         />
       </div>
 
@@ -272,16 +341,13 @@ export default function RecipesPage() {
         onClose={() => setSelectedRecipe(null)}
         onDelete={handleDelete}
         onRecipeUpdated={handleRecipeUpdated}
+        onRegenerate={handleRegenerateRecipe}
       />
 
       <AIRecipeGenerator
         isOpen={showAI}
         onClose={() => setShowAI(false)}
         onGenerate={handleGenerateAI}
-        isGenerating={isGeneratingAI}
-        lastGeneratedRecipe={pendingRecipe}
-        onKeepRecipe={handleKeepRecipe}
-        onDiscardRecipe={handleDiscardRecipe}
       />
 
     </div>

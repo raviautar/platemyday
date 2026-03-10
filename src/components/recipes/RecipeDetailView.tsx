@@ -10,7 +10,7 @@ import { useUserIdentity } from '@/hooks/useUserIdentity';
 import { useToast } from '@/components/ui/Toast';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
-import { Sparkles, Heart, Trash2, Send, Loader2 } from 'lucide-react';
+import { Sparkles, Heart, Trash2, Send, Loader2, RefreshCw } from 'lucide-react';
 import { RecipeIngredientsAndInstructions } from '@/components/recipes/RecipeIngredientsAndInstructions';
 import { getTagBadgeColor } from '@/lib/tag-colors';
 
@@ -23,6 +23,7 @@ interface RecipeDetailViewProps {
   onDelete?: (id: string) => void;
   onAddToLibrary?: (recipe: SuggestedRecipe) => void;
   onRecipeUpdated?: (recipeId: string, updates: Partial<Recipe> & { estimatedNutrition?: NutritionInfo }) => void;
+  onRegenerate?: (recipeId: string) => Promise<void>;
 }
 
 export function RecipeDetailView({
@@ -34,6 +35,7 @@ export function RecipeDetailView({
   onDelete,
   onAddToLibrary,
   onRecipeUpdated,
+  onRegenerate,
 }: RecipeDetailViewProps) {
   const { getRecipe } = useRecipes();
   const { userId, anonymousId } = useUserIdentity();
@@ -41,6 +43,7 @@ export function RecipeDetailView({
   const { track } = useAnalytics();
   const [editPrompt, setEditPrompt] = useState('');
   const [isEditing, setIsEditing] = useState(false);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   // Always resolve from context to get latest data after edits
   const recipe = (propRecipe?.id ? getRecipe(propRecipe.id) : undefined)
@@ -71,6 +74,29 @@ export function RecipeDetailView({
     ? suggestedRecipe!.estimatedNutrition
     : recipe?.estimatedNutrition || mealSlot?.estimatedNutrition;
   const isAIGenerated = isSuggested || recipe?.isAIGenerated;
+
+  const canRegenerate = isAIGenerated && onRegenerate && (isLibraryRecipe || isSuggested);
+
+  const handleRegenerate = async () => {
+    if (!onRegenerate || isRegenerating) return;
+    const recipeId = recipe?.id || '';
+    if (!recipeId) return;
+
+    setIsRegenerating(true);
+    track(EVENTS.RECIPE_GENERATION_STARTED, {
+      prompt_length: 0,
+      is_regeneration: true,
+      source: 'recipe_detail',
+    });
+
+    try {
+      await onRegenerate(recipeId);
+    } catch {
+      // Error handled by caller
+    } finally {
+      setIsRegenerating(false);
+    }
+  };
 
   const handleEditSubmit = async () => {
     if (!editPrompt.trim() || !recipe || isEditing) return;
@@ -188,17 +214,31 @@ export function RecipeDetailView({
           <div className="px-4 py-4 space-y-5 w-full">
             {/* Header with badges and actions */}
             <div className="bg-gradient-to-r from-primary/5 via-primary/3 to-transparent -mx-4 px-4 py-4 border-b border-border/40">
-              <div className="flex items-center gap-2 mb-3">
-                {isAIGenerated && (
-                  <span className={`inline-flex items-center gap-1 text-[10px] ${isSuggested ? 'bg-secondary/20 text-secondary-dark' : 'bg-accent/20 text-accent-dark'} px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold`}>
-                    <Sparkles className="w-3 h-3" />
-                    Generated
-                  </span>
-                )}
-                {mealSlot && (
-                  <span className="text-[10px] bg-secondary/30 text-yellow-800 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
-                    {mealSlot.mealType}
-                  </span>
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  {isAIGenerated && (
+                    <span className={`inline-flex items-center gap-1 text-[10px] ${isSuggested ? 'bg-secondary/20 text-secondary-dark' : 'bg-accent/20 text-accent-dark'} px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold`}>
+                      <Sparkles className="w-3 h-3" />
+                      Generated
+                    </span>
+                  )}
+                  {mealSlot && (
+                    <span className="text-[10px] bg-secondary/30 text-yellow-800 px-2 py-0.5 rounded-full uppercase tracking-wider font-semibold">
+                      {mealSlot.mealType}
+                    </span>
+                  )}
+                </div>
+
+                {/* Regenerate button — top right */}
+                {canRegenerate && (
+                  <button
+                    onClick={handleRegenerate}
+                    disabled={isRegenerating}
+                    className="p-1.5 rounded-lg text-muted hover:text-primary hover:bg-primary/10 transition-colors disabled:opacity-50"
+                    title="Regenerate recipe"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isRegenerating ? 'animate-spin' : ''}`} />
+                  </button>
                 )}
               </div>
 
@@ -225,6 +265,14 @@ export function RecipeDetailView({
                 <p className="text-sm text-muted leading-snug">{description}</p>
               )}
             </div>
+
+            {/* Regenerating overlay */}
+            {isRegenerating && (
+              <div className="flex items-center gap-2 bg-primary/5 border border-primary/20 rounded-lg px-3 py-2">
+                <RefreshCw className="w-4 h-4 text-primary animate-spin" />
+                <span className="text-sm text-primary font-medium">Regenerating recipe...</span>
+              </div>
+            )}
 
             {/* Time & servings badges */}
             {(prepTime || cookTime || servings) && (

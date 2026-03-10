@@ -208,6 +208,7 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
             updateMealNutrition(recipeId, updates.estimatedNutrition);
           }
         }}
+        onRegenerate={onReplaceMeal ? async (_recipeId: string) => { await handleRegenerate(); } : undefined}
       />
 
       <ReplaceFromRecipes
