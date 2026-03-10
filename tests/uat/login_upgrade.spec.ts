@@ -26,12 +26,12 @@ test.describe('Login and Upgrade UAT', () => {
         // Navigate to upgrade page manually
         await page.goto('/upgrade');
 
-        // Verify "Get Lifetime Premium" is visible and "Sign in to Purchase" is NOT
-        await expect(page.locator('button:has-text("Get Lifetime Premium")')).toBeVisible();
-        await expect(page.locator('button:has-text("Sign in to Purchase")')).not.toBeVisible();
+        // Verify pack purchase CTA is visible and "Sign in to Purchase" is NOT
+        await expect(page.locator('button:has-text("Enter Feast Mode")')).toBeVisible();
+        await expect(page.locator('text=Sign in to Purchase')).not.toBeVisible();
 
         // Click to start Stripe Checkout
-        await page.click('button:has-text("Get Lifetime Premium")');
+        await page.click('button:has-text("Enter Feast Mode")');
 
         // Wait for Stripe Checkout to load
         await page.waitForURL('**/checkout.stripe.com/**');
@@ -56,7 +56,7 @@ test.describe('Login and Upgrade UAT', () => {
         await page.goto('/upgrade');
 
         // Should see "Sign in to Purchase"
-        const signInBtn = page.locator('button:has-text("Sign in to Purchase")');
+        const signInBtn = page.locator('text=Sign in to Purchase').first();
         await expect(signInBtn).toBeVisible();
 
         // Redirect to login on click
@@ -108,6 +108,6 @@ test.describe('Login and Upgrade UAT', () => {
 
         // Navigate to upgrade to verify signed out state
         await page.goto('/upgrade');
-        await expect(page.locator('button:has-text("Sign in to Purchase")')).toBeVisible();
+        await expect(page.locator('text=Sign in to Purchase').first()).toBeVisible();
     });
 });

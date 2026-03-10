@@ -156,6 +156,10 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY= # pk_live_... or pk_test_...
 STRIPE_PRICE_MONTHLY=               # price_... (Stripe Price ID for monthly subscription)
 STRIPE_PRICE_ANNUAL=                # price_... (Stripe Price ID for annual subscription)
 STRIPE_PRICE_LIFETIME=              # price_... (Stripe Price ID for one-time lifetime payment)
+STRIPE_PRICE_LIFETIME_APPSUMO=      # price_... (Stripe Price ID for legacy AppSumo lifetime payment)
+STRIPE_PRICE_CREDIT_PACK_1=         # price_... (Stripe Price ID for credit pack 1 — edit credits in src/lib/credit-packs.ts)
+STRIPE_PRICE_CREDIT_PACK_2=         # price_... (Stripe Price ID for credit pack 2)
+STRIPE_PRICE_CREDIT_PACK_3=         # price_... (Stripe Price ID for credit pack 3)
 ADMIN_SECRET_KEY=                   # Secret for /api/admin/* routes
 ```
 

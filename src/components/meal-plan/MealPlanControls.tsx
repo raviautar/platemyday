@@ -6,7 +6,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal } from '@/components/ui/Modal';
 import { PreferencesEditor } from '@/components/settings/PreferencesEditor';
 import { PantryBar } from '@/components/meal-plan/PantryBar';
-import { Settings2, Sparkles, X, BookOpen } from 'lucide-react';
+import { Settings2, Sparkles, X, BookOpen, ChevronDown } from 'lucide-react';
 import { useBilling } from '@/contexts/BillingContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useRecipes } from '@/contexts/RecipeContext';
@@ -34,6 +34,7 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
   const { recipes } = useRecipes();
   const [showPreferences, setShowPreferences] = useState(false);
   const [recipeMix, setRecipeMix] = useState<RecipeMix>('balanced');
+  const [showRecipeMix, setShowRecipeMix] = useState(false);
 
   const prefs = { ...DEFAULT_USER_PREFERENCES, ...settings.preferences };
   const hasCustomizations =
@@ -53,32 +54,47 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
           {/* Recipe mix selector — only show when user has library recipes */}
           {hasLibraryRecipes && (
             <div>
-              <div className="flex items-center gap-2 mb-2">
-                <div className="flex items-center gap-1.5 text-sm font-medium text-foreground">
-                  <BookOpen className="w-4 h-4 text-muted" />
-                  <span>Recipe mix</span>
+              <button
+                type="button"
+                onClick={() => setShowRecipeMix(v => !v)}
+                className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors group"
+              >
+                <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                <span>
+                  Recipe mix:{' '}
+                  <span className="text-foreground font-medium">
+                    {RECIPE_MIX_OPTIONS.find(o => o.value === recipeMix)?.label}
+                  </span>
+                </span>
+                <ChevronDown
+                  className={`w-3 h-3 transition-transform duration-200 ${showRecipeMix ? 'rotate-180' : ''}`}
+                />
+              </button>
+
+              {showRecipeMix && (
+                <div className="mt-2 space-y-1.5">
+                  <div className="flex gap-1">
+                    {RECIPE_MIX_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => { setRecipeMix(option.value); setShowRecipeMix(false); }}
+                        title={option.description}
+                        className={`flex-1 px-1.5 sm:px-2 py-2 rounded-lg text-xs font-medium transition-all ${
+                          recipeMix === option.value
+                            ? 'bg-primary/10 text-primary border border-primary/30'
+                            : 'bg-surface/60 text-muted hover:bg-surface border border-transparent hover:text-foreground'
+                        }`}
+                      >
+                        <span className="hidden sm:inline">{option.label}</span>
+                        <span className="sm:hidden">{option.label.split(' ')[0]}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted">
+                    {RECIPE_MIX_OPTIONS.find(o => o.value === recipeMix)?.description}
+                  </p>
                 </div>
-              </div>
-              <div className="flex gap-1">
-                {RECIPE_MIX_OPTIONS.map((option) => (
-                  <button
-                    key={option.value}
-                    onClick={() => setRecipeMix(option.value)}
-                    title={option.description}
-                    className={`flex-1 px-1.5 sm:px-2 py-2 rounded-lg text-xs font-medium transition-all ${
-                      recipeMix === option.value
-                        ? 'bg-primary/10 text-primary border border-primary/30'
-                        : 'bg-surface/60 text-muted hover:bg-surface border border-transparent hover:text-foreground'
-                    }`}
-                  >
-                    <span className="hidden sm:inline">{option.label}</span>
-                    <span className="sm:hidden">{option.label.split(' ')[0]}</span>
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-muted mt-1.5">
-                {RECIPE_MIX_OPTIONS.find(o => o.value === recipeMix)?.description}
-              </p>
+              )}
             </div>
           )}
 

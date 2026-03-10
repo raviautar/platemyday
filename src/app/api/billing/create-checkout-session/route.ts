@@ -1,6 +1,7 @@
 import { getAuthUser } from '@/lib/supabase/auth';
 import { getStripe, STRIPE_PRICES } from '@/lib/stripe';
 import { createServiceClient } from '@/lib/supabase/server';
+import { CREDIT_PACKS, type CreditPackId } from '@/lib/credit-packs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -9,18 +10,23 @@ export async function POST(req: Request) {
   try {
     const { userId } = await getAuthUser();
     if (!userId) {
-      return Response.json({ error: 'Sign in required to purchase a plan' }, { status: 401 });
+      return Response.json({ error: 'Sign in required to purchase credits' }, { status: 401 });
     }
 
-    const { plan } = await req.json() as { plan: 'monthly' | 'annual' | 'lifetime' | 'lifetimeAppsumo' };
+    const { pack } = await req.json() as { pack?: CreditPackId };
+    if (!pack || !Object.hasOwn(CREDIT_PACKS, pack)) {
+      return Response.json(
+        { error: 'Invalid pack', details: { pack, availablePacks: Object.keys(CREDIT_PACKS) } },
+        { status: 400 }
+      );
+    }
 
-    const priceId = STRIPE_PRICES[plan];
+    const selectedPack = CREDIT_PACKS[pack];
+    const priceId = STRIPE_PRICES[pack];
     
     if (!priceId) {
-      return Response.json({ error: 'Invalid plan', details: { plan, availablePlans: Object.keys(STRIPE_PRICES) } }, { status: 400 });
+      return Response.json({ error: 'Pack is not configured', details: { pack } }, { status: 400 });
     }
-
-    const mode = (plan === 'lifetime' || plan === 'lifetimeAppsumo') ? 'payment' as const : 'subscription' as const;
 
     // Get or create Stripe customer
     const sb = createServiceClient();
@@ -48,14 +54,16 @@ export async function POST(req: Request) {
 
     const session = await getStripe().checkout.sessions.create({
       customer: customerId,
-      mode,
+      mode: 'payment',
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${origin}/upgrade?success=true`,
+      success_url: `${origin}/upgrade?success=true&pack=${pack}`,
       cancel_url: `${origin}/upgrade?canceled=true`,
-      metadata: { user_id: userId },
-      ...(mode === 'subscription' && {
-        subscription_data: { metadata: { user_id: userId } },
-      }),
+      metadata: {
+        user_id: userId,
+        purchase_type: 'credit_pack',
+        pack_id: pack,
+        credits_to_add: String(selectedPack.credits),
+      },
     });
 
     return Response.json({ url: session.url });

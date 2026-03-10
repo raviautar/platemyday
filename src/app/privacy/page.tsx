@@ -58,9 +58,9 @@ export default function PrivacyPolicyPage() {
 
             <h3 className="text-lg font-medium text-foreground mt-4 mb-2">Payment Information</h3>
             <p>
-              If you purchase a premium plan, payment processing is handled entirely by Stripe.
+              If you purchase generation credit bundles or a legacy paid plan, payment processing is handled entirely by Stripe.
               We do not store your credit card number, bank account details, or other payment credentials.
-              We receive from Stripe only your customer ID and subscription status.
+              We receive from Stripe only your customer ID and billing status metadata needed to provide access.
             </p>
           </section>
 
@@ -70,7 +70,7 @@ export default function PrivacyPolicyPage() {
             <ul className="list-disc pl-6 space-y-1">
               <li>Provide and maintain the Service</li>
               <li>Generate personalized meal plans and recipes based on your preferences</li>
-              <li>Process payments and manage subscriptions</li>
+              <li>Process payments and manage credit balances</li>
               <li>Improve and develop new features</li>
               <li>Analyze usage patterns to enhance user experience</li>
               <li>Communicate with you about your account or the Service</li>

@@ -42,8 +42,11 @@ export function RecipeDetailView({
   const [editPrompt, setEditPrompt] = useState('');
   const [isEditing, setIsEditing] = useState(false);
 
-  // Resolve the recipe from context if we have a meal slot with a recipeId
-  const recipe = propRecipe ?? (mealSlot?.recipeId ? getRecipe(mealSlot.recipeId) : undefined) ?? null;
+  // Always resolve from context to get latest data after edits
+  const recipe = (propRecipe?.id ? getRecipe(propRecipe.id) : undefined)
+    ?? (mealSlot?.recipeId ? getRecipe(mealSlot.recipeId) : undefined)
+    ?? propRecipe
+    ?? null;
 
   // Determine what we're showing
   const isSuggested = !!suggestedRecipe;
@@ -200,18 +203,21 @@ export function RecipeDetailView({
               </div>
 
               {/* Action buttons */}
-              <div className="flex gap-2 mb-3">
+              <div className="flex items-center gap-2 mb-3">
                 {isSuggested && onAddToLibrary && (
-                  <Button onClick={() => { onAddToLibrary(suggestedRecipe!); onClose(); }} size="sm" className="flex-1 gap-2 text-sm py-1.5 h-auto">
-                    <Heart className="w-4 h-4" />
+                  <Button onClick={() => { onAddToLibrary(suggestedRecipe!); onClose(); }} size="sm" className="gap-1.5 text-xs py-1 px-3 h-auto">
+                    <Heart className="w-3.5 h-3.5" />
                     Save to Library
                   </Button>
                 )}
                 {isLibraryRecipe && onDelete && (
-                  <Button variant="danger" size="sm" onClick={() => { onDelete(recipe!.id); onClose(); }} className="gap-2 text-sm py-1.5 h-auto">
+                  <button
+                    onClick={() => { onDelete(recipe!.id); onClose(); }}
+                    className="p-1.5 rounded-lg text-muted hover:text-danger hover:bg-danger/10 transition-colors"
+                    title="Delete recipe"
+                  >
                     <Trash2 className="w-4 h-4" />
-                    Delete
-                  </Button>
+                  </button>
                 )}
               </div>
 

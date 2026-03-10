@@ -16,7 +16,7 @@ export default function TermsOfServicePage() {
         <h1 className="text-3xl md:text-4xl font-bold font-[family-name:var(--font-outfit)] text-foreground mb-2">
           Terms of Service
         </h1>
-        <p className="text-muted-foreground text-sm mb-10">Last updated: February 21, 2026</p>
+        <p className="text-muted-foreground text-sm mb-10">Last updated: March 8, 2026</p>
 
         <div className="prose prose-neutral max-w-none space-y-8 text-foreground/90 text-[15px] leading-relaxed">
           <section>
@@ -41,7 +41,7 @@ export default function TermsOfServicePage() {
             <h2 className="text-xl font-semibold text-foreground mb-3">3. Accounts</h2>
             <ul className="list-disc pl-6 space-y-1">
               <li>You may use the Service without creating an account (as an anonymous user) with limited functionality.</li>
-              <li>To access all features, including premium plans, you must create an account using a valid email address or Google sign-in.</li>
+              <li>To purchase generation credit bundles, you must create an account using a valid email address or Google sign-in.</li>
               <li>You are responsible for maintaining the security of your account credentials.</li>
               <li>You must provide accurate information when creating your account.</li>
               <li>You must be at least 13 years old to use the Service.</li>
@@ -49,7 +49,7 @@ export default function TermsOfServicePage() {
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold text-foreground mb-3">4. Free and Premium Plans</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-3">4. Free Plan and Credit Bundles</h2>
 
             <h3 className="text-lg font-medium text-foreground mt-4 mb-2">Free Plan</h3>
             <ul className="list-disc pl-6 space-y-1">
@@ -57,12 +57,13 @@ export default function TermsOfServicePage() {
               <li>Recipe generation and single meal regeneration are free and unlimited.</li>
             </ul>
 
-            <h3 className="text-lg font-medium text-foreground mt-4 mb-2">Premium Plans</h3>
+            <h3 className="text-lg font-medium text-foreground mt-4 mb-2">Credit Bundles</h3>
             <ul className="list-disc pl-6 space-y-1">
-              <li>Premium plans (Monthly, Annual, Lifetime) provide unlimited meal plan generation.</li>
-              <li>Subscription plans renew automatically at the end of each billing period unless canceled.</li>
-              <li>The Lifetime plan is a one-time purchase granting permanent unlimited access.</li>
-              <li>All prices are displayed in Euros (&euro;) and include applicable taxes.</li>
+              <li>You can purchase one-time generation credit bundles in your account settings.</li>
+              <li>Each meal plan generation consumes one credit.</li>
+              <li>Purchased credits do not expire.</li>
+              <li>Existing paid users may retain grandfathered unlimited access where applicable.</li>
+              <li>Displayed prices and available currencies may vary by checkout region and tax settings.</li>
             </ul>
           </section>
 
@@ -70,8 +71,8 @@ export default function TermsOfServicePage() {
             <h2 className="text-xl font-semibold text-foreground mb-3">5. Payments and Refunds</h2>
             <ul className="list-disc pl-6 space-y-1">
               <li>All payments are processed securely through Stripe.</li>
-              <li>You can cancel your subscription at any time through the subscription management portal.</li>
-              <li>Upon cancellation, you retain access to premium features until the end of your current billing period.</li>
+              <li>Credit bundle purchases are processed as one-time payments.</li>
+              <li>If your account has a grandfathered subscription plan, billing changes can be managed through the subscription portal.</li>
               <li>Refund requests may be considered on a case-by-case basis within 14 days of purchase. Contact us to request a refund.</li>
             </ul>
           </section>

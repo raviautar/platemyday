@@ -89,20 +89,20 @@ export function PantryBar({ compact }: PantryBarProps) {
       <button
         type="button"
         onClick={() => setIsCollapsed(!isCollapsed)}
-        className="w-full flex items-center justify-between gap-2 px-4 py-3 hover:bg-primary/5 transition-colors"
+        className="w-full flex items-center justify-between gap-2 px-3 sm:px-4 py-3 hover:bg-primary/5 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <Package className="w-5 h-5 text-primary" />
-          <span className="font-semibold text-foreground text-sm">
+          <Package className="w-5 h-5 text-primary shrink-0" />
+          <span className="font-semibold text-foreground text-xs sm:text-sm">
             What&apos;s in your kitchen?
           </span>
           {ingredientCount > 0 && (
-            <span className="text-xs bg-primary/15 text-primary px-2 py-0.5 rounded-full font-medium">
-              {ingredientCount} item{ingredientCount !== 1 ? 's' : ''}
+            <span className="text-xs bg-primary/15 text-primary px-2 py-0.5 rounded-full font-medium shrink-0">
+              {ingredientCount}
             </span>
           )}
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           {ingredientCount > 0 && !isCollapsed && (
             <button
               type="button"
@@ -122,7 +122,7 @@ export function PantryBar({ compact }: PantryBarProps) {
 
       {/* Collapsed preview — show chips inline */}
       {isCollapsed && ingredientCount > 0 && (
-        <div className="px-4 pb-3 -mt-1">
+        <div className="px-3 sm:px-4 pb-3 -mt-1">
           <div className="flex flex-wrap gap-1.5">
             {prefs.pantryIngredients.slice(0, 8).map(ing => (
               <span
@@ -143,7 +143,7 @@ export function PantryBar({ compact }: PantryBarProps) {
 
       {/* Expanded content */}
       {!isCollapsed && (
-        <div className="px-4 pb-4 space-y-3">
+        <div className="px-3 sm:px-4 pb-4 space-y-3">
           {/* Input with autocomplete */}
           <div className="relative">
             <div className="flex gap-1.5">
@@ -219,8 +219,8 @@ export function PantryBar({ compact }: PantryBarProps) {
               ))}
             </div>
           ) : (
-            <p className="text-xs text-muted text-center py-2 italic">
-              Add ingredients you have on hand — your meal plan will prioritize using them
+            <p className="text-xs text-muted text-center py-2 italic leading-relaxed">
+              Add ingredients you have on hand and they&apos;ll be prioritized in your meal plan
             </p>
           )}
         </div>

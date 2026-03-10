@@ -1,26 +1,35 @@
 'use client';
 
-import { Suspense, useState, useEffect, useRef } from 'react';
+import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Check, Sparkles, Zap, Crown, ExternalLink, PartyPopper, Loader2, ArrowRight, Settings } from 'lucide-react';
+import { ArrowRight, Check, Crown, Loader2, Sparkles, UtensilsCrossed } from 'lucide-react';
+import Link from 'next/link';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
 import { useBilling } from '@/contexts/BillingContext';
 import { EVENTS } from '@/lib/analytics/events';
-import Link from 'next/link';
+import { CREDIT_PACK_ORDER, CREDIT_PACKS, type CreditPackId } from '@/lib/credit-packs';
 
-const features = [
-  'Unlimited meal plan generations',
-];
+interface PackPriceInfo {
+  packId: CreditPackId;
+  name: string;
+  credits: number;
+  amount: number;
+  currency: string;
+  formatted: string;
+}
 
-const freeFeatures = [
-  '10 meal plan generations',
-  'Unlimited recipe generation',
-  'Unlimited single meal regeneration',
-  'Manual recipes',
-];
+interface PriceInfoResponse {
+  packs: PackPriceInfo[];
+}
 
-const CONFETTI_COLORS = ['#4CAF50', '#FFD54F', '#F48FB1', '#388E3C', '#EC407A', '#FFC107'];
+const LEGACY_UNLIMITED_PLANS = new Set(['lifetime', 'lifetime_appsumo', 'pro_monthly', 'pro_annual']);
+
+const CARD_DECOR = {
+  credit_pack_1: 'from-emerald-500/20 to-lime-300/15 border-emerald-300/70',
+  credit_pack_2: 'from-orange-400/20 to-amber-300/20 border-orange-300/80',
+  credit_pack_3: 'from-rose-400/20 to-pink-300/20 border-rose-300/70',
+} as const;
 
 export default function UpgradePage() {
   return (
@@ -30,233 +39,85 @@ export default function UpgradePage() {
   );
 }
 
-function SuccessCelebration({ isActivePaid }: { isActivePaid: boolean }) {
-  const [showConfetti, setShowConfetti] = useState(false);
-
-  useEffect(() => {
-    if (isActivePaid) {
-      setShowConfetti(true);
-      const timer = setTimeout(() => setShowConfetti(false), 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [isActivePaid]);
-
-  return (
-    <div className="relative mb-8">
-      {showConfetti && (
-        <div className="fixed inset-0 pointer-events-none z-50">
-          <div className="confetti-container">
-            {Array.from({ length: 60 }).map((_, i) => (
-              <div
-                key={i}
-                className="confetti"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  animationDelay: `${Math.random() * 2}s`,
-                  animationDuration: `${2.5 + Math.random() * 2}s`,
-                  backgroundColor: CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)],
-                  width: `${6 + Math.random() * 8}px`,
-                  height: `${6 + Math.random() * 8}px`,
-                  borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-                }}
-              />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {isActivePaid ? (
-        <div className="celebration-card bg-gradient-to-br from-primary/10 via-accent/5 to-secondary/10 border-2 border-primary/30 rounded-2xl p-8 md:p-10 text-center relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent shimmer-overlay" />
-
-          <div className="relative z-10">
-            <div className="celebration-icon w-20 h-20 mx-auto mb-5 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center shadow-lg">
-              <PartyPopper className="w-10 h-10 text-white" />
-            </div>
-
-            <h2 className="celebration-title text-3xl md:text-4xl font-bold text-foreground mb-3">
-              Welcome to Premium!
-            </h2>
-
-            <p className="celebration-subtitle text-muted text-lg mb-2 max-w-md mx-auto">
-              You now have unlimited meal planning.
-            </p>
-            <p className="celebration-subtitle-delayed text-muted text-sm mb-6">
-              Time to create something delicious.
-            </p>
-
-            <a
-              href="/meal-plan"
-              className="celebration-cta inline-flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-semibold px-8 py-3 rounded-xl transition-colors shadow-md hover:shadow-lg"
-            >
-              Start Planning
-              <ArrowRight className="w-5 h-5" />
-            </a>
-          </div>
-        </div>
-      ) : (
-        <div className="activating-card bg-primary/5 border border-primary/20 rounded-2xl p-8 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-primary/10 rounded-full flex items-center justify-center">
-            <Loader2 className="w-8 h-8 text-primary animate-spin" />
-          </div>
-          <p className="text-primary font-semibold text-lg mb-1">Payment successful!</p>
-          <p className="text-muted text-sm">Activating your plan... This may take a moment.</p>
-        </div>
-      )}
-
-      <style jsx>{`
-        .confetti-container {
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100%;
-          height: 100%;
-          overflow: hidden;
-          pointer-events: none;
-        }
-        .confetti {
-          position: absolute;
-          top: -20px;
-          animation: confetti-fall 3s ease-out forwards;
-        }
-        @keyframes confetti-fall {
-          0% {
-            transform: translateY(0) rotate(0deg) scale(1);
-            opacity: 1;
-          }
-          80% {
-            opacity: 1;
-          }
-          100% {
-            transform: translateY(100vh) rotate(720deg) scale(0.5);
-            opacity: 0;
-          }
-        }
-        .celebration-card {
-          animation: card-appear 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-        @keyframes card-appear {
-          0% {
-            transform: scale(0.8);
-            opacity: 0;
-          }
-          100% {
-            transform: scale(1);
-            opacity: 1;
-          }
-        }
-        .shimmer-overlay {
-          animation: shimmer 3s ease-in-out infinite;
-        }
-        @keyframes shimmer {
-          0%, 100% { transform: translateX(-100%); }
-          50% { transform: translateX(100%); }
-        }
-        .celebration-icon {
-          animation: icon-bounce 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-        }
-        @keyframes icon-bounce {
-          0% {
-            transform: scale(0) rotate(-20deg);
-            opacity: 0;
-          }
-          60% {
-            transform: scale(1.2) rotate(5deg);
-          }
-          100% {
-            transform: scale(1) rotate(0deg);
-            opacity: 1;
-          }
-        }
-        .celebration-title {
-          animation: fade-up 0.5s ease-out 0.3s both;
-        }
-        .celebration-subtitle {
-          animation: fade-up 0.5s ease-out 0.5s both;
-        }
-        .celebration-subtitle-delayed {
-          animation: fade-up 0.5s ease-out 0.65s both;
-        }
-        .celebration-cta {
-          animation: fade-up 0.5s ease-out 0.8s both;
-        }
-        @keyframes fade-up {
-          0% {
-            transform: translateY(12px);
-            opacity: 0;
-          }
-          100% {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-        .activating-card {
-          animation: pulse-subtle 2s ease-in-out infinite;
-        }
-        @keyframes pulse-subtle {
-          0%, 100% { opacity: 1; }
-          50% { opacity: 0.85; }
-        }
-      `}</style>
-    </div>
-  );
-}
-
 function UpgradeContent() {
-  const [checkoutLoading, setCheckoutLoading] = useState<boolean>(false);
-  const [priceInfo, setPriceInfo] = useState<{ amount: number; currency: string; formatted: string } | null>(null);
+  const [checkoutPack, setCheckoutPack] = useState<CreditPackId | null>(null);
+  const [priceInfo, setPriceInfo] = useState<PriceInfoResponse | null>(null);
+  const [priceLoadFailed, setPriceLoadFailed] = useState(false);
+  const [portalLoading, setPortalLoading] = useState(false);
+
   const { track } = useAnalytics();
   const { isAuthenticated, isLoaded } = useUserIdentity();
-  const { plan, unlimited, creditsUsed, creditsLimit, refetch } = useBilling();
+  const { plan, unlimited, creditsUsed, creditsLimit, creditsRemaining, refetch } = useBilling();
   const searchParams = useSearchParams();
 
-  const isActivePaid = plan === 'lifetime' || plan === 'lifetime_appsumo' || plan === 'pro_monthly' || plan === 'pro_annual';
   const success = searchParams.get('success') === 'true';
   const canceled = searchParams.get('canceled') === 'true';
+  const purchasedPack = searchParams.get('pack') as CreditPackId | null;
 
-  // Keep a stable ref to refetch so the polling effect doesn't restart
-  // when the callback identity changes (e.g. anonymousId hydration)
+  const isGrandfatheredUnlimited = unlimited && LEGACY_UNLIMITED_PLANS.has(plan);
+  const isLegacySubscription = plan === 'pro_monthly' || plan === 'pro_annual';
+
   const refetchRef = useRef(refetch);
-  useEffect(() => { refetchRef.current = refetch; }, [refetch]);
+  useEffect(() => {
+    refetchRef.current = refetch;
+  }, [refetch]);
 
   useEffect(() => {
     track(EVENTS.UPGRADE_PAGE_VIEWED);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
+    let cancelled = false;
+
     async function fetchPriceInfo() {
       try {
         const res = await fetch('/api/billing/price-info');
-        if (res.ok) {
-          const data = await res.json();
+        if (!res.ok) {
+          if (!cancelled) setPriceLoadFailed(true);
+          return;
+        }
+        const data = (await res.json()) as PriceInfoResponse;
+        if (!cancelled) {
           setPriceInfo(data);
+          setPriceLoadFailed(false);
         }
       } catch (error) {
         console.error('Failed to fetch price info:', error);
+        if (!cancelled) setPriceLoadFailed(true);
       }
     }
+
     fetchPriceInfo();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
-  // Poll billing data after successful checkout — webhook may not have processed yet
   useEffect(() => {
     if (!success) return;
 
     let attempts = 0;
     const maxAttempts = 8;
     let stopped = false;
+    // Track the limit seen on the first poll so we know when the webhook has fired
+    let baseLimit: number | null = null;
 
     const poll = async () => {
       const data = await refetchRef.current();
-      attempts++;
-      // Stop polling once the plan is recognized as active
-      if (data && (data.plan === 'lifetime' || data.plan === 'lifetime_appsumo' || data.plan === 'pro_monthly' || data.plan === 'pro_annual')) {
+      attempts += 1;
+
+      if (baseLimit === null && data) {
+        baseLimit = data.creditsLimit;
+      }
+
+      const creditsAdded = baseLimit !== null && data !== null && data.creditsLimit > baseLimit;
+
+      if (data?.unlimited || creditsAdded || attempts >= maxAttempts) {
         stopped = true;
         clearInterval(interval);
       }
     };
 
-    // Immediate fetch + retries every 2s
     poll();
     const interval = setInterval(() => {
       if (stopped || attempts >= maxAttempts) {
@@ -267,32 +128,70 @@ function UpgradeContent() {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [success]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [success]);
 
-  async function handleCheckout() {
-    track(EVENTS.CHECKOUT_STARTED, { plan: 'lifetimeAppsumo' });
+  const packPrices = useMemo(() => {
+    const apiById = new Map((priceInfo?.packs || []).map((pack) => [pack.packId, pack]));
 
-    setCheckoutLoading(true);
+    return CREDIT_PACK_ORDER.map((packId) => {
+      const pack = CREDIT_PACKS[packId];
+      const apiPrice = apiById.get(packId);
+
+      return {
+        ...pack,
+        amount: apiPrice?.amount ?? null,
+        currency: apiPrice?.currency ?? null,
+        formatted: apiPrice?.formatted ?? null,
+      };
+    });
+  }, [priceInfo]);
+
+  const pricingPending = !priceInfo && !priceLoadFailed;
+
+  const remaining = creditsRemaining ?? Math.max(0, creditsLimit - creditsUsed);
+
+  async function handleCheckout(packId: CreditPackId) {
+    const pack = packPrices.find((p) => p.id === packId);
+    if (!pack) return;
+
+    track(EVENTS.UPGRADE_PLAN_SELECTED, {
+      pack_id: pack.id,
+      credits: pack.credits,
+      ...(pack.amount !== null ? { price: pack.amount } : {}),
+      ...(pack.currency ? { currency: pack.currency } : {}),
+    });
+    track(EVENTS.CHECKOUT_STARTED, {
+      pack_id: pack.id,
+      credits: pack.credits,
+      ...(pack.amount !== null ? { price: pack.amount } : {}),
+      ...(pack.currency ? { currency: pack.currency } : {}),
+    });
+
+    setCheckoutPack(packId);
+
     try {
       const res = await fetch('/api/billing/create-checkout-session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ plan: 'lifetimeAppsumo' }),
+        body: JSON.stringify({ pack: packId }),
       });
+
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
-      } else {
-        alert(data.error || 'Failed to start checkout');
-        setCheckoutLoading(false);
+        return;
       }
+
+      alert(data.error || 'Failed to start checkout');
+      setCheckoutPack(null);
     } catch {
       alert('Failed to start checkout. Please try again.');
-      setCheckoutLoading(false);
+      setCheckoutPack(null);
     }
   }
 
   async function handleManageSubscription() {
+    setPortalLoading(true);
     try {
       const res = await fetch('/api/billing/create-portal-session', {
         method: 'POST',
@@ -300,165 +199,183 @@ function UpgradeContent() {
       const data = await res.json();
       if (data.url) {
         window.location.href = data.url;
+        return;
       }
+      alert(data.error || 'Failed to open subscription management');
     } catch {
-      alert('Failed to open subscription management.');
+      alert('Failed to open subscription management');
+    } finally {
+      setPortalLoading(false);
     }
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      {success && <SuccessCelebration isActivePaid={isActivePaid} />}
+    <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-b from-white/80 to-surface/40 p-6 md:p-10 shadow-[0_25px_90px_-45px_rgba(44,130,78,0.55)]">
+      <div className="pointer-events-none absolute -left-24 top-[-70px] h-64 w-64 rounded-full bg-gradient-to-br from-primary/25 to-secondary/20 blur-3xl" />
+      <div className="pointer-events-none absolute -right-28 bottom-[-60px] h-72 w-72 rounded-full bg-gradient-to-br from-accent/20 to-primary/15 blur-3xl" />
 
-      {canceled && (
-        <div className="mb-6 bg-secondary/10 border border-secondary/30 rounded-xl p-4 text-center">
-          <p className="text-foreground">Checkout was canceled. You can try again anytime.</p>
-        </div>
-      )}
-
-      {isActivePaid && !success && (
-        <div className="mb-8 bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 rounded-2xl p-6 md:p-8">
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="w-12 h-12 bg-primary/15 rounded-full flex items-center justify-center flex-shrink-0">
-                <Crown className="w-6 h-6 text-primary" />
-              </div>
-              <div>
-                <p className="text-sm text-muted">Your current plan</p>
-                <p className="text-xl font-bold text-foreground">
-                  {plan === 'lifetime' || plan === 'lifetime_appsumo' ? 'Lifetime Premium' : plan === 'pro_annual' ? 'Premium Annual' : 'Premium Monthly'}
-                </p>
-                <p className="text-sm text-primary font-medium">Unlimited meal plan generation</p>
-              </div>
+      {success && (
+        <div className="relative z-10 mb-6 rounded-2xl border border-primary/30 bg-primary/10 p-4 md:p-5">
+          <div className="flex items-start gap-3">
+            <div className="mt-0.5 rounded-full bg-primary/20 p-2 text-primary">
+              <Check className="h-5 w-5" />
             </div>
-            <div className="flex flex-col sm:flex-row gap-2">
-              {(plan === 'pro_monthly' || plan === 'pro_annual') && (
-                <button
-                  className="inline-flex items-center justify-center gap-2 bg-white border border-border text-foreground hover:bg-surface font-medium px-5 py-2.5 rounded-lg transition-colors text-sm"
-                  onClick={handleManageSubscription}
-                >
-                  <Settings className="w-4 h-4" />
-                  Manage Subscription
-                </button>
-              )}
-              <a
-                href="/meal-plan"
-                className="inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-medium px-5 py-2.5 rounded-lg transition-colors text-sm"
-              >
-                Go to Meal Plan
-                <ArrowRight className="w-4 h-4" />
-              </a>
+            <div>
+              <p className="text-sm font-semibold text-foreground">Purchase confirmed</p>
+              <p className="text-sm text-muted">
+                {purchasedPack && Object.hasOwn(CREDIT_PACKS, purchasedPack)
+                  ? `${CREDIT_PACKS[purchasedPack].name} is being added to your account.`
+                  : 'Your generation credits are being added to your account.'}
+              </p>
             </div>
           </div>
-          {(plan === 'pro_monthly' || plan === 'pro_annual') && (
-            <p className="text-xs text-muted mt-4 text-center sm:text-left">
-              You can cancel, switch plans, or update payment details via Manage Subscription.
-            </p>
-          )}
         </div>
       )}
 
-      <div className="text-center mb-6">
-        {isActivePaid ? (
-          <>
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-3">
-              <Check className="w-4 h-4" />
-              Premium Active
-            </div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Your Plan
-            </h1>
-            <p className="text-muted max-w-2xl mx-auto">
-              You have unlimited meal planning
-            </p>
-          </>
+      {canceled && (
+        <div className="relative z-10 mb-6 rounded-2xl border border-secondary/40 bg-secondary/15 p-4 text-sm text-foreground">
+          Checkout was canceled. You can try any bundle whenever you are ready.
+        </div>
+      )}
+
+      {priceLoadFailed && (
+        <div className="relative z-10 mb-6 rounded-2xl border border-danger/30 bg-danger/10 p-4 text-sm text-foreground">
+          We could not load live Stripe prices right now. Please refresh in a moment.
+        </div>
+      )}
+
+      <div className="relative z-10 mb-8 md:mb-10">
+        <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-foreground/5 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-muted">
+          <Sparkles className="h-3.5 w-3.5" />
+          Meal plan credits
+        </div>
+        <h1 className="text-3xl md:text-5xl font-bold leading-tight text-foreground font-[family-name:var(--font-outfit)]">
+          Get more meal plan credits
+        </h1>
+        <p className="mt-3 max-w-2xl text-sm md:text-base text-muted">
+          Each full meal plan uses one credit. Credits never expire.
+        </p>
+      </div>
+
+      <div className="relative z-10 mb-6 flex flex-wrap items-center gap-3">
+        {isGrandfatheredUnlimited ? (
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary/40 bg-primary/10 px-4 py-2 text-sm font-semibold text-primary">
+            <Crown className="h-4 w-4" />
+            Grandfathered Unlimited Active
+          </div>
         ) : (
-          <>
-            <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-4 py-1.5 rounded-full text-sm font-medium mb-3">
-              <Sparkles className="w-4 h-4" />
-              Unlock Premium
-            </div>
-            <h1 className="text-3xl font-bold text-foreground mb-2">
-              Upgrade to Premium
-            </h1>
-            <p className="text-muted max-w-2xl mx-auto">
-              Unlimited personalized meal planning
-            </p>
-            {!unlimited && (
-              <p className="text-sm text-muted mt-1.5">
-                <span className="font-semibold text-foreground">{creditsLimit - creditsUsed}</span> of <span className="font-semibold text-foreground">{creditsLimit}</span> free meal plan generations remaining
-              </p>
-            )}
-          </>
+          <div className="inline-flex items-center gap-2 rounded-full border border-border bg-white/70 px-4 py-2 text-sm text-foreground">
+            <UtensilsCrossed className="h-4 w-4 text-primary" />
+            <span>
+              <strong>{remaining}</strong> of <strong>{creditsLimit}</strong> total credits remaining
+            </span>
+          </div>
+        )}
+
+        {isLegacySubscription && (
+          <button
+            onClick={handleManageSubscription}
+            disabled={portalLoading}
+            className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-medium text-foreground hover:bg-surface disabled:opacity-60"
+          >
+            {portalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+            Manage Subscription
+          </button>
         )}
       </div>
 
-      <div className="max-w-md mx-auto mb-12">
-        <div className="bg-gradient-to-br from-primary to-primary-dark rounded-xl p-8 flex flex-col relative overflow-hidden shadow-xl">
-          <div className="absolute top-4 right-4">
-            <div className="bg-accent text-white text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1">
-              <Crown className="w-3 h-3" />
-              APPSUMO EXCLUSIVE
-            </div>
-          </div>
+      <div className="relative z-10 grid grid-cols-1 gap-4 md:grid-cols-3 md:gap-5">
+        {packPrices.map((pack, idx) => {
+          const hasPrice = pack.amount !== null && !!pack.currency && !!pack.formatted;
+          const isLoading = checkoutPack === pack.id;
+          const isDisabled = isGrandfatheredUnlimited || Boolean(checkoutPack) || !hasPrice;
+          const perGeneration = pack.amount !== null ? pack.amount / pack.credits : null;
 
-          <div className="mb-6">
-            <h3 className="text-xl font-semibold text-white mb-2">Lifetime Premium</h3>
-            <div className="flex items-baseline gap-1 mb-2">
-              {priceInfo ? (
-                <span className="text-5xl font-bold text-white">{priceInfo.formatted}</span>
-              ) : (
-                <span className="text-5xl font-bold text-white">&euro;40</span>
+          return (
+            <article
+              key={pack.id}
+              className={`group relative overflow-hidden rounded-2xl border bg-gradient-to-b ${CARD_DECOR[pack.id]} p-5 md:p-6 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg animate-pack-in`}
+              style={{ animationDelay: `${idx * 110}ms` }}
+            >
+              <div className="pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-white/50 blur-2xl" />
+
+              {pack.badge && (
+                <div className="absolute right-3 top-3 rounded-full bg-foreground text-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide">
+                  {pack.badge}
+                </div>
               )}
-              <span className="text-white/80 text-lg">one-time</span>
-            </div>
-          </div>
 
-          <ul className="space-y-2.5 mb-6 flex-1">
-            {features.map((feature, idx) => (
-              <li key={idx} className="flex items-start gap-2 text-sm">
-                <Check className="w-4 h-4 text-white flex-shrink-0 mt-0.5" />
-                <span className="text-white">{feature}</span>
-              </li>
-            ))}
-            <li className="flex items-start gap-2 text-sm pt-2 border-t border-white/20">
-              <Check className="w-4 h-4 text-secondary flex-shrink-0 mt-0.5" />
-              <span className="text-white font-semibold">All future updates</span>
-            </li>
-          </ul>
+              <h2 className="text-xl font-bold text-foreground font-[family-name:var(--font-outfit)]">{pack.name}</h2>
+              <p className="mt-1 text-sm text-muted">{pack.subtitle}</p>
 
-          {(plan === 'lifetime' || plan === 'lifetime_appsumo') ? (
-            <button
-              className="w-full bg-white/20 text-white font-semibold px-4 py-3 rounded-lg"
-              disabled
-            >
-              Current Plan
-            </button>
-          ) : !isLoaded ? (
-            <button
-              className="w-full bg-white/50 text-primary/50 font-semibold px-4 py-3 rounded-lg cursor-default"
-              disabled
-            >
-              Loading...
-            </button>
-          ) : !isAuthenticated ? (
-            <Link href="/login?redirect=/upgrade" className="w-full bg-white text-primary hover:bg-white/90 font-semibold px-4 py-3 rounded-lg transition-colors text-center block">
-              Sign in to Purchase
-            </Link>
-          ) : (
-            <button
-              className="w-full bg-white text-primary hover:bg-white/90 font-semibold px-4 py-3 rounded-lg transition-colors disabled:opacity-50"
-              onClick={handleCheckout}
-              disabled={checkoutLoading || isActivePaid}
-            >
-              {checkoutLoading ? 'Redirecting...' : 'Get Lifetime Premium'}
-            </button>
-          )}
-          <p className="text-xs text-white/70 text-center mt-3">
-            Pay once, use forever
-          </p>
-        </div>
+              <div className="mt-5 flex items-end gap-2">
+                <p className="text-4xl font-black text-foreground tracking-tight">
+                  {pack.formatted ?? (pricingPending ? '...' : 'Unavailable')}
+                </p>
+                <p className="pb-1 text-xs font-medium uppercase tracking-wide text-muted">one-time</p>
+              </div>
+
+              <p className="mt-1 text-xs text-muted">
+                {perGeneration !== null && pack.currency
+                  ? `~${new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: pack.currency,
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    }).format(perGeneration)} per plan`
+                  : pricingPending
+                    ? 'Loading price...'
+                    : 'Price unavailable right now'}
+              </p>
+
+              <div className="mt-5 rounded-xl border border-white/40 bg-white/60 p-3">
+                <p className="text-2xl font-bold text-foreground">{pack.credits}</p>
+                <p className="text-xs font-medium uppercase tracking-wide text-muted">Meal plan credits</p>
+              </div>
+              
+
+              {isLoaded && !isAuthenticated ? (
+                <Link
+                  href="/login?redirect=/upgrade"
+                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-foreground/90"
+                >
+                  Sign in to Purchase
+                </Link>
+              ) : (
+                <button
+                  onClick={() => handleCheckout(pack.id)}
+                  disabled={!isAuthenticated || isDisabled}
+                  className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-foreground px-4 py-3 text-sm font-semibold text-white transition hover:bg-foreground/90 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <ArrowRight className="h-4 w-4" />}
+                  {isGrandfatheredUnlimited ? 'Unlimited Active' : pack.cta}
+                </button>
+              )}
+            </article>
+          );
+        })}
       </div>
+
+      <p className="relative z-10 mt-6 text-xs text-muted">
+        Payments are securely handled by Stripe. Existing paid users stay on unlimited access.
+      </p>
+
+      <style jsx>{`
+        .animate-pack-in {
+          animation: pack-in 0.55s ease-out both;
+        }
+
+        @keyframes pack-in {
+          from {
+            opacity: 0;
+            transform: translateY(16px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+      `}</style>
     </div>
   );
 }

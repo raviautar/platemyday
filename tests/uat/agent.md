@@ -7,7 +7,7 @@ This document provides instructions for the agent to create Playwright UAT tests
 1.  **Verification**: 
     - Sign in via email → navigate to `/upgrade` → should see checkout button immediately (no flash of "Sign in to Purchase")
     - Sign in via Google OAuth → callback → redirect → should see authenticated state
-    - On `/upgrade`, click "Get Lifetime Premium" → complete Stripe checkout → redirect back to `/upgrade?success=true` → should see "Payment successful" / celebration, not "Sign in to Purchase"
+    - On `/upgrade`, click a credit-pack CTA (e.g. "Enter Feast Mode") → complete Stripe checkout → redirect back to `/upgrade?success=true` → should see purchase confirmation, not "Sign in to Purchase"
     - While signed in, manually navigate to `/login` → should redirect to `/meal-plan`
     - While signed out, navigate to `/upgrade` → should see "Sign in to Purchase" (correct behavior)
 
@@ -22,8 +22,8 @@ The Playwright test (to be written in `tests/uat/login_upgrade.spec.ts` or simil
 - **Action**: Fill in a unique email (e.g., `test_{timestamp}@example.com`) and password, and create an account.
 - **Verification**: Ensure the user is redirected to `/meal-plan`.
 - **Action**: Manually navigate to `http://localhost:3000/upgrade`.
-- **Verification**: The "Get Lifetime Premium" button should be visible immediately. The "Sign in to Purchase" button should NOT be present.
-- **Action**: Click the "Get Lifetime Premium" button.
+- **Verification**: A credit-pack purchase CTA (for example, "Enter Feast Mode") should be visible immediately. The "Sign in to Purchase" button should NOT be present.
+- **Action**: Click the selected credit-pack CTA.
 - **Action**: Fill in the Stripe Checkout details:
   - Email: Pre-filled or use the generated test email.
   - Card Number: `4242 4242 4242 4242`

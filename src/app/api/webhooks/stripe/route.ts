@@ -3,6 +3,7 @@ import { getStripe } from '@/lib/stripe';
 import { createServiceClient } from '@/lib/supabase/server';
 import { trackServerEvent } from '@/lib/analytics/posthog-server';
 import { EVENTS } from '@/lib/analytics/events';
+import { CREDIT_PACKS, type CreditPackId } from '@/lib/credit-packs';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,6 +23,26 @@ function getPlanIdFromPriceId(priceId: string): string {
   if (priceId === process.env.STRIPE_PRICE_LIFETIME) return 'lifetime';
   if (priceId === process.env.STRIPE_PRICE_LIFETIME_APPSUMO) return 'lifetime_appsumo';
   return 'free';
+}
+
+function parseCreditPackMetadata(metadata: Stripe.Metadata | null | undefined): {
+  packId: CreditPackId;
+  creditsToAdd: number;
+} | null {
+  const rawPackId = metadata?.pack_id;
+  const rawCredits = metadata?.credits_to_add;
+  if (!rawPackId || !rawCredits) return null;
+
+  if (!Object.hasOwn(CREDIT_PACKS, rawPackId)) return null;
+
+  const creditsToAdd = Number.parseInt(rawCredits, 10);
+  if (!Number.isFinite(creditsToAdd) || creditsToAdd <= 0) return null;
+  if (creditsToAdd !== CREDIT_PACKS[rawPackId as CreditPackId].credits) return null;
+
+  return {
+    packId: rawPackId as CreditPackId,
+    creditsToAdd,
+  };
 }
 
 export async function POST(req: Request) {
@@ -49,20 +70,49 @@ export async function POST(req: Request) {
       if (!userId) break;
 
       if (session.mode === 'payment') {
-        // Lifetime purchase
-        await sb.from('user_billing').upsert(
-          {
-            user_id: userId,
-            stripe_customer_id: session.customer as string,
-            plan_id: 'lifetime',
-            subscription_status: null,
-            subscription_id: null,
-            updated_at: new Date().toISOString(),
-          },
-          { onConflict: 'user_id' },
-        );
+        const packPurchase = parseCreditPackMetadata(session.metadata);
 
-        trackServerEvent(EVENTS.SUBSCRIPTION_ACTIVATED, userId, '', { plan: 'lifetime' });
+        if (packPurchase) {
+          const { data, error } = await sb.rpc('apply_credit_pack_purchase', {
+            p_stripe_event_id: event.id,
+            p_stripe_session_id: session.id,
+            p_user_id: userId,
+            p_pack_id: packPurchase.packId,
+            p_credits: packPurchase.creditsToAdd,
+          });
+
+          if (error) {
+            console.error('Failed to apply credit pack purchase:', error);
+            break;
+          }
+
+          const row = Array.isArray(data) ? data[0] : data;
+          const applied = Boolean(row?.applied);
+
+          if (applied) {
+            trackServerEvent(EVENTS.SUBSCRIPTION_ACTIVATED, userId, '', {
+              plan: 'credit_pack',
+              pack_id: packPurchase.packId,
+              credits_added: packPurchase.creditsToAdd,
+              credits_limit: row?.credits_limit,
+            });
+          }
+        } else {
+          // Legacy lifetime purchase path (kept for grandfathered users/history)
+          await sb.from('user_billing').upsert(
+            {
+              user_id: userId,
+              stripe_customer_id: session.customer as string,
+              plan_id: 'lifetime',
+              subscription_status: null,
+              subscription_id: null,
+              updated_at: new Date().toISOString(),
+            },
+            { onConflict: 'user_id' },
+          );
+
+          trackServerEvent(EVENTS.SUBSCRIPTION_ACTIVATED, userId, '', { plan: 'lifetime' });
+        }
       } else if (session.mode === 'subscription' && session.subscription) {
         // Subscription purchase — set billing immediately so the user is recognized
         // as premium even before the customer.subscription.created event arrives
