@@ -137,8 +137,8 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
           {!billingLoading && !unlimited && (
             <p className={`text-xs text-center ${(creditsRemaining ?? 0) <= 2 ? 'text-accent font-medium' : 'text-muted'}`}>
               {(creditsRemaining ?? 0) === 0
-                ? 'No free generations remaining'
-                : `${creditsRemaining} free generation${creditsRemaining === 1 ? '' : 's'} remaining`}
+                ? 'No generations remaining'
+                : `${creditsRemaining} generation${creditsRemaining === 1 ? '' : 's'} remaining`}
             </p>
           )}
         </div>

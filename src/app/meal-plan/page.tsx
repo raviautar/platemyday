@@ -149,9 +149,9 @@ export default function MealPlanPage() {
               <div className="w-14 h-14 mx-auto mb-4 bg-amber-50 rounded-full flex items-center justify-center">
                 <Crown className="w-7 h-7 text-amber-500" />
               </div>
-              <h3 className="text-lg font-semibold text-foreground mb-2">You&apos;ve used all your free generations</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-2">You&apos;ve used all your generations</h3>
               <p className="text-sm text-muted mb-6">
-                Upgrade to a paid plan for unlimited meal plan generations, or come back later.
+                Get more credits to keep generating meal plans.
               </p>
               <Link
                 href="/upgrade"

@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { ArrowRight, Check, Crown, Loader2, Sparkles, UtensilsCrossed } from 'lucide-react';
+import { ArrowRight, Crown, Loader2, PartyPopper, Sparkles, UtensilsCrossed, X } from 'lucide-react';
 import Link from 'next/link';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
@@ -39,11 +39,69 @@ export default function UpgradePage() {
   );
 }
 
+function SuccessCelebration({ packName, creditsAdded, onClose }: { packName: string; creditsAdded: number; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 animate-fade-in">
+      <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative bg-white rounded-3xl shadow-2xl max-w-sm w-full overflow-hidden border border-border/50">
+        {/* Decorative top gradient */}
+        <div className="h-2 bg-gradient-to-r from-primary via-secondary to-accent" />
+
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-muted hover:text-foreground p-1 rounded-lg transition-colors z-10"
+          aria-label="Close"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        <div className="px-6 pt-8 pb-6 text-center">
+          {/* Animated icon */}
+          <div className="mx-auto mb-5 w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-emerald-100 flex items-center justify-center animate-celebration-bounce">
+            <PartyPopper className="w-10 h-10 text-primary" />
+          </div>
+
+          <h2 className="text-2xl font-bold text-foreground font-[family-name:var(--font-outfit)] mb-2">
+            You&apos;re all set!
+          </h2>
+          <p className="text-muted text-sm mb-5">
+            <strong className="text-foreground">{creditsAdded} credits</strong> from your <strong className="text-foreground">{packName}</strong> pack have been added to your account.
+          </p>
+
+          <Link
+            href="/meal-plan"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:from-primary-dark hover:to-emerald-700 shadow-md hover:shadow-lg"
+          >
+            <Sparkles className="w-4 h-4" />
+            Start planning meals
+          </Link>
+        </div>
+
+        <style jsx>{`
+          .animate-celebration-bounce {
+            animation: celebration-bounce 0.6s ease-out;
+          }
+
+          @keyframes celebration-bounce {
+            0% { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+            50% { transform: scale(1.15) rotate(5deg); opacity: 1; }
+            70% { transform: scale(0.95) rotate(-2deg); }
+            100% { transform: scale(1) rotate(0deg); }
+          }
+        `}</style>
+      </div>
+    </div>
+  );
+}
+
 function UpgradeContent() {
   const [checkoutPack, setCheckoutPack] = useState<CreditPackId | null>(null);
   const [priceInfo, setPriceInfo] = useState<PriceInfoResponse | null>(null);
   const [priceLoadFailed, setPriceLoadFailed] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationCredits, setCelebrationCredits] = useState(0);
+  const [pollComplete, setPollComplete] = useState(false);
 
   const { track } = useAnalytics();
   const { isAuthenticated, isLoaded } = useUserIdentity();
@@ -96,10 +154,15 @@ function UpgradeContent() {
   useEffect(() => {
     if (!success) return;
 
+    // Determine expected credits from the purchased pack so we can detect
+    // if the webhook already fired before we started polling.
+    const expectedCredits = purchasedPack && Object.hasOwn(CREDIT_PACKS, purchasedPack)
+      ? CREDIT_PACKS[purchasedPack].credits
+      : null;
+
     let attempts = 0;
     const maxAttempts = 8;
     let stopped = false;
-    // Track the limit seen on the first poll so we know when the webhook has fired
     let baseLimit: number | null = null;
 
     const poll = async () => {
@@ -111,13 +174,29 @@ function UpgradeContent() {
       }
 
       const creditsAdded = baseLimit !== null && data !== null && data.creditsLimit > baseLimit;
+      // If the pack credits are already reflected in the limit on the first poll,
+      // the webhook fired before we started polling — treat as success.
+      const alreadyApplied = !creditsAdded && expectedCredits !== null && data !== null && data.creditsLimit >= expectedCredits;
+      const confirmed = data?.unlimited || creditsAdded || alreadyApplied;
 
-      if (data?.unlimited || creditsAdded || attempts >= maxAttempts) {
+      if (confirmed || attempts >= maxAttempts) {
         stopped = true;
         clearInterval(interval);
+
+        if (!cancelled) {
+          setPollComplete(true);
+          if (confirmed) {
+            const added = creditsAdded && baseLimit !== null && data
+              ? data.creditsLimit - baseLimit
+              : expectedCredits ?? 0;
+            setCelebrationCredits(added);
+            setShowCelebration(true);
+          }
+        }
       }
     };
 
+    let cancelled = false;
     poll();
     const interval = setInterval(() => {
       if (stopped || attempts >= maxAttempts) {
@@ -127,8 +206,11 @@ function UpgradeContent() {
       poll();
     }, 2000);
 
-    return () => clearInterval(interval);
-  }, [success]);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [success, purchasedPack]);
 
   const packPrices = useMemo(() => {
     const apiById = new Map((priceInfo?.packs || []).map((pack) => [pack.packId, pack]));
@@ -209,25 +291,30 @@ function UpgradeContent() {
     }
   }
 
+  const celebrationPackName = purchasedPack && Object.hasOwn(CREDIT_PACKS, purchasedPack)
+    ? CREDIT_PACKS[purchasedPack].name
+    : 'Credit';
+
   return (
     <div className="relative overflow-hidden rounded-3xl border border-border/60 bg-gradient-to-b from-white/80 to-surface/40 p-6 md:p-10 shadow-[0_25px_90px_-45px_rgba(44,130,78,0.55)]">
       <div className="pointer-events-none absolute -left-24 top-[-70px] h-64 w-64 rounded-full bg-gradient-to-br from-primary/25 to-secondary/20 blur-3xl" />
       <div className="pointer-events-none absolute -right-28 bottom-[-60px] h-72 w-72 rounded-full bg-gradient-to-br from-accent/20 to-primary/15 blur-3xl" />
 
-      {success && (
+      {showCelebration && (
+        <SuccessCelebration
+          packName={celebrationPackName}
+          creditsAdded={celebrationCredits}
+          onClose={() => setShowCelebration(false)}
+        />
+      )}
+
+      {success && !showCelebration && !pollComplete && (
         <div className="relative z-10 mb-6 rounded-2xl border border-primary/30 bg-primary/10 p-4 md:p-5">
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 rounded-full bg-primary/20 p-2 text-primary">
-              <Check className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-foreground">Purchase confirmed</p>
-              <p className="text-sm text-muted">
-                {purchasedPack && Object.hasOwn(CREDIT_PACKS, purchasedPack)
-                  ? `${CREDIT_PACKS[purchasedPack].name} is being added to your account.`
-                  : 'Your generation credits are being added to your account.'}
-              </p>
-            </div>
+          <div className="flex items-center gap-3">
+            <Loader2 className="h-5 w-5 text-primary animate-spin shrink-0" />
+            <p className="text-sm text-muted">
+              Confirming your purchase...
+            </p>
           </div>
         </div>
       )}
@@ -267,7 +354,7 @@ function UpgradeContent() {
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-white/70 px-4 py-2 text-sm text-foreground">
             <UtensilsCrossed className="h-4 w-4 text-primary" />
             <span>
-              <strong>{remaining}</strong> of <strong>{creditsLimit}</strong> total credits remaining
+              <strong>{remaining}</strong> {remaining === 1 ? 'credit' : 'credits'} remaining
             </span>
           </div>
         )}
@@ -308,31 +395,31 @@ function UpgradeContent() {
               <h2 className="text-xl font-bold text-foreground font-[family-name:var(--font-outfit)]">{pack.name}</h2>
               <p className="mt-1 text-sm text-muted">{pack.subtitle}</p>
 
-              <div className="mt-5 flex items-end gap-2">
-                <p className="text-4xl font-black text-foreground tracking-tight">
-                  {pack.formatted ?? (pricingPending ? '...' : 'Unavailable')}
+              {/* Credits + Price */}
+              <div className="mt-5 space-y-1">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-3xl font-black text-foreground tracking-tight">{pack.credits}</span>
+                  <span className="text-sm font-medium text-muted">credits</span>
+                </div>
+                <div className="flex items-baseline gap-2">
+                  <p className="text-lg font-bold text-foreground tracking-tight">
+                    {pack.formatted ?? (pricingPending ? '...' : '—')}
+                  </p>
+                  <span className="text-xs text-muted">one-time</span>
+                </div>
+                <p className="text-xs text-muted">
+                  {perGeneration !== null && pack.currency
+                    ? `${new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: pack.currency,
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }).format(perGeneration)} per meal plan`
+                    : pricingPending
+                      ? 'Loading price...'
+                      : 'Price unavailable right now'}
                 </p>
-                <p className="pb-1 text-xs font-medium uppercase tracking-wide text-muted">one-time</p>
               </div>
-
-              <p className="mt-1 text-xs text-muted">
-                {perGeneration !== null && pack.currency
-                  ? `~${new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: pack.currency,
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    }).format(perGeneration)} per plan`
-                  : pricingPending
-                    ? 'Loading price...'
-                    : 'Price unavailable right now'}
-              </p>
-
-              <div className="mt-5 rounded-xl border border-white/40 bg-white/60 p-3">
-                <p className="text-2xl font-bold text-foreground">{pack.credits}</p>
-                <p className="text-xs font-medium uppercase tracking-wide text-muted">Meal plan credits</p>
-              </div>
-              
 
               {isLoaded && !isAuthenticated ? (
                 <Link
