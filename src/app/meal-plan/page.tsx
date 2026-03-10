@@ -87,7 +87,7 @@ export default function MealPlanPage() {
           <button
             type="button"
             aria-label="Shopping list"
-            title="Shopping List"
+            title={!weekPlan && !shoppingListLoading ? 'Generate a meal plan first' : 'Shopping List'}
             onClick={() => {
               if (weekPlan || shoppingListLoading) {
                 setShoppingListOpen(true);

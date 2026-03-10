@@ -15,7 +15,8 @@
       "WebFetch(domain:medium.com)",
       "WebFetch(domain:clerk.com)",
       "Bash(node -e:*)",
-      "WebFetch(domain:supabase.com)"
+      "WebFetch(domain:supabase.com)",
+      "Bash(git log --all --oneline --grep=\"credit\" -i)"
     ]
   }
 }

@@ -195,7 +195,7 @@ export function consumeRateLimit({
   };
 }
 
-export function rateLimitResponse(action: string, retryAfterSeconds: number): Response {
+function rateLimitResponse(action: string, retryAfterSeconds: number): Response {
   return Response.json(
     {
       error: `Too many ${action} requests. Please wait ${retryAfterSeconds}s and try again.`,
@@ -210,7 +210,7 @@ export function rateLimitResponse(action: string, retryAfterSeconds: number): Re
   );
 }
 
-export function validationErrorResponse(error: z.ZodError): Response {
+function validationErrorResponse(error: z.ZodError): Response {
   const firstIssue = error.issues[0];
   const fieldPath = firstIssue?.path?.join('.');
   const detail = fieldPath ? `${fieldPath}: ${firstIssue.message}` : 'Request payload is invalid.';
@@ -218,7 +218,7 @@ export function validationErrorResponse(error: z.ZodError): Response {
   return Response.json({ error: detail }, { status: 400 });
 }
 
-export async function parseJsonBody(request: Request): Promise<unknown | null> {
+async function parseJsonBody(request: Request): Promise<unknown | null> {
   try {
     return await request.json();
   } catch {

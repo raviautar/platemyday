@@ -67,10 +67,12 @@ export async function POST(req: Request) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.metadata?.user_id || session.metadata?.clerk_user_id;
+      console.log('[webhook] checkout.session.completed:', { sessionId: session.id, mode: session.mode, userId, metadata: session.metadata });
       if (!userId) break;
 
       if (session.mode === 'payment') {
         const packPurchase = parseCreditPackMetadata(session.metadata);
+        console.log('[webhook] parseCreditPackMetadata result:', packPurchase);
 
         if (packPurchase) {
           const { data, error } = await sb.rpc('apply_credit_pack_purchase', {
@@ -83,11 +85,15 @@ export async function POST(req: Request) {
 
           if (error) {
             console.error('Failed to apply credit pack purchase:', error);
-            break;
+            return Response.json(
+              { error: 'Failed to apply credit pack purchase' },
+              { status: 500 }
+            );
           }
 
           const row = Array.isArray(data) ? data[0] : data;
           const applied = Boolean(row?.applied);
+          console.log('[webhook] apply_credit_pack_purchase result:', { applied, credits_used: row?.credits_used, credits_limit: row?.credits_limit });
 
           if (applied) {
             trackServerEvent(EVENTS.SUBSCRIPTION_ACTIVATED, userId, '', {
@@ -97,6 +103,13 @@ export async function POST(req: Request) {
               credits_limit: row?.credits_limit,
             });
           }
+        } else if (session.metadata?.purchase_type === 'credit_pack') {
+          // Credit pack metadata was present but failed validation — don't fall through to lifetime
+          console.error('[webhook] Credit pack metadata validation failed:', session.metadata);
+          return Response.json(
+            { error: 'Invalid credit pack metadata' },
+            { status: 500 }
+          );
         } else {
           // Legacy lifetime purchase path (kept for grandfathered users/history)
           await sb.from('user_billing').upsert(

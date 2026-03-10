@@ -72,7 +72,7 @@ interface MealPlanContextType {
 
 const MealPlanContext = createContext<MealPlanContextType | null>(null);
 
-export function collectIngredients(
+function collectIngredients(
   weekPlan: WeekPlan,
   recipesMap: Map<string, string[]>,
   suggestedRecipes?: Record<string, SuggestedRecipe>,

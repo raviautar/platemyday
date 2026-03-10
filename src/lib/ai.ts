@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const nutritionSchema = z.object({
+const nutritionSchema = z.object({
   calories: z.number().describe('Estimated calories per serving'),
   protein: z.number().describe('Estimated protein in grams per serving'),
   carbs: z.number().describe('Estimated carbohydrates in grams per serving'),

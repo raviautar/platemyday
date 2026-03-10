@@ -24,6 +24,17 @@ export function Modal({ isOpen, onClose, title, children, fullscreen = false }: 
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        onCloseRef.current();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen]);
+
   // Handle browser back button for fullscreen modals
   useEffect(() => {
     if (!fullscreen || !isOpen) return;

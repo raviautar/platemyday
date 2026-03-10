@@ -205,7 +205,7 @@ export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedReci
         ) : (
           <div className="text-center py-8">
             <ShoppingCart className="w-12 h-12 text-muted mx-auto mb-3" />
-            <p className="text-muted">No ingredients found in your meal plan.</p>
+            <p className="text-muted">Your meal plan has no ingredients yet. Add meals to see your shopping list.</p>
           </div>
         )}
       </div>
