@@ -19,15 +19,24 @@ import {
   deleteMealPlanDb,
 } from '@/lib/supabase/db';
 
+export interface PartialMeal {
+  mealType?: string;
+  recipeTitle?: string;
+  recipeId?: string;
+  estimatedNutrition?: { calories?: number; protein?: number; carbs?: number; fat?: number };
+  description?: string;
+  ingredients?: string[];
+  instructions?: string[];
+  servings?: number;
+  prepTimeMinutes?: number;
+  cookTimeMinutes?: number;
+  tags?: string[];
+}
+
 export interface PartialPlan {
   days?: Array<{
     dayOfWeek?: string;
-    meals?: Array<{
-      mealType?: string;
-      recipeTitle?: string;
-      recipeId?: string;
-      estimatedNutrition?: { calories?: number };
-    }>;
+    meals?: PartialMeal[];
   }>;
 }
 
@@ -45,6 +54,7 @@ interface MealPlanContextType {
   clearWeekPlan: () => void;
   replaceMeal: (dayIndex: number, mealId: string, newMeal: MealSlot, newSuggestedRecipe?: SuggestedRecipe) => void;
   updateMealNutrition: (recipeId: string, nutrition: NutritionInfo) => void;
+  updateSuggestedRecipe: (title: string, updated: SuggestedRecipe) => void;
   mealPlanHistory: WeekPlan[];
   loadHistory: () => Promise<void>;
   restoreMealPlan: (planId: string) => Promise<void>;
@@ -186,6 +196,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     }
 
     if (generating) return;
+    if (!weekPlan.id) return; // Wait for DB save to assign an ID
 
     const ingredients = collectIngredients(weekPlan, recipesMap, weekPlan.suggestedRecipes);
 
@@ -392,6 +403,32 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     });
   }, [updateLocalPlan]);
 
+  const updateSuggestedRecipe = useCallback((title: string, updated: SuggestedRecipe) => {
+    updateLocalPlan(prev => {
+      const existing = prev.suggestedRecipes || {};
+      const newTitle = updated.title;
+      const updatedSuggested = { ...existing };
+      delete updatedSuggested[title];
+      updatedSuggested[newTitle] = updated;
+
+      const newDays = title !== newTitle
+        ? prev.days.map(d => ({
+            ...d,
+            meals: d.meals.map(m =>
+              m.recipeTitleFallback === title ? { ...m, recipeTitleFallback: newTitle, estimatedNutrition: updated.estimatedNutrition } : m
+            ),
+          }))
+        : prev.days.map(d => ({
+            ...d,
+            meals: d.meals.map(m =>
+              m.recipeTitleFallback === title ? { ...m, estimatedNutrition: updated.estimatedNutrition } : m
+            ),
+          }));
+
+      return { ...prev, days: newDays, suggestedRecipes: updatedSuggested };
+    });
+  }, [updateLocalPlan]);
+
   const clearWeekPlan = useCallback(() => {
     setWeekPlanState(null);
   }, []);
@@ -472,40 +509,40 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     return weekStart;
   }, []);
 
-  const buildWeekPlan = useCallback((data: any): WeekPlan => {
+  // data is an array of days; each meal carries inline recipe details for new recipes
+  const buildWeekPlan = useCallback((data: any[]): WeekPlan => {
     const weekStart = getWeekStartDate(settings.weekStartDay);
-
     const suggestedRecipesMap: Record<string, SuggestedRecipe> = {};
-    if (data.newRecipes) {
-      data.newRecipes.forEach((recipe: any) => {
-        suggestedRecipesMap[recipe.title] = {
-          title: recipe.title,
-          description: recipe.description,
-          ingredients: recipe.ingredients || [],
-          instructions: recipe.instructions || [],
-          servings: recipe.servings,
-          prepTimeMinutes: recipe.prepTimeMinutes,
-          cookTimeMinutes: recipe.cookTimeMinutes,
-          tags: recipe.tags || [],
-          estimatedNutrition: recipe.estimatedNutrition,
-        };
-      });
-    }
 
-    const days = data.days.map((day: any, index: number) => {
+    const days = data.map((day: any, index: number) => {
       const date = new Date(weekStart);
       date.setDate(weekStart.getDate() + index);
 
       return {
         date: date.toISOString().split('T')[0],
         dayOfWeek: day.dayOfWeek || DAYS_OF_WEEK[index],
-        meals: (day.meals || []).map((meal: any) => ({
-          id: crypto.randomUUID(),
-          recipeId: meal.recipeId || '',
-          mealType: meal.mealType,
-          recipeTitleFallback: meal.recipeId ? undefined : meal.recipeTitle,
-          estimatedNutrition: meal.estimatedNutrition,
-        })),
+        meals: (day.meals || []).map((meal: any) => {
+          if (!meal.recipeId && meal.ingredients?.length > 0) {
+            suggestedRecipesMap[meal.recipeTitle] = {
+              title: meal.recipeTitle,
+              description: meal.description || '',
+              ingredients: meal.ingredients || [],
+              instructions: meal.instructions || [],
+              servings: meal.servings,
+              prepTimeMinutes: meal.prepTimeMinutes,
+              cookTimeMinutes: meal.cookTimeMinutes,
+              tags: meal.tags || [],
+              estimatedNutrition: meal.estimatedNutrition,
+            };
+          }
+          return {
+            id: crypto.randomUUID(),
+            recipeId: meal.recipeId || '',
+            mealType: meal.mealType,
+            recipeTitleFallback: meal.recipeId ? undefined : meal.recipeTitle,
+            estimatedNutrition: meal.estimatedNutrition,
+          };
+        }),
       };
     });
 
@@ -588,10 +625,10 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
             finalData = JSON.parse(trimmed.slice(5));
           } else {
             try {
-              const partial = JSON.parse(trimmed);
-              setPartialPlan(partial);
+              const day = JSON.parse(trimmed);
+              setPartialPlan(prev => ({ days: [...(prev?.days || []), day] }));
             } catch {
-              // Ignore malformed partial lines
+              // Ignore malformed lines
             }
           }
         }
@@ -653,13 +690,15 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
         const newSuggested = newWeekPlan.suggestedRecipes;
         await setWeekPlan(newWeekPlan, newSuggested);
 
-        const newRecipeCount = finalData.newRecipes?.length || 0;
+        const days = finalData as any[];
+        const newRecipeCount = days.reduce((count: number, d: any) =>
+          count + (d.meals || []).filter((m: any) => !m.recipeId && (m.ingredients?.length ?? 0) > 0).length, 0);
         const generationTime = Date.now() - generationStartTime;
 
         track(EVENTS.MEAL_PLAN_GENERATION_COMPLETED, {
           new_recipe_count: newRecipeCount,
           generation_time_ms: generationTime,
-          total_meals: finalData.days?.reduce((sum: number, d: { meals?: unknown[] }) => sum + (d.meals?.length || 0), 0) || 0,
+          total_meals: days.reduce((sum: number, d: { meals?: unknown[] }) => sum + (d.meals?.length || 0), 0),
         });
 
         if (isFirstPlan) {
@@ -701,6 +740,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     clearWeekPlan,
     replaceMeal,
     updateMealNutrition,
+    updateSuggestedRecipe,
     mealPlanHistory,
     loadHistory,
     restoreMealPlan,
@@ -725,7 +765,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     clearGenerationError,
   }), [
     weekPlan, setWeekPlan, moveMeal, removeMeal, addMealToDay, clearWeekPlan,
-    replaceMeal, updateMealNutrition, mealPlanHistory, loadHistory, restoreMealPlan, deleteMealPlan,
+    replaceMeal, updateMealNutrition, updateSuggestedRecipe, mealPlanHistory, loadHistory, restoreMealPlan, deleteMealPlan,
     historyLoading, loading, shoppingList, shoppingPantryItems, shoppingListLoading,
     shoppingListUpdated, nutritionUpdated, dismissShoppingListUpdated, dismissNutritionUpdated,
     addPantryItemToShoppingList,

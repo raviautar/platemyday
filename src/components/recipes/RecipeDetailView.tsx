@@ -23,6 +23,7 @@ interface RecipeDetailViewProps {
   onDelete?: (id: string) => void;
   onAddToLibrary?: (recipe: SuggestedRecipe) => void;
   onRecipeUpdated?: (recipeId: string, updates: Partial<Recipe> & { estimatedNutrition?: NutritionInfo }) => void;
+  onSuggestedRecipeUpdated?: (title: string, updated: SuggestedRecipe) => void;
   onRegenerate?: (recipeId: string) => Promise<void>;
 }
 
@@ -35,6 +36,7 @@ export function RecipeDetailView({
   onDelete,
   onAddToLibrary,
   onRecipeUpdated,
+  onSuggestedRecipeUpdated,
   onRegenerate,
 }: RecipeDetailViewProps) {
   const { getRecipe } = useRecipes();
@@ -98,12 +100,28 @@ export function RecipeDetailView({
     }
   };
 
+  const canEdit = (isLibraryRecipe && !!onRecipeUpdated) || (isSuggested && !!onSuggestedRecipeUpdated);
+
   const handleEditSubmit = async () => {
-    if (!editPrompt.trim() || !recipe || isEditing) return;
+    if (!editPrompt.trim() || isEditing) return;
+
+    const sourceRecipe = recipe || (suggestedRecipe ? {
+      title: suggestedRecipe.title,
+      description: suggestedRecipe.description || '',
+      ingredients: suggestedRecipe.ingredients,
+      instructions: suggestedRecipe.instructions,
+      servings: suggestedRecipe.servings || 4,
+      prepTimeMinutes: suggestedRecipe.prepTimeMinutes || 0,
+      cookTimeMinutes: suggestedRecipe.cookTimeMinutes || 0,
+      tags: suggestedRecipe.tags,
+      estimatedNutrition: suggestedRecipe.estimatedNutrition,
+    } : null);
+
+    if (!sourceRecipe) return;
 
     setIsEditing(true);
     track(EVENTS.RECIPE_EDITED, {
-      recipe_title: recipe.title,
+      recipe_title: sourceRecipe.title,
       prompt_length: editPrompt.trim().length,
     });
 
@@ -113,15 +131,15 @@ export function RecipeDetailView({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           currentRecipe: {
-            title: recipe.title,
-            description: recipe.description,
-            ingredients: recipe.ingredients,
-            instructions: recipe.instructions,
-            servings: recipe.servings,
-            prepTimeMinutes: recipe.prepTimeMinutes,
-            cookTimeMinutes: recipe.cookTimeMinutes,
-            tags: recipe.tags,
-            estimatedNutrition: recipe.estimatedNutrition,
+            title: sourceRecipe.title,
+            description: sourceRecipe.description,
+            ingredients: sourceRecipe.ingredients,
+            instructions: sourceRecipe.instructions,
+            servings: sourceRecipe.servings,
+            prepTimeMinutes: sourceRecipe.prepTimeMinutes,
+            cookTimeMinutes: sourceRecipe.cookTimeMinutes,
+            tags: sourceRecipe.tags,
+            estimatedNutrition: sourceRecipe.estimatedNutrition,
           },
           editPrompt: editPrompt.trim(),
           userId: userId ?? undefined,
@@ -136,17 +154,31 @@ export function RecipeDetailView({
 
       const updatedRecipe = await response.json();
 
-      onRecipeUpdated?.(recipe.id, {
-        title: updatedRecipe.title,
-        description: updatedRecipe.description,
-        ingredients: updatedRecipe.ingredients,
-        instructions: updatedRecipe.instructions,
-        servings: updatedRecipe.servings,
-        prepTimeMinutes: updatedRecipe.prepTimeMinutes,
-        cookTimeMinutes: updatedRecipe.cookTimeMinutes,
-        tags: updatedRecipe.tags,
-        estimatedNutrition: updatedRecipe.estimatedNutrition,
-      });
+      if (isLibraryRecipe && recipe) {
+        onRecipeUpdated?.(recipe.id, {
+          title: updatedRecipe.title,
+          description: updatedRecipe.description,
+          ingredients: updatedRecipe.ingredients,
+          instructions: updatedRecipe.instructions,
+          servings: updatedRecipe.servings,
+          prepTimeMinutes: updatedRecipe.prepTimeMinutes,
+          cookTimeMinutes: updatedRecipe.cookTimeMinutes,
+          tags: updatedRecipe.tags,
+          estimatedNutrition: updatedRecipe.estimatedNutrition,
+        });
+      } else if (isSuggested && suggestedRecipe) {
+        onSuggestedRecipeUpdated?.(suggestedRecipe.title, {
+          title: updatedRecipe.title,
+          description: updatedRecipe.description || '',
+          ingredients: updatedRecipe.ingredients || [],
+          instructions: updatedRecipe.instructions || [],
+          servings: updatedRecipe.servings,
+          prepTimeMinutes: updatedRecipe.prepTimeMinutes,
+          cookTimeMinutes: updatedRecipe.cookTimeMinutes,
+          tags: updatedRecipe.tags || [],
+          estimatedNutrition: updatedRecipe.estimatedNutrition,
+        });
+      }
 
       setEditPrompt('');
       showToast('Recipe updated!');
@@ -343,8 +375,7 @@ export function RecipeDetailView({
           </div>
         </div>
 
-        {/* Prompt edit bar — only for library recipes */}
-        {isLibraryRecipe && onRecipeUpdated && (
+        {canEdit && (
           <div className="sticky bottom-0 bg-white border-t border-border/60 px-4 py-3 safe-area-bottom">
             <div className="flex gap-2">
               <input

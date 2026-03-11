@@ -19,27 +19,21 @@ export const recipeSchema = z.object({
   estimatedNutrition: nutritionSchema.optional().describe('Estimated nutrition per serving'),
 });
 
-export const mealPlanWithDetailsSchema = z.object({
-  days: z.array(z.object({
-    dayOfWeek: z.string().describe('Day of the week'),
-    meals: z.array(z.object({
-      mealType: z.enum(['breakfast', 'lunch', 'dinner', 'snack']),
-      recipeTitle: z.string().describe('Title of recipe'),
-      recipeId: z.string().optional().describe('ID of existing recipe if using one from library'),
-      estimatedNutrition: nutritionSchema.describe('Estimated nutrition per serving for this meal'),
-    })),
-  })).length(7).describe('7 consecutive days of meal plans starting from the specified week start day'),
-  newRecipes: z.array(z.object({
-    title: z.string().describe('Recipe title - must match recipeTitle in meals'),
-    description: z.string().describe('Brief description of the dish'),
-    ingredients: z.array(z.string()).describe('List of ingredients with measurements'),
-    instructions: z.array(z.string()).describe('Step-by-step cooking instructions'),
-    servings: z.number().describe('Number of servings'),
-    prepTimeMinutes: z.number().describe('Preparation time in minutes'),
-    cookTimeMinutes: z.number().describe('Cooking time in minutes'),
-    tags: z.array(z.string()).describe('Tags like "vegetarian", "quick", "italian"'),
-    estimatedNutrition: nutritionSchema.describe('Estimated nutrition per serving'),
-  })).describe('Full details for any new recipes not in the user\'s library'),
+export const mealPlanDaySchema = z.object({
+  dayOfWeek: z.string().describe('Day of the week'),
+  meals: z.array(z.object({
+    mealType: z.enum(['breakfast', 'lunch', 'dinner', 'snack']),
+    recipeTitle: z.string().describe('Title of recipe'),
+    recipeId: z.string().optional().describe('ID of existing recipe if using one from library'),
+    estimatedNutrition: nutritionSchema.describe('Estimated nutrition per serving for this meal'),
+    description: z.string().optional().describe('Brief description — new recipes only'),
+    ingredients: z.array(z.string()).optional().describe('Ingredients with measurements — new recipes only'),
+    instructions: z.array(z.string()).optional().describe('Step-by-step instructions — new recipes only'),
+    servings: z.number().optional().describe('Number of servings — new recipes only'),
+    prepTimeMinutes: z.number().optional().describe('Prep time in minutes — new recipes only'),
+    cookTimeMinutes: z.number().optional().describe('Cook time in minutes — new recipes only'),
+    tags: z.array(z.string()).optional().describe('Tags like "vegetarian", "quick", "italian" — new recipes only'),
+  })),
 });
 
 export const consolidatedShoppingListSchema = z.object({
@@ -51,5 +45,5 @@ export const consolidatedShoppingListSchema = z.object({
 });
 
 export type AIRecipeOutput = z.infer<typeof recipeSchema>;
-export type AIMealPlanWithDetailsOutput = z.infer<typeof mealPlanWithDetailsSchema>;
+export type AIMealPlanDayOutput = z.infer<typeof mealPlanDaySchema>;
 export type AIConsolidatedShoppingList = z.infer<typeof consolidatedShoppingListSchema>;

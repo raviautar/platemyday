@@ -29,7 +29,7 @@ interface MealCardProps {
 
 const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo, onReplaceMeal, suggestedRecipe, onAddToLibrary }: MealCardProps) => {
   const { getRecipe, updateRecipe } = useRecipes();
-  const { updateMealNutrition } = useMealPlan();
+  const { updateMealNutrition, updateSuggestedRecipe } = useMealPlan();
   const { settings } = useSettings();
   const { userId, anonymousId } = useUserIdentity();
   const { track } = useAnalytics();
@@ -207,6 +207,9 @@ const MealCardComponent = ({ meal, currentDayIndex, weekDays, onRemove, onMoveTo
           if (updates.estimatedNutrition) {
             updateMealNutrition(recipeId, updates.estimatedNutrition);
           }
+        }}
+        onSuggestedRecipeUpdated={(oldTitle, updated) => {
+          updateSuggestedRecipe(oldTitle, updated);
         }}
         onRegenerate={onReplaceMeal ? async (_recipeId: string) => { await handleRegenerate(); } : undefined}
       />

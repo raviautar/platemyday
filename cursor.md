@@ -50,7 +50,7 @@ AI-powered meal planning app with recipe management and weekly meal planning usi
 - **Navigation**: `src/components/layout/Sidebar.tsx` (desktop), `BottomNav.tsx` (mobile) + logo at `public/icon.png`
 - **Auth Middleware**: `src/middleware.ts` - Clerk config (all routes public)
 - **Types**: `src/types/index.ts` - Core interfaces (Recipe, MealSlot, WeekPlan, AppSettings, LoadingRecipe)
-- **AI Schemas**: `src/lib/ai.ts` - Zod schemas for AI validation (recipeSchema, mealPlanSchema, mealPlanWithDetailsSchema)
+- **AI Schemas**: `src/lib/ai.ts` - Zod schemas for AI validation (recipeSchema, mealPlanDaySchema, consolidatedShoppingListSchema)
 - **Contexts**: `src/contexts/` - RecipeContext, MealPlanContext, SettingsContext
 - **Constants**: `src/lib/constants.ts` - Default prompts, unit system functions
 
