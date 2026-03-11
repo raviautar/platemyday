@@ -77,6 +77,10 @@ export async function POST(req: Request) {
     return Response.json(result.output);
   } catch (error) {
     console.error('Recipe generation error:', error);
+    trackServerEvent(EVENTS.RECIPE_GENERATION_FAILED, null, '', {
+      error_type: 'server_error',
+      error_message: error instanceof Error ? error.message : 'Unknown error',
+    });
     return Response.json(
       { error: 'Failed to generate recipe. Please try again with a different description!' },
       { status: 500 }

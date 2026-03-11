@@ -154,6 +154,7 @@ export default function RecipesPage() {
         isAIGenerated: true,
       });
 
+      track(EVENTS.RECIPE_CREATED, { recipe_title: savedRecipe.title, source: 'ai_generator', is_ai_generated: true });
       if (recipes.length === 0) track(EVENTS.FIRST_RECIPE_CREATED);
       track(EVENTS.AI_RECIPE_SAVED, { recipe_title: savedRecipe.title });
 

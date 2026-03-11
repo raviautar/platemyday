@@ -84,6 +84,9 @@ export function AIRecipeGenerator({ isOpen, onClose, onGenerate }: AIRecipeGener
   };
 
   const handleClose = () => {
+    if (prompt.trim()) {
+      track(EVENTS.AI_RECIPE_DISCARDED, { prompt_length: prompt.trim().length, had_strict_ingredients: strictIngredients });
+    }
     setPrompt('');
     setStrictIngredients(false);
     onClose();

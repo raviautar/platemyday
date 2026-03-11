@@ -58,6 +58,7 @@ export function useMealPlanGeneration() {
       setWeekPlan(updatedPlan);
     }
 
+    track(EVENTS.RECIPE_CREATED, { recipe_title: suggestedRecipe.title, source: 'suggested_recipe', is_ai_generated: true });
     track(EVENTS.SUGGESTED_RECIPE_SAVED, { recipe_title: suggestedRecipe.title });
     showToast(`${suggestedRecipe.title} added to your library!`);
   }, [addRecipe, weekPlan, setWeekPlan, track, showToast]);

@@ -70,6 +70,10 @@ CRITICAL: Provide a COMPLETE recipe with:
     return Response.json(result.output);
   } catch (error) {
     console.error('Meal regeneration error:', error);
+    trackServerEvent(EVENTS.MEAL_PLAN_GENERATION_FAILED, null, '', {
+      error_type: 'server_error',
+      error_message: error instanceof Error ? error.message : 'Unknown error',
+    });
     return Response.json(
       { error: 'Failed to regenerate meal. Please try again.' },
       { status: 500 }
