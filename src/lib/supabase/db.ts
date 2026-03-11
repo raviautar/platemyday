@@ -153,13 +153,14 @@ export async function saveMealPlan(
   anonymousId: string,
   suggestedRecipes?: Record<string, SuggestedRecipe>
 ): Promise<WeekPlan> {
-  // If the plan already has an ID, update it instead of creating a new one
   if (weekPlan.id) {
+    console.log('[DB] saveMealPlan: UPDATE path', { planId: weekPlan.id, userId, anonymousId });
     await updateMealPlan(supabase, weekPlan, suggestedRecipes);
     return weekPlan;
   }
 
-  // Deactivate all existing active plans for this user
+  console.log('[DB] saveMealPlan: INSERT path (new plan)', { userId, anonymousId, weekStartDate: weekPlan.weekStartDate });
+
   const owner = ownerFilter(userId, anonymousId);
   await supabase
     .from('meal_plans')
@@ -167,7 +168,6 @@ export async function saveMealPlan(
     .match(owner)
     .eq('is_active', true);
 
-  // Insert the new meal plan
   const { data: plan, error: planError } = await supabase
     .from('meal_plans')
     .insert({
@@ -179,8 +179,8 @@ export async function saveMealPlan(
     .single();
 
   if (planError) throw planError;
+  console.log('[DB] saveMealPlan: meal_plans row inserted', { dbPlanId: plan.id });
 
-  // Insert days
   const daysToInsert = weekPlan.days.map((day, index) => ({
     meal_plan_id: plan.id,
     day_of_week: day.dayOfWeek,
@@ -194,11 +194,10 @@ export async function saveMealPlan(
     .select();
 
   if (daysError) throw daysError;
+  console.log('[DB] saveMealPlan: meal_plan_days inserted', { count: days.length });
 
-  // Sort days by index to match original order
   const sortedDays = [...days].sort((a, b) => a.day_index - b.day_index);
 
-  // Insert meals
   const mealsToInsert = weekPlan.days.flatMap((day, dayIdx) =>
     day.meals.map((meal, mealIdx) => ({
       day_id: sortedDays[dayIdx].id,
@@ -215,10 +214,11 @@ export async function saveMealPlan(
       .from('meal_plan_meals')
       .insert(mealsToInsert);
     if (mealsError) throw mealsError;
+    console.log('[DB] saveMealPlan: meal_plan_meals inserted', { count: mealsToInsert.length });
   }
 
-  // Insert suggested recipes if any
-  if (suggestedRecipes && Object.keys(suggestedRecipes).length > 0) {
+  const suggestedCount = suggestedRecipes ? Object.keys(suggestedRecipes).length : 0;
+  if (suggestedRecipes && suggestedCount > 0) {
     const suggestedToInsert = Object.values(suggestedRecipes).map(sr => ({
       meal_plan_id: plan.id,
       title: sr.title,
@@ -236,9 +236,12 @@ export async function saveMealPlan(
       .from('suggested_recipes')
       .insert(suggestedToInsert);
     if (sugError) throw sugError;
+    console.log('[DB] saveMealPlan: suggested_recipes inserted', { count: suggestedCount });
+  } else {
+    console.log('[DB] saveMealPlan: no suggested recipes to insert');
   }
 
-  // Return the full plan
+  console.log('[DB] saveMealPlan: INSERT complete', { dbPlanId: plan.id });
   return { ...weekPlan, id: plan.id, createdAt: plan.created_at };
 }
 
@@ -249,7 +252,6 @@ export async function updateMealPlan(
 ): Promise<void> {
   if (!weekPlan.id) throw new Error('Cannot update meal plan without ID');
 
-  // Get existing day IDs
   const { data: existingDays, error: daysError } = await supabase
     .from('meal_plan_days')
     .select('id, day_index')
@@ -257,17 +259,17 @@ export async function updateMealPlan(
     .order('day_index', { ascending: true });
 
   if (daysError) throw daysError;
+  console.log('[DB] updateMealPlan: existing days found', { count: existingDays?.length ?? 0, planId: weekPlan.id });
 
-  // Delete all existing meals
   if (existingDays && existingDays.length > 0) {
     const dayIds = existingDays.map(d => d.id);
     await supabase
       .from('meal_plan_meals')
       .delete()
       .in('day_id', dayIds);
+    console.log('[DB] updateMealPlan: deleted existing meals for', dayIds.length, 'days');
   }
 
-  // Insert updated meals
   const mealsToInsert = weekPlan.days.flatMap((day, dayIdx) => {
     const dayId = existingDays?.[dayIdx]?.id;
     if (!dayId) return [];
@@ -281,6 +283,7 @@ export async function updateMealPlan(
     }));
   });
 
+  console.log('[DB] updateMealPlan: inserting meals', { count: mealsToInsert.length });
   if (mealsToInsert.length > 0) {
     const { error: mealsError } = await supabase
       .from('meal_plan_meals')
@@ -288,13 +291,14 @@ export async function updateMealPlan(
     if (mealsError) throw mealsError;
   }
 
-  // Update suggested recipes: delete old ones and insert new ones
   await supabase
     .from('suggested_recipes')
     .delete()
     .eq('meal_plan_id', weekPlan.id);
 
-  if (suggestedRecipes && Object.keys(suggestedRecipes).length > 0) {
+  const suggestedCount = suggestedRecipes ? Object.keys(suggestedRecipes).length : 0;
+  console.log('[DB] updateMealPlan: upserting suggested recipes', { count: suggestedCount });
+  if (suggestedRecipes && suggestedCount > 0) {
     const suggestedToInsert = Object.values(suggestedRecipes).map(sr => ({
       meal_plan_id: weekPlan.id,
       title: sr.title,
@@ -313,6 +317,8 @@ export async function updateMealPlan(
       .insert(suggestedToInsert);
     if (sugError) throw sugError;
   }
+
+  console.log('[DB] updateMealPlan: UPDATE complete', { planId: weekPlan.id });
 }
 
 export async function restoreMealPlanDb(

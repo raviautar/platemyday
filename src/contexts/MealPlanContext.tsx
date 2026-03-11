@@ -213,6 +213,12 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     const timer = setTimeout(async () => {
       setShoppingListLoading(true);
       try {
+        console.log('[MealPlan] consolidate-shopping-list: sending request', {
+          mealPlanId: weekPlan.id,
+          userId,
+          anonymousId,
+          ingredientCount: ingredients.length,
+        });
         const response = await fetch('/api/consolidate-shopping-list', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -224,7 +230,11 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
           signal: abortController.signal,
         });
 
-        if (!response.ok) throw new Error('Failed to consolidate');
+        if (!response.ok) {
+          console.warn('[MealPlan] consolidate-shopping-list: request failed', { status: response.status, mealPlanId: weekPlan.id });
+          throw new Error('Failed to consolidate');
+        }
+        console.log('[MealPlan] consolidate-shopping-list: response ok', { status: response.status });
 
         const contentType = response.headers.get('content-type') || '';
         if (contentType.includes('application/json')) {
@@ -323,7 +333,15 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
   const setWeekPlan = useCallback(async (plan: WeekPlan, suggestedRecipes?: Record<string, SuggestedRecipe>) => {
     setWeekPlanState(plan);
     try {
+      const isNew = !plan.id;
+      console.log(`[MealPlan] setWeekPlan: ${isNew ? 'INSERT (new plan)' : 'UPDATE (existing plan)'}`, {
+        planId: plan.id || '(none — will be assigned by DB)',
+        suggestedRecipeCount: suggestedRecipes ? Object.keys(suggestedRecipes).length : 0,
+        userId,
+        anonymousId,
+      });
       const saved = await saveMealPlanDb(supabase, plan, userId, anonymousId, suggestedRecipes);
+      console.log('[MealPlan] setWeekPlan: save succeeded', { dbId: saved.id, createdAt: saved.createdAt });
       setWeekPlanState(prev => prev ? { ...prev, id: saved.id, createdAt: saved.createdAt } : prev);
     } catch (err) {
       console.error('Failed to save meal plan:', err);
@@ -546,13 +564,19 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       };
     });
 
-    return {
-      id: crypto.randomUUID(),
+    const plan = {
+      id: '',
       weekStartDate: weekStart.toISOString().split('T')[0],
       createdAt: new Date().toISOString(),
       days,
       suggestedRecipes: Object.keys(suggestedRecipesMap).length > 0 ? suggestedRecipesMap : undefined,
     };
+    console.log('[MealPlan] buildWeekPlan: built new plan (no id yet)', {
+      dayCount: plan.days.length,
+      suggestedRecipeCount: Object.keys(suggestedRecipesMap).length,
+      weekStartDate: plan.weekStartDate,
+    });
+    return plan;
   }, [getWeekStartDate, settings.weekStartDay]);
 
   const startGeneration = useCallback((preferences: string, systemPrompt?: string, recipeMix?: string) => {
