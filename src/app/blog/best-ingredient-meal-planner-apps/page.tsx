@@ -6,11 +6,11 @@ import { Check, X, Minus } from 'lucide-react';
 export const metadata: Metadata = {
   title: 'Best Ingredient-Based Meal Planner Apps in 2026',
   description: 'An honest head-to-head comparison of every major ingredient-based meal planner: PlateMyDay, SuperCook, Mealime, MealThinker, and more. Find out which one actually reduces food waste.',
-  alternates: { canonical: 'https://platemyday.com/blog/best-ingredient-meal-planner-apps' },
+  alternates: { canonical: '/blog/best-ingredient-meal-planner-apps' },
   openGraph: {
     title: 'Best Ingredient-Based Meal Planner Apps in 2026 — Compared',
     description: 'An honest head-to-head comparison of every major ingredient-based meal planner app. Find out which one actually helps you reduce food waste.',
-    url: 'https://platemyday.com/blog/best-ingredient-meal-planner-apps',
+    url: '/blog/best-ingredient-meal-planner-apps',
   },
   twitter: {
     card: 'summary_large_image',

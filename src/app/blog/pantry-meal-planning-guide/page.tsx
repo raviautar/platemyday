@@ -5,11 +5,11 @@ import { BlogPost } from '@/components/blog/BlogPost';
 export const metadata: Metadata = {
   title: 'The Complete Guide to Pantry Meal Planning (2026)',
   description: 'A practical step-by-step guide to cooking from the ingredients you already have. Learn how to plan a full week of meals from your pantry, reduce your grocery bill, and stop throwing food away.',
-  alternates: { canonical: 'https://platemyday.com/blog/pantry-meal-planning-guide' },
+  alternates: { canonical: '/blog/pantry-meal-planning-guide' },
   openGraph: {
     title: 'The Complete Guide to Pantry Meal Planning (2026)',
     description: 'How to plan a full week of meals from what\'s already in your kitchen — step by step.',
-    url: 'https://platemyday.com/blog/pantry-meal-planning-guide',
+    url: '/blog/pantry-meal-planning-guide',
   },
   twitter: {
     card: 'summary_large_image',

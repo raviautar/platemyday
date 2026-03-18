@@ -27,7 +27,7 @@ export const viewport: Viewport = {
   themeColor: "#10b981",
 };
 
-const BASE_URL = "https://platemyday.com";
+const BASE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://platemyday.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(BASE_URL),

@@ -6,11 +6,11 @@ import { ArrowRight, Package, Sparkles, ShoppingCart, Calendar, Heart, Leaf, Set
 export const metadata: Metadata = {
   title: 'Features — Pantry Meal Planner & Food Waste Reduction App',
   description: 'Explore every feature of PlateMyDay: pantry-based meal planning, 7-day plan generation, smart shopping lists, recipe saving, dietary preferences, and more. Free to try.',
-  alternates: { canonical: 'https://platemyday.com/features' },
+  alternates: { canonical: '/features' },
   openGraph: {
     title: 'PlateMyDay Features — Pantry Meal Planner & Food Waste App',
     description: 'Pantry tracking, 7-day meal plan generation, smart shopping lists, and more. The ingredient-based meal planner built around reducing food waste.',
-    url: 'https://platemyday.com/features',
+    url: '/features',
   },
   twitter: {
     card: 'summary_large_image',

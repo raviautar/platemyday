@@ -5,13 +5,13 @@ export const metadata: Metadata = {
   description:
     "Learn how PlateMyDay helps you reduce food waste by building personalized weekly meal plans from the ingredients already in your kitchen.",
   alternates: {
-    canonical: "https://platemyday.com/about",
+    canonical: "/about",
   },
   openGraph: {
     title: "About PlateMyDay — Ingredient-Based Meal Planning",
     description:
       "Learn how PlateMyDay helps you reduce food waste by building personalized weekly meal plans from the ingredients already in your kitchen.",
-    url: "https://platemyday.com/about",
+    url: "/about",
   },
   twitter: {
     card: "summary_large_image",

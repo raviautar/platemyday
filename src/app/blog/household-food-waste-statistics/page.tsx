@@ -5,11 +5,11 @@ import { BlogPost } from '@/components/blog/BlogPost';
 export const metadata: Metadata = {
   title: 'Household Food Waste Statistics 2026: The $2,913 Habit You Don\'t Know You Have',
   description: 'A data-driven deep-dive into how much food American households waste every year — in dollars, CO₂ emissions, and water usage — and what you can do about it.',
-  alternates: { canonical: 'https://platemyday.com/blog/household-food-waste-statistics' },
+  alternates: { canonical: '/blog/household-food-waste-statistics' },
   openGraph: {
     title: 'Household Food Waste Statistics 2026: The $2,913 Yearly Habit',
     description: 'How much food do American households really waste? A data-driven deep-dive into the numbers, the causes, and the solutions.',
-    url: 'https://platemyday.com/blog/household-food-waste-statistics',
+    url: '/blog/household-food-waste-statistics',
   },
   twitter: {
     card: 'summary_large_image',

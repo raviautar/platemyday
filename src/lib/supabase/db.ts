@@ -7,14 +7,19 @@ function ownerFilter(userId: string | null, anonymousId: string) {
   return userId ? { user_id: userId } : { anonymous_id: anonymousId };
 }
 
+/** Apply parameterized owner filter to a Supabase query (avoids string interpolation in .or()) */
+function applyOwnerFilter<T extends { eq: (col: string, val: string) => T }>(query: T, userId: string | null, anonymousId: string): T {
+  return userId ? query.eq('user_id', userId) : query.eq('anonymous_id', anonymousId);
+}
+
 // ─── Recipes ───────────────────────────────────────────────────
 
 export async function getRecipes(supabase: SupabaseClient, userId: string | null, anonymousId: string): Promise<Recipe[]> {
-  const { data, error } = await supabase
+  let query = supabase
     .from('recipes')
-    .select('*')
-    .or(`${userId ? `user_id.eq.${userId}` : `anonymous_id.eq.${anonymousId}`}`)
-    .order('created_at', { ascending: false });
+    .select('*');
+  query = applyOwnerFilter(query, userId, anonymousId);
+  const { data, error } = await query.order('created_at', { ascending: false });
 
   if (error) throw error;
   return (data || []).map(mapDbRecipe);
@@ -87,8 +92,7 @@ function mapDbRecipe(row: any): Recipe {
 // ─── Meal Plans ────────────────────────────────────────────────
 
 export async function getMealPlans(supabase: SupabaseClient, userId: string | null, anonymousId: string): Promise<WeekPlan[]> {
-  const filter = userId ? `user_id.eq.${userId}` : `anonymous_id.eq.${anonymousId}`;
-  const { data: plans, error } = await supabase
+  let query = supabase
     .from('meal_plans')
     .select(`
       *,
@@ -97,17 +101,16 @@ export async function getMealPlans(supabase: SupabaseClient, userId: string | nu
         meal_plan_meals (*)
       ),
       suggested_recipes (*)
-    `)
-    .or(filter)
-    .order('created_at', { ascending: false });
+    `);
+  query = applyOwnerFilter(query, userId, anonymousId);
+  const { data: plans, error } = await query.order('created_at', { ascending: false });
 
   if (error) throw error;
   return (plans || []).map(mapDbMealPlan);
 }
 
 export async function getActiveMealPlan(supabase: SupabaseClient, userId: string | null, anonymousId: string): Promise<WeekPlan | null> {
-  const filter = userId ? `user_id.eq.${userId}` : `anonymous_id.eq.${anonymousId}`;
-  const { data: plans, error } = await supabase
+  let query = supabase
     .from('meal_plans')
     .select(`
       *,
@@ -116,8 +119,9 @@ export async function getActiveMealPlan(supabase: SupabaseClient, userId: string
         meal_plan_meals (*)
       ),
       suggested_recipes (*)
-    `)
-    .or(filter)
+    `);
+  query = applyOwnerFilter(query, userId, anonymousId);
+  const { data: plans, error } = await query
     .eq('is_active', true)
     .limit(1);
 
@@ -127,8 +131,7 @@ export async function getActiveMealPlan(supabase: SupabaseClient, userId: string
 }
 
 export async function getMealPlanById(supabase: SupabaseClient, id: string, userId: string | null, anonymousId: string): Promise<WeekPlan | null> {
-  const filter = userId ? `user_id.eq.${userId}` : `anonymous_id.eq.${anonymousId}`;
-  const { data: plans, error } = await supabase
+  let query = supabase
     .from('meal_plans')
     .select(`
       *,
@@ -137,8 +140,9 @@ export async function getMealPlanById(supabase: SupabaseClient, id: string, user
         meal_plan_meals (*)
       ),
       suggested_recipes (*)
-    `)
-    .or(filter)
+    `);
+  query = applyOwnerFilter(query, userId, anonymousId);
+  const { data: plans, error } = await query
     .eq('id', id)
     .limit(1);
 
@@ -398,11 +402,11 @@ function mapDbMealPlan(row: any): WeekPlan {
 // ─── Settings ──────────────────────────────────────────────────
 
 export async function getSettings(supabase: SupabaseClient, userId: string | null, anonymousId: string): Promise<AppSettings | null> {
-  const filter = userId ? `user_id.eq.${userId}` : `anonymous_id.eq.${anonymousId}`;
-  const { data, error } = await supabase
+  let query = supabase
     .from('user_settings')
-    .select('*')
-    .or(filter)
+    .select('*');
+  query = applyOwnerFilter(query, userId, anonymousId);
+  const { data, error } = await query
     .limit(1)
     .maybeSingle();
 
@@ -502,38 +506,12 @@ export async function migrateAnonymousData(supabase: SupabaseClient, anonymousId
       .eq('anonymous_id', anonymousId);
   }
 
-  // Migrate credits: merge anonymous credits into authenticated user's credits
-  const { data: anonCredits } = await sb
-    .from('user_credits')
-    .select('credits_used, credits_limit')
-    .eq('anonymous_id', anonymousId)
-    .maybeSingle();
-
-  if (anonCredits) {
-    const { data: userCredits } = await sb
-      .from('user_credits')
-      .select('credits_used, credits_limit')
-      .eq('user_id', userId)
-      .maybeSingle();
-
-    if (userCredits) {
-      // Merge: sum credits_used, keep the higher limit
-      await sb
-        .from('user_credits')
-        .update({
-          credits_used: userCredits.credits_used + anonCredits.credits_used,
-          credits_limit: Math.max(userCredits.credits_limit, anonCredits.credits_limit),
-          updated_at: new Date().toISOString(),
-        })
-        .eq('user_id', userId);
-      // Remove the anonymous row
-      await sb.from('user_credits').delete().eq('anonymous_id', anonymousId);
-    } else {
-      // Transfer anonymous credits to user
-      await sb
-        .from('user_credits')
-        .update({ user_id: userId, anonymous_id: null, updated_at: new Date().toISOString() })
-        .eq('anonymous_id', anonymousId);
-    }
+  // Migrate credits atomically via SQL function to prevent race conditions
+  const { error: creditMigrationError } = await sb.rpc('migrate_anonymous_credits', {
+    p_anonymous_id: anonymousId,
+    p_user_id: userId,
+  });
+  if (creditMigrationError) {
+    logger.warn('[DB] migrateAnonymousData: credit migration failed', creditMigrationError);
   }
 }

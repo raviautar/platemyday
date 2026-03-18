@@ -6,11 +6,11 @@ import { ArrowRight, Clock, ArrowLeft } from 'lucide-react';
 export const metadata: Metadata = {
   title: 'Blog — Meal Planning, Food Waste & Pantry Cooking',
   description: 'Practical guides on ingredient-based meal planning, reducing household food waste, and cooking from your pantry. Written by the PlateMyDay team.',
-  alternates: { canonical: 'https://platemyday.com/blog' },
+  alternates: { canonical: '/blog' },
   openGraph: {
     title: 'PlateMyDay Blog — Meal Planning, Food Waste & Pantry Cooking',
     description: 'Practical guides on ingredient-based meal planning, reducing household food waste, and cooking from your pantry.',
-    url: 'https://platemyday.com/blog',
+    url: '/blog',
   },
 };
 

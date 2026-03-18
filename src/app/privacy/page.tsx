@@ -3,7 +3,7 @@ import Link from 'next/link';
 export const metadata = {
   title: 'Privacy Policy',
   description: 'Privacy Policy for PlateMyDay — how we collect, use, and protect your data.',
-  alternates: { canonical: 'https://platemyday.com/privacy' },
+  alternates: { canonical: '/privacy' },
   robots: { index: false },
 };
 

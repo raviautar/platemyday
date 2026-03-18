@@ -16,6 +16,7 @@ import { migrateAnonymousData } from '@/lib/supabase/db';
 import { useSupabase } from '@/hooks/useSupabase';
 import { posthog } from '@/lib/analytics/posthog-client';
 import { EVENTS } from '@/lib/analytics/events';
+import { useToast } from '@/components/ui/Toast';
 
 /**
  * Handles migrating anonymous user data to the authenticated user.
@@ -27,6 +28,7 @@ import { EVENTS } from '@/lib/analytics/events';
 function AnonymousMigration() {
   const { userId, isAuthenticated, isLoaded } = useUserIdentity();
   const { refetchSettings } = useSettings();
+  const { showToast } = useToast();
   const supabase = useSupabase();
   const migrated = useRef(false);
 
@@ -43,9 +45,12 @@ function AnonymousMigration() {
           clearAnonymousId();
           refetchSettings();
         })
-        .catch((err) => console.error('Migration failed:', err));
+        .catch((err) => {
+          console.error('Migration failed:', err);
+          showToast('Some of your data may not have transferred. Please try signing out and back in.', 'error');
+        });
     }
-  }, [userId, isAuthenticated, isLoaded, refetchSettings, supabase]);
+  }, [userId, isAuthenticated, isLoaded, refetchSettings, supabase, showToast]);
 
   return null;
 }
@@ -67,9 +72,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <SettingsProvider>
-      <AnonymousMigration />
       <SettingsGuard>
         <ToastProvider>
+          <AnonymousMigration />
           {isFullScreenPage ? (
             <div className="min-h-screen bg-background">
               <BottomNav />
