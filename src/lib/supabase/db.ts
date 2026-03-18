@@ -1,4 +1,5 @@
 import { SupabaseClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 import { Recipe, WeekPlan, DayPlan, MealSlot, AppSettings, SuggestedRecipe } from '@/types';
 import { DEFAULT_USER_PREFERENCES } from '@/lib/constants';
 
@@ -154,12 +155,12 @@ export async function saveMealPlan(
   suggestedRecipes?: Record<string, SuggestedRecipe>
 ): Promise<WeekPlan> {
   if (weekPlan.id) {
-    console.log('[DB] saveMealPlan: UPDATE path', { planId: weekPlan.id, userId, anonymousId });
+    logger.log('[DB] saveMealPlan: UPDATE path', { planId: weekPlan.id, userId, anonymousId });
     await updateMealPlan(supabase, weekPlan, suggestedRecipes);
     return weekPlan;
   }
 
-  console.log('[DB] saveMealPlan: INSERT path (new plan)', { userId, anonymousId, weekStartDate: weekPlan.weekStartDate });
+  logger.log('[DB] saveMealPlan: INSERT path (new plan)', { userId, anonymousId, weekStartDate: weekPlan.weekStartDate });
 
   const owner = ownerFilter(userId, anonymousId);
   await supabase
@@ -179,7 +180,7 @@ export async function saveMealPlan(
     .single();
 
   if (planError) throw planError;
-  console.log('[DB] saveMealPlan: meal_plans row inserted', { dbPlanId: plan.id });
+  logger.log('[DB] saveMealPlan: meal_plans row inserted', { dbPlanId: plan.id });
 
   const daysToInsert = weekPlan.days.map((day, index) => ({
     meal_plan_id: plan.id,
@@ -194,7 +195,7 @@ export async function saveMealPlan(
     .select();
 
   if (daysError) throw daysError;
-  console.log('[DB] saveMealPlan: meal_plan_days inserted', { count: days.length });
+  logger.log('[DB] saveMealPlan: meal_plan_days inserted', { count: days.length });
 
   const sortedDays = [...days].sort((a, b) => a.day_index - b.day_index);
 
@@ -214,7 +215,7 @@ export async function saveMealPlan(
       .from('meal_plan_meals')
       .insert(mealsToInsert);
     if (mealsError) throw mealsError;
-    console.log('[DB] saveMealPlan: meal_plan_meals inserted', { count: mealsToInsert.length });
+    logger.log('[DB] saveMealPlan: meal_plan_meals inserted', { count: mealsToInsert.length });
   }
 
   const suggestedCount = suggestedRecipes ? Object.keys(suggestedRecipes).length : 0;
@@ -236,12 +237,12 @@ export async function saveMealPlan(
       .from('suggested_recipes')
       .insert(suggestedToInsert);
     if (sugError) throw sugError;
-    console.log('[DB] saveMealPlan: suggested_recipes inserted', { count: suggestedCount });
+    logger.log('[DB] saveMealPlan: suggested_recipes inserted', { count: suggestedCount });
   } else {
-    console.log('[DB] saveMealPlan: no suggested recipes to insert');
+    logger.log('[DB] saveMealPlan: no suggested recipes to insert');
   }
 
-  console.log('[DB] saveMealPlan: INSERT complete', { dbPlanId: plan.id });
+  logger.log('[DB] saveMealPlan: INSERT complete', { dbPlanId: plan.id });
   return { ...weekPlan, id: plan.id, createdAt: plan.created_at };
 }
 
@@ -259,7 +260,7 @@ export async function updateMealPlan(
     .order('day_index', { ascending: true });
 
   if (daysError) throw daysError;
-  console.log('[DB] updateMealPlan: existing days found', { count: existingDays?.length ?? 0, planId: weekPlan.id });
+  logger.log('[DB] updateMealPlan: existing days found', { count: existingDays?.length ?? 0, planId: weekPlan.id });
 
   if (existingDays && existingDays.length > 0) {
     const dayIds = existingDays.map(d => d.id);
@@ -267,7 +268,7 @@ export async function updateMealPlan(
       .from('meal_plan_meals')
       .delete()
       .in('day_id', dayIds);
-    console.log('[DB] updateMealPlan: deleted existing meals for', dayIds.length, 'days');
+    logger.log('[DB] updateMealPlan: deleted existing meals for', dayIds.length, 'days');
   }
 
   const mealsToInsert = weekPlan.days.flatMap((day, dayIdx) => {
@@ -283,7 +284,7 @@ export async function updateMealPlan(
     }));
   });
 
-  console.log('[DB] updateMealPlan: inserting meals', { count: mealsToInsert.length });
+  logger.log('[DB] updateMealPlan: inserting meals', { count: mealsToInsert.length });
   if (mealsToInsert.length > 0) {
     const { error: mealsError } = await supabase
       .from('meal_plan_meals')
@@ -297,7 +298,7 @@ export async function updateMealPlan(
     .eq('meal_plan_id', weekPlan.id);
 
   const suggestedCount = suggestedRecipes ? Object.keys(suggestedRecipes).length : 0;
-  console.log('[DB] updateMealPlan: upserting suggested recipes', { count: suggestedCount });
+  logger.log('[DB] updateMealPlan: upserting suggested recipes', { count: suggestedCount });
   if (suggestedRecipes && suggestedCount > 0) {
     const suggestedToInsert = Object.values(suggestedRecipes).map(sr => ({
       meal_plan_id: weekPlan.id,
@@ -318,7 +319,7 @@ export async function updateMealPlan(
     if (sugError) throw sugError;
   }
 
-  console.log('[DB] updateMealPlan: UPDATE complete', { planId: weekPlan.id });
+  logger.log('[DB] updateMealPlan: UPDATE complete', { planId: weekPlan.id });
 }
 
 export async function restoreMealPlanDb(

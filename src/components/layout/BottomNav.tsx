@@ -40,7 +40,7 @@ export function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center py-2 px-4 min-w-[72px] transition-all duration-300 relative ${isActive ? 'text-primary font-medium' : isFocused ? 'text-emerald-600 font-bold scale-110 drop-shadow-md z-10' : 'text-muted'
+              className={`flex flex-col items-center py-2 px-4 min-w-[72px] transition-all duration-300 relative ${isActive ? 'text-primary font-medium' : isFocused ? 'text-primary font-bold scale-110 drop-shadow-md z-10' : 'text-muted'
                 } ${isDimmed ? 'opacity-30 grayscale' : 'opacity-100'}`}
             >
               <span className="relative">
@@ -53,9 +53,9 @@ export function BottomNav() {
                 )}
                 {isFocused && (
                   <>
-                    <span className="absolute -inset-3 bg-emerald-400/20 rounded-full blur-md animate-pulse -z-10" />
+                    <span className="absolute -inset-3 bg-primary/20 rounded-full blur-md animate-pulse -z-10" />
                     <span className="absolute -top-6 left-1/2 -translate-x-1/2 animate-bounce flex items-center justify-center">
-                      <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-emerald-600" />
+                      <div className="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-t-[8px] border-t-primary" />
                     </span>
                   </>
                 )}

@@ -84,7 +84,7 @@ export function PantryBar({ compact }: PantryBarProps) {
   const ingredientCount = prefs.pantryIngredients.length;
 
   return (
-    <div className="bg-gradient-to-r from-primary/5 to-emerald-50 rounded-xl border border-primary/20 overflow-hidden">
+    <div className="bg-gradient-to-r from-primary/5 to-surface rounded-xl border border-primary/20">
       {/* Header — always visible */}
       <button
         type="button"
@@ -220,7 +220,7 @@ export function PantryBar({ compact }: PantryBarProps) {
             </div>
           ) : (
             <p className="text-xs text-muted text-center py-2 italic leading-relaxed">
-              Add ingredients you have on hand and they&apos;ll be prioritized in your meal plan
+              Add what&apos;s in your fridge and pantry — we&apos;ll plan meals around them so nothing goes to waste.
             </p>
           )}
         </div>

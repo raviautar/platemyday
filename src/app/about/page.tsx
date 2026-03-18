@@ -8,8 +8,8 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen relative overflow-hidden bg-white">
       {/* Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(135deg,_#f0fdf4_0%,_#ecfdf5_30%,_#ccfbf1_70%,_#f0fdf4_100%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_rgba(16,185,129,0.15),transparent)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,_#FEFCF8_0%,_#F3EDE4_30%,_#E4D9CC_70%,_#FEFCF8_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_rgba(58,125,68,0.12),transparent)]" />
 
       {/* Top Nav */}
       <div className="relative z-20 flex items-center px-6 py-4">
@@ -32,7 +32,7 @@ export default function AboutPage() {
             priority
           />
           <h1 className="text-3xl md:text-4xl font-bold font-[family-name:var(--font-outfit)] tracking-tight mb-3">
-            <span className="bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-600 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-[#3A7D44] via-[#2D6235] to-[#3A7D44] bg-clip-text text-transparent">
               About PlateMyDay
             </span>
           </h1>
@@ -60,6 +60,19 @@ export default function AboutPage() {
           </a>
         </div>
 
+        {/* Philosophy callout */}
+        <div className="bg-white/70 backdrop-blur-sm rounded-2xl border border-border p-6 md:p-8 mb-12 text-center">
+          <h2 className="text-xl md:text-2xl font-bold text-foreground mb-3 font-[family-name:var(--font-outfit)]">
+            What is ingredient-based cooking?
+          </h2>
+          <p className="text-muted-foreground text-sm md:text-base leading-relaxed max-w-lg mx-auto mb-4">
+            Instead of picking a recipe and buying everything from scratch, you start with what&apos;s already in your kitchen. It&apos;s how home cooks have always cooked — and it&apos;s the simplest way to waste less food and spend less money.
+          </p>
+          <p className="text-muted-foreground text-sm md:text-base leading-relaxed max-w-lg mx-auto">
+            PlateMyDay makes it effortless. Tell us what&apos;s in your fridge, and we&apos;ll turn it into a full week of meals — balanced, delicious, and built around ingredients you already have.
+          </p>
+        </div>
+
         {/* Story sections */}
         <div className="space-y-12">
           {/* Section 1 */}
@@ -74,9 +87,9 @@ export default function AboutPage() {
               />
             </div>
             <div>
-              <h2 className="font-semibold text-foreground text-lg mb-1.5 font-[family-name:var(--font-outfit)]">Cooking made simple</h2>
+              <h2 className="font-semibold text-foreground text-lg mb-1.5 font-[family-name:var(--font-outfit)]">Your ingredients come first</h2>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                We built PlateMyDay because meal planning shouldn&apos;t feel like a chore. Tell us your preferences and we&apos;ll handle the rest.
+                PlateMyDay flips the script on meal planning. Instead of shopping for recipes, your pantry drives every plan. The chicken in your fridge, the rice in your cupboard — they become dinner, not waste.
               </p>
             </div>
           </div>
@@ -93,9 +106,9 @@ export default function AboutPage() {
               />
             </div>
             <div className="text-right">
-              <h2 className="font-semibold text-foreground text-lg mb-1.5 font-[family-name:var(--font-outfit)]">Personalized for you</h2>
+              <h2 className="font-semibold text-foreground text-lg mb-1.5 font-[family-name:var(--font-outfit)]">Buy only what&apos;s missing</h2>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                Every meal plan is generated around your dietary needs, allergies, and taste. No generic templates, just food you&apos;ll actually enjoy.
+                Your shopping list is the gap between what you have and what you need — nothing more. No duplicate buys, no forgotten bags of spinach wilting in the back of the fridge.
               </p>
             </div>
           </div>
@@ -112,9 +125,9 @@ export default function AboutPage() {
               />
             </div>
             <div>
-              <h2 className="font-semibold text-foreground text-lg mb-1.5 font-[family-name:var(--font-outfit)]">Always improving</h2>
+              <h2 className="font-semibold text-foreground text-lg mb-1.5 font-[family-name:var(--font-outfit)]">Less waste, more flavor</h2>
               <p className="text-muted-foreground text-sm leading-relaxed">
-                We&apos;re constantly adding new features and refining our engine to give you better recipes and smarter plans every week.
+                When you cook from ingredients on hand, you eat fresher, spend smarter, and throw away less. It&apos;s a small shift that adds up — for your wallet and the planet.
               </p>
             </div>
           </div>

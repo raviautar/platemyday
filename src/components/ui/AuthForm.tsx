@@ -104,7 +104,7 @@ export function AuthForm({
     if (emailSent) {
         return (
             <div className="text-center">
-                <div className="w-14 h-14 mx-auto mb-4 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-lg">
+                <div className="w-14 h-14 mx-auto mb-4 bg-gradient-to-br from-primary to-primary-dark rounded-full flex items-center justify-center shadow-lg">
                     <CheckCircle className="w-7 h-7 text-white" />
                 </div>
                 <h3 className="text-xl font-bold font-[family-name:var(--font-outfit)] text-foreground mb-2">
@@ -224,7 +224,7 @@ export function AuthForm({
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-br from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-semibold px-4 py-3 rounded-xl shadow-lg shadow-emerald-600/20 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    className="w-full flex items-center justify-center gap-2 bg-gradient-to-br from-primary to-primary-dark hover:from-primary-dark hover:to-[#1F4D28] text-white font-semibold px-4 py-3 rounded-xl shadow-lg shadow-primary/20 transition-all duration-200 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
                 >
                     {tab === 'signin' ? (
                         <>

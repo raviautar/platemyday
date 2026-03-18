@@ -4,6 +4,7 @@ import { createServiceClient } from '@/lib/supabase/server';
 import { trackServerEvent } from '@/lib/analytics/posthog-server';
 import { EVENTS } from '@/lib/analytics/events';
 import { CREDIT_PACKS, type CreditPackId } from '@/lib/credit-packs';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -67,12 +68,12 @@ export async function POST(req: Request) {
     case 'checkout.session.completed': {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.metadata?.user_id || session.metadata?.clerk_user_id;
-      console.log('[webhook] checkout.session.completed:', { sessionId: session.id, mode: session.mode, userId, metadata: session.metadata });
+      logger.log('[webhook] checkout.session.completed:', { sessionId: session.id, mode: session.mode, userId, metadata: session.metadata });
       if (!userId) break;
 
       if (session.mode === 'payment') {
         const packPurchase = parseCreditPackMetadata(session.metadata);
-        console.log('[webhook] parseCreditPackMetadata result:', packPurchase);
+        logger.log('[webhook] parseCreditPackMetadata result:', packPurchase);
 
         if (packPurchase) {
           const { data, error } = await sb.rpc('apply_credit_pack_purchase', {
@@ -93,7 +94,7 @@ export async function POST(req: Request) {
 
           const row = Array.isArray(data) ? data[0] : data;
           const applied = Boolean(row?.applied);
-          console.log('[webhook] apply_credit_pack_purchase result:', { applied, credits_used: row?.credits_used, credits_limit: row?.credits_limit });
+          logger.log('[webhook] apply_credit_pack_purchase result:', { applied, credits_used: row?.credits_used, credits_limit: row?.credits_limit });
 
           if (applied) {
             trackServerEvent(EVENTS.SUBSCRIPTION_ACTIVATED, userId, '', {

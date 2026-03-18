@@ -59,11 +59,11 @@ export function FeatureTour({ view, onNext, onComplete }: FeatureTourProps) {
         return (
             <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto">
                 <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-3 font-[family-name:var(--font-outfit)]">Feature 1 of 3</p>
-                <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-outfit)] text-foreground">Weekly Meal Plans</h2>
-                <div className="mb-6 bg-white p-2 rounded-2xl shadow-2xl shadow-teal-500/20 ring-1 ring-black/5 transform hover:-translate-y-1 transition-transform duration-300">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-outfit)] text-foreground">Start with your pantry</h2>
+                <div className="mb-6 bg-white p-2 rounded-2xl shadow-2xl shadow-primary/20 ring-1 ring-black/5 transform hover:-translate-y-1 transition-transform duration-300">
                     <Image
                         src="/assets/tour/meal-plan.png"
-                        alt="Weekly Meal Plans"
+                        alt="Start with your pantry"
                         width={600}
                         height={600}
                         className="rounded-xl w-[280px] h-[280px] sm:w-[360px] sm:h-[360px] object-contain"
@@ -71,7 +71,7 @@ export function FeatureTour({ view, onNext, onComplete }: FeatureTourProps) {
                     />
                 </div>
                 <p className="text-muted-foreground mb-10 text-base md:text-lg leading-relaxed">
-                    Personalized menus ready in seconds. Eat healthier without the hassle.
+                    Ingredient-based cooking starts with what you have. Add your pantry items and we&apos;ll turn them into a full week of meals — no waste, no guesswork.
                 </p>
                 <button
                     onClick={() => onNext('feature2')}
@@ -87,18 +87,18 @@ export function FeatureTour({ view, onNext, onComplete }: FeatureTourProps) {
         return (
             <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto">
                 <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-3 font-[family-name:var(--font-outfit)]">Feature 2 of 3</p>
-                <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-outfit)] text-foreground">Tailored Recipes</h2>
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-outfit)] text-foreground">Recipes from what you have</h2>
                 <div className="mb-6 bg-white p-2 rounded-2xl shadow-2xl shadow-primary/20 ring-1 ring-black/5 transform hover:-translate-y-1 transition-transform duration-300">
                     <Image
                         src="/assets/tour/recipes.png"
-                        alt="Tailored Recipes"
+                        alt="Recipes from what you have"
                         width={600}
                         height={600}
                         className="rounded-xl w-[280px] h-[280px] sm:w-[360px] sm:h-[360px] object-contain"
                     />
                 </div>
                 <p className="text-muted-foreground mb-10 text-base md:text-lg leading-relaxed">
-                    Recipes curated for your diet and preferences.
+                    Get recipes that use your ingredients first. Only buy what you&apos;re truly missing.
                 </p>
                 <button
                     onClick={() => onNext('feature3')}
@@ -114,18 +114,18 @@ export function FeatureTour({ view, onNext, onComplete }: FeatureTourProps) {
         return (
             <div className="flex flex-col items-center justify-center text-center max-w-md mx-auto">
                 <p className="text-xs font-semibold uppercase tracking-[0.15em] text-primary mb-3 font-[family-name:var(--font-outfit)]">Feature 3 of 3</p>
-                <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-outfit)] text-foreground">Dietary Preferences</h2>
-                <div className="mb-6 bg-white p-2 rounded-2xl shadow-2xl shadow-teal-500/20 ring-1 ring-black/5 transform hover:-translate-y-1 transition-transform duration-300">
+                <h2 className="text-3xl md:text-4xl font-bold mb-4 font-[family-name:var(--font-outfit)] text-foreground">Your diet, your way</h2>
+                <div className="mb-6 bg-white p-2 rounded-2xl shadow-2xl shadow-primary/20 ring-1 ring-black/5 transform hover:-translate-y-1 transition-transform duration-300">
                     <Image
                         src="/assets/tour/preferences.png"
-                        alt="Dietary Preferences"
+                        alt="Your diet, your way"
                         width={600}
                         height={600}
                         className="rounded-xl w-[280px] h-[280px] sm:w-[360px] sm:h-[360px] object-contain"
                     />
                 </div>
                 <p className="text-muted-foreground mb-10 text-base md:text-lg leading-relaxed">
-                    Set your dietary needs and allergens. Every plan respects your choices.
+                    Set allergies, dietary needs, and preferences. Every plan respects your choices while minimizing waste.
                 </p>
                 <button
                     onClick={() => onNext('auth')}

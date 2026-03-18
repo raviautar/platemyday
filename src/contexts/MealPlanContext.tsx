@@ -11,6 +11,7 @@ import { useToast } from '@/components/ui/Toast';
 import { useBilling } from '@/contexts/BillingContext';
 import { EVENTS } from '@/lib/analytics/events';
 import { DAYS_OF_WEEK } from '@/lib/constants';
+import { logger } from '@/lib/logger';
 import {
   getActiveMealPlan,
   getMealPlans,
@@ -213,7 +214,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     const timer = setTimeout(async () => {
       setShoppingListLoading(true);
       try {
-        console.log('[MealPlan] consolidate-shopping-list: sending request', {
+        logger.log('[MealPlan] consolidate-shopping-list: sending request', {
           mealPlanId: weekPlan.id,
           userId,
           anonymousId,
@@ -231,10 +232,10 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
         });
 
         if (!response.ok) {
-          console.warn('[MealPlan] consolidate-shopping-list: request failed', { status: response.status, mealPlanId: weekPlan.id });
+          logger.warn('[MealPlan] consolidate-shopping-list: request failed', { status: response.status, mealPlanId: weekPlan.id });
           throw new Error('Failed to consolidate');
         }
-        console.log('[MealPlan] consolidate-shopping-list: response ok', { status: response.status });
+        logger.log('[MealPlan] consolidate-shopping-list: response ok', { status: response.status });
 
         const contentType = response.headers.get('content-type') || '';
         if (contentType.includes('application/json')) {
@@ -334,14 +335,14 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     setWeekPlanState(plan);
     try {
       const isNew = !plan.id;
-      console.log(`[MealPlan] setWeekPlan: ${isNew ? 'INSERT (new plan)' : 'UPDATE (existing plan)'}`, {
+      logger.log(`[MealPlan] setWeekPlan: ${isNew ? 'INSERT (new plan)' : 'UPDATE (existing plan)'}`, {
         planId: plan.id || '(none — will be assigned by DB)',
         suggestedRecipeCount: suggestedRecipes ? Object.keys(suggestedRecipes).length : 0,
         userId,
         anonymousId,
       });
       const saved = await saveMealPlanDb(supabase, plan, userId, anonymousId, suggestedRecipes);
-      console.log('[MealPlan] setWeekPlan: save succeeded', { dbId: saved.id, createdAt: saved.createdAt });
+      logger.log('[MealPlan] setWeekPlan: save succeeded', { dbId: saved.id, createdAt: saved.createdAt });
       setWeekPlanState(prev => prev ? { ...prev, id: saved.id, createdAt: saved.createdAt } : prev);
     } catch (err) {
       console.error('Failed to save meal plan:', err);
@@ -571,7 +572,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       days,
       suggestedRecipes: Object.keys(suggestedRecipesMap).length > 0 ? suggestedRecipesMap : undefined,
     };
-    console.log('[MealPlan] buildWeekPlan: built new plan (no id yet)', {
+    logger.log('[MealPlan] buildWeekPlan: built new plan (no id yet)', {
       dayCount: plan.days.length,
       suggestedRecipeCount: Object.keys(suggestedRecipesMap).length,
       weekStartDate: plan.weekStartDate,
@@ -684,7 +685,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
         for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
           try {
             if (attempt > 0) {
-              console.log(`Retrying meal plan generation (attempt ${attempt + 1}/${MAX_RETRIES + 1})...`);
+              logger.log(`Retrying meal plan generation (attempt ${attempt + 1}/${MAX_RETRIES + 1})...`);
               setPartialPlan(null);
             }
 
@@ -697,7 +698,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
             break;
           } catch (error) {
             lastError = error instanceof Error ? error : new Error('Failed to generate meal plan');
-            console.warn(`Meal plan generation attempt ${attempt + 1} failed:`, lastError.message);
+            logger.warn(`Meal plan generation attempt ${attempt + 1} failed:`, lastError.message);
           }
         }
 

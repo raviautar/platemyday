@@ -103,7 +103,7 @@ export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedReci
         {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-primary to-emerald-600 rounded-xl flex items-center justify-center shadow-md">
+            <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center shadow-md">
               <ShoppingCart className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -138,7 +138,7 @@ export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedReci
         {totalCount > 0 && (
           <div className="w-full bg-surface-dark rounded-full h-2">
             <div
-              className="bg-gradient-to-r from-primary to-emerald-500 h-2 rounded-full transition-all duration-300"
+              className="bg-gradient-to-r from-primary to-primary-dark h-2 rounded-full transition-all duration-300"
               style={{ width: `${(checkedCount / totalCount) * 100}%` }}
             />
           </div>
@@ -163,7 +163,7 @@ export function ShoppingList({ isOpen, onClose, weekPlan, recipes, suggestedReci
                       <button
                         key={key}
                         onClick={() => toggleItem(key)}
-                        className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-all duration-200 ${checked ? 'bg-emerald-50/50' : 'hover:bg-surface'
+                        className={`w-full flex items-center gap-3 p-2.5 rounded-lg text-left transition-all duration-200 ${checked ? 'bg-surface/50' : 'hover:bg-surface'
                           }`}
                       >
                         <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${checked ? 'bg-primary border-primary' : 'border-border'

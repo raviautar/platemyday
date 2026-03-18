@@ -26,7 +26,7 @@ interface PriceInfoResponse {
 const LEGACY_UNLIMITED_PLANS = new Set(['lifetime', 'lifetime_appsumo', 'pro_monthly', 'pro_annual']);
 
 const CARD_DECOR = {
-  credit_pack_1: 'from-emerald-500/20 to-lime-300/15 border-emerald-300/70',
+  credit_pack_1: 'from-primary/20 to-[#3A7D44]/10 border-primary/40',
   credit_pack_2: 'from-orange-400/20 to-amber-300/20 border-orange-300/80',
   credit_pack_3: 'from-rose-400/20 to-pink-300/20 border-rose-300/70',
 } as const;
@@ -57,7 +57,7 @@ function SuccessCelebration({ packName, creditsAdded, onClose }: { packName: str
 
         <div className="px-6 pt-8 pb-6 text-center">
           {/* Animated icon */}
-          <div className="mx-auto mb-5 w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-emerald-100 flex items-center justify-center animate-celebration-bounce">
+          <div className="mx-auto mb-5 w-20 h-20 rounded-full bg-gradient-to-br from-primary/20 to-surface flex items-center justify-center animate-celebration-bounce">
             <PartyPopper className="w-10 h-10 text-primary" />
           </div>
 
@@ -70,7 +70,7 @@ function SuccessCelebration({ packName, creditsAdded, onClose }: { packName: str
 
           <Link
             href="/meal-plan"
-            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-emerald-600 px-5 py-3 text-sm font-semibold text-white transition hover:from-primary-dark hover:to-emerald-700 shadow-md hover:shadow-lg"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary to-primary-dark px-5 py-3 text-sm font-semibold text-white transition hover:from-primary-dark hover:to-[#1F4D28] shadow-md hover:shadow-lg"
           >
             <Sparkles className="w-4 h-4" />
             Start planning meals

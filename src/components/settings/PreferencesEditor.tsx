@@ -474,8 +474,8 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
                 }}
                 className={`px-3 py-1.5 rounded-full border-2 transition-all text-sm ${
                   isSelected
-                    ? 'border-teal-500 bg-teal-50 text-teal-700 font-medium'
-                    : 'border-border bg-white text-muted hover:border-teal-300'
+                    ? 'border-primary bg-primary/10 text-primary-dark font-medium'
+                    : 'border-border bg-white text-muted hover:border-primary/50'
                 }`}
               >
                 {cuisine}
@@ -487,7 +487,7 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
             .map(customCuisine => (
               <span
                 key={customCuisine}
-                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border-2 border-teal-500 bg-teal-50 text-teal-700 font-medium text-sm"
+                className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full border-2 border-primary bg-primary/10 text-primary-dark font-medium text-sm"
               >
                 {customCuisine}
                 <button onClick={() => handleUpdate({ cuisinePreferences: (prefs.cuisinePreferences || []).filter(c => c !== customCuisine) })}>
@@ -509,11 +509,11 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
                 addCustomCuisine();
               }
             }}
-            className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-teal-300 text-sm"
+            className="min-w-0 flex-1 px-3 py-1.5 rounded-lg border border-border bg-white text-foreground placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/40 text-sm"
           />
           <button
             onClick={addCustomCuisine}
-            className="px-3 py-1.5 rounded-lg bg-teal-50 text-teal-600 hover:bg-teal-100 transition-colors"
+            className="px-3 py-1.5 rounded-lg bg-primary/10 text-primary hover:bg-primary/15 transition-colors"
           >
             <Plus className="w-4 h-4" />
           </button>

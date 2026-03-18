@@ -25,8 +25,8 @@ function LoginForm() {
   return (
     <div className="min-h-screen w-full flex items-center justify-center relative overflow-hidden bg-white">
       {/* Background */}
-      <div className="absolute inset-0 bg-[linear-gradient(135deg,_#f0fdf4_0%,_#ecfdf5_30%,_#ccfbf1_70%,_#f0fdf4_100%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_rgba(16,185,129,0.15),transparent)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(135deg,_#FEFCF8_0%,_#F3EDE4_30%,_#E4D9CC_70%,_#FEFCF8_100%)]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_rgba(58,125,68,0.12),transparent)]" />
 
       <div className="relative z-10 w-full max-w-md mx-auto px-4">
         {/* Logo */}
@@ -49,7 +49,7 @@ function LoginForm() {
         </div>
 
         {/* Card */}
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl shadow-emerald-500/10 border border-white/60 p-6">
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl shadow-primary/10 border border-white/60 p-6">
           <AuthForm
             defaultTab="signin"
             redirect={redirect}

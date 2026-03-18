@@ -65,7 +65,7 @@ export function TopBanner() {
   };
 
   return (
-    <header className="fixed top-0 inset-x-0 h-14 bg-gradient-to-r from-emerald-600 to-teal-600 border-b border-emerald-700/30 shadow-lg z-50 flex items-center justify-between px-3 sm:px-4 md:px-6 backdrop-blur-sm gap-2 min-w-0">
+    <header className="fixed top-0 inset-x-0 h-14 bg-gradient-to-r from-[#3A7D44] to-[#2D6235] border-b border-[#2D6235]/30 shadow-lg z-50 flex items-center justify-between px-3 sm:px-4 md:px-6 backdrop-blur-sm gap-2 min-w-0">
       <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 flex-shrink">
         {isHomePage ? (
           <button
@@ -100,8 +100,8 @@ export function TopBanner() {
               PlateMyDay
             </span>
           </h1>
-          <p className="text-[9px] sm:text-[10px] md:text-xs text-emerald-50/90 font-medium tracking-wide hidden sm:block font-[family-name:var(--font-outfit)]">
-            Your personalized meal planner
+          <p className="text-[9px] sm:text-[10px] md:text-xs text-white/80 font-medium tracking-wide hidden sm:block font-[family-name:var(--font-outfit)]">
+            Ingredient-first meal planning
           </p>
         </Link>
       </div>
@@ -116,7 +116,7 @@ export function TopBanner() {
         ) : !isAuthenticated ? (
           <Link
             href={`/login?redirect=${encodeURIComponent(pathname)}`}
-            className="p-1.5 sm:p-2 bg-white text-emerald-600 hover:bg-emerald-50 rounded-full transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 flex-shrink-0"
+            className="p-1.5 sm:p-2 bg-white text-primary hover:bg-surface rounded-full transition-all duration-200 shadow-md hover:shadow-lg hover:scale-105 active:scale-95 flex-shrink-0"
             aria-label="Sign In"
           >
             <UserCircle className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7" strokeWidth={2} />

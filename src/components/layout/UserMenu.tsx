@@ -42,7 +42,7 @@ export function UserMenu() {
         className="flex items-center gap-1 rounded-full transition-all duration-200 hover:scale-105 active:scale-95"
         aria-label="User menu"
       >
-        <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-emerald-700 font-bold text-sm flex items-center justify-center ring-2 ring-white/50 shadow-md">
+        <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-primary-dark font-bold text-sm flex items-center justify-center ring-2 ring-white/50 shadow-md">
           {initial}
         </span>
         <ChevronDown className={`w-3 h-3 text-white/80 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} />

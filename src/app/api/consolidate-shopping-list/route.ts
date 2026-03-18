@@ -8,6 +8,7 @@ import {
 import { getMealPlanById, getRecipes } from '@/lib/supabase/db';
 import { createServiceClient } from '@/lib/supabase/server';
 import { Recipe, WeekPlan } from '@/types';
+import { logger } from '@/lib/logger';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -45,7 +46,7 @@ export async function POST(req: Request) {
     if (validation instanceof Response) return validation;
 
     const { mealPlanId, userId, anonymousId } = validation.data;
-    console.log('[consolidate-shopping-list] request received', { mealPlanId, userId, anonymousId });
+    logger.log('[consolidate-shopping-list] request received', { mealPlanId, userId, anonymousId });
 
     const supabase = createServiceClient();
     const [mealPlan, recipes] = await Promise.all([
@@ -54,16 +55,16 @@ export async function POST(req: Request) {
     ]);
 
     if (!mealPlan) {
-      console.warn('[consolidate-shopping-list] meal plan not found', { mealPlanId, userId, anonymousId });
+      logger.warn('[consolidate-shopping-list] meal plan not found', { mealPlanId, userId, anonymousId });
       return Response.json({ error: 'Meal plan not found' }, { status: 404 });
     }
-    console.log('[consolidate-shopping-list] meal plan found', { mealPlanId, dayCount: mealPlan.days.length });
+    logger.log('[consolidate-shopping-list] meal plan found', { mealPlanId, dayCount: mealPlan.days.length });
 
     const ingredients = collectIngredients(mealPlan, recipes);
-    console.log('[consolidate-shopping-list] ingredient count', { count: ingredients.length });
+    logger.log('[consolidate-shopping-list] ingredient count', { count: ingredients.length });
 
     if (ingredients.length === 0) {
-      console.log('[consolidate-shopping-list] no ingredients, returning empty');
+      logger.log('[consolidate-shopping-list] no ingredients, returning empty');
       return Response.json({ categories: [], pantryItems: [] });
     }
 

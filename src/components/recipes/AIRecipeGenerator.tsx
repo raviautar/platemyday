@@ -98,7 +98,7 @@ export function AIRecipeGenerator({ isOpen, onClose, onGenerate }: AIRecipeGener
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={handleClose} title="Create Recipe" fullscreen>
+    <Modal isOpen={isOpen} onClose={handleClose} title="Create a Recipe" fullscreen>
       <div className="md:max-w-5xl md:mx-auto w-full space-y-6 md:space-y-8">
         <div className="space-y-6">
           <div>
@@ -110,7 +110,7 @@ export function AIRecipeGenerator({ isOpen, onClose, onGenerate }: AIRecipeGener
               rows={6}
               className="text-base"
             />
-            <p className="text-sm text-muted mt-2">Include ingredients, style, or any preferences.</p>
+            <p className="text-sm text-muted mt-2">Describe a dish, or list ingredients you want to use up.</p>
           </div>
 
           <label className="flex items-center gap-3 cursor-pointer">
@@ -125,11 +125,11 @@ export function AIRecipeGenerator({ isOpen, onClose, onGenerate }: AIRecipeGener
                 strictIngredients ? 'translate-x-5' : ''
               }`} />
             </button>
-            <span className="text-sm text-foreground">Keep it simple — minimal extra ingredients</span>
+            <span className="text-sm text-foreground">Use only what I have — no extra shopping</span>
           </label>
 
           <div>
-            <p className="text-sm font-semibold text-foreground mb-4">Quick add ingredients</p>
+            <p className="text-sm font-semibold text-foreground mb-4">Common pantry staples</p>
             <div className="flex flex-wrap gap-2.5">
               {ingredientSuggestions.map((ingredient) => (
                 <button

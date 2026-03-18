@@ -10,13 +10,14 @@ import { ShoppingList } from '@/components/meal-plan/ShoppingList';
 import { NutritionSummary } from '@/components/meal-plan/NutritionSummary';
 import { GeneratingAnimation, ACTION_IMAGES } from '@/components/ui/GeneratingAnimation';
 import { StreamingMealView } from '@/components/meal-plan/StreamingMealView';
+import { WasteImpact } from '@/components/meal-plan/WasteImpact';
 import { PieChartIcon } from '@/components/ui/PieChartIcon';
 import { useMealPlanGeneration } from '@/hooks/useMealPlanGeneration';
 import { useBilling } from '@/contexts/BillingContext';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
 import Link from 'next/link';
-import { History, ShoppingCart, AlertTriangle, RefreshCw, Trash2, Crown, Settings2, Sparkles } from 'lucide-react';
+import { History, ShoppingCart, AlertTriangle, RefreshCw, Trash2, Crown } from 'lucide-react';
 
 export default function MealPlanPage() {
   const { recipes } = useRecipes();
@@ -96,7 +97,7 @@ export default function MealPlanPage() {
             }}
             disabled={!weekPlan && !shoppingListLoading}
             className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-sm shrink-0 transition-all ${weekPlan
-              ? 'bg-gradient-to-r from-primary to-emerald-600 text-white hover:from-primary-dark hover:to-emerald-700 shadow-md hover:shadow-lg'
+              ? 'bg-gradient-to-r from-primary to-primary-dark text-white hover:from-primary-dark hover:to-[#1F4D28] shadow-md hover:shadow-lg'
               : 'bg-surface border border-border text-muted cursor-not-allowed opacity-60'
               }`}
           >
@@ -132,6 +133,10 @@ export default function MealPlanPage() {
         hasExistingPlan={!!weekPlan}
         loading={loading}
       />
+
+      {weekPlan && !loading && (
+        <WasteImpact weekPlan={weekPlan} suggestedRecipes={suggestedRecipes} />
+      )}
 
       <div className="mt-6">
         {loading ? (
@@ -173,7 +178,7 @@ export default function MealPlanPage() {
               <p className="text-sm text-muted mb-6">{generationError}</p>
               <button
                 onClick={retryGeneration}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-emerald-600 text-white font-medium text-sm hover:from-primary-dark hover:to-emerald-700 shadow-sm hover:shadow-md transition-all"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-primary to-primary-dark text-white font-medium text-sm hover:from-primary-dark hover:to-[#1F4D28] shadow-sm hover:shadow-md transition-all"
               >
                 <RefreshCw className="w-4 h-4" />
                 Try Again
@@ -190,56 +195,52 @@ export default function MealPlanPage() {
             onAddToLibrary={handleAddToLibrary}
           />
         ) : (
-          <div className="-mt-2">
-            <div className="flex justify-between items-end">
-              {/* Left doodle — curves left then up toward Preferences */}
-              <div className="flex flex-col-reverse items-center gap-2 sm:gap-3 w-36 sm:w-44 md:w-52">
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1.5 text-slate-400">
-                    <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span className="text-base sm:text-lg md:text-xl font-semibold font-[family-name:var(--font-outfit)]">
-                      Add your pantry
-                    </span>
-                  </div>
-                  <p className="text-xs sm:text-sm text-slate-400/80 mt-1 font-[family-name:var(--font-outfit)]">
-                    Tell us what ingredients you have on hand
-                  </p>
-                </div>
-                <svg viewBox="0 0 80 200" className="w-12 sm:w-14 md:w-16 h-auto" fill="none">
-                  <path
-                    d="M50 195 C48 175, 55 155, 58 140 C62 120, 55 105, 40 95 C25 85, 15 75, 12 60 C9 45, 15 30, 22 20 C28 12, 30 6, 30 2"
-                    stroke="#94a3b8"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeDasharray="5 4"
-                  />
-                  <path d="M25 6 L30 0 L35 7" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-              </div>
+          <div className="relative bg-gradient-to-b from-surface/50 to-transparent rounded-2xl border border-border/40 p-6 sm:p-8 md:p-10">
+            {/* Mascot illustration */}
+            <div className="flex justify-center mb-6">
+              <img
+                src="/assets/actions/salad.png"
+                alt=""
+                className="w-28 h-28 sm:w-32 sm:h-32 drop-shadow-xl opacity-90"
+              />
+            </div>
 
-              {/* Right doodle — curves right then up toward Generate */}
-              <div className="flex flex-col-reverse items-center gap-2 sm:gap-3 w-36 sm:w-44 md:w-52">
-                <div className="text-center">
-                  <div className="flex items-center justify-center gap-1.5 text-slate-400">
-                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span className="text-base sm:text-lg md:text-xl font-semibold font-[family-name:var(--font-outfit)]">
-                      Then generate!
-                    </span>
-                  </div>
-                  <p className="text-xs sm:text-sm text-slate-400/80 mt-1 font-[family-name:var(--font-outfit)]">
-                    Get personalized meal plans for the next week!
-                  </p>
+            {/* Heading */}
+            <h2 className="text-xl sm:text-2xl font-bold text-foreground text-center mb-2 font-[family-name:var(--font-outfit)]">
+              What&apos;s in your kitchen?
+            </h2>
+            <p className="text-sm text-muted text-center max-w-md mx-auto mb-8 leading-relaxed">
+              Add ingredients above and hit generate. We&apos;ll build a full week of meals using what you already have — so nothing goes to waste.
+            </p>
+
+            {/* Steps */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto">
+              <div className="flex sm:flex-col items-center gap-3 sm:gap-2 text-center">
+                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-primary">1</span>
                 </div>
-                <svg viewBox="0 0 80 200" className="w-12 sm:w-14 md:w-16 h-auto" fill="none">
-                  <path
-                    d="M30 195 C32 175, 25 155, 22 140 C18 120, 25 105, 40 95 C55 85, 65 75, 68 60 C71 45, 65 30, 58 20 C52 12, 50 6, 50 2"
-                    stroke="#94a3b8"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeDasharray="5 4"
-                  />
-                  <path d="M45 6 L50 0 L55 7" fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
+                <div className="sm:text-center">
+                  <p className="text-sm font-semibold text-foreground">Add pantry items</p>
+                  <p className="text-xs text-muted mt-0.5">What do you need to use up?</p>
+                </div>
+              </div>
+              <div className="flex sm:flex-col items-center gap-3 sm:gap-2 text-center">
+                <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-accent-dark">2</span>
+                </div>
+                <div className="sm:text-center">
+                  <p className="text-sm font-semibold text-foreground">Generate your plan</p>
+                  <p className="text-xs text-muted mt-0.5">Meals built around your ingredients</p>
+                </div>
+              </div>
+              <div className="flex sm:flex-col items-center gap-3 sm:gap-2 text-center">
+                <div className="w-10 h-10 rounded-full bg-secondary/15 flex items-center justify-center shrink-0">
+                  <span className="text-sm font-bold text-secondary-dark">3</span>
+                </div>
+                <div className="sm:text-center">
+                  <p className="text-sm font-semibold text-foreground">Cook & save</p>
+                  <p className="text-xs text-muted mt-0.5">Less waste, smaller grocery bills</p>
+                </div>
               </div>
             </div>
           </div>

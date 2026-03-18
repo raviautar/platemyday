@@ -1,18 +1,18 @@
 @import "tailwindcss";
 
 :root {
-  --background: #FAFFF5;
-  --foreground: #1a2e1a;
-  --primary: #4CAF50;
-  --primary-dark: #388E3C;
-  --secondary: #FFD54F;
-  --secondary-dark: #FFC107;
-  --accent: #F48FB1;
-  --accent-dark: #EC407A;
-  --surface: #E8F5E9;
-  --surface-dark: #C8E6C9;
-  --muted: #6B7C6B;
-  --border: #C8E6C9;
+  --background: #FEFCF8;
+  --foreground: #2D2A26;
+  --primary: #3A7D44;
+  --primary-dark: #2D6235;
+  --secondary: #C17817;
+  --secondary-dark: #A86514;
+  --accent: #D4764E;
+  --accent-dark: #B85F3A;
+  --surface: #F3EDE4;
+  --surface-dark: #E4D9CC;
+  --muted: #7A7268;
+  --border: #DDD4C8;
   --danger: #EF5350;
 }
 
@@ -83,4 +83,22 @@ body {
 
 .animate-fade-in {
   animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0) rotate(var(--float-rotate, 0deg)); }
+  50% { transform: translateY(-12px) rotate(var(--float-rotate, 0deg)); }
+}
+
+@keyframes floatDelayed {
+  0%, 100% { transform: translateY(0) rotate(var(--float-rotate, 0deg)); }
+  50% { transform: translateY(-10px) rotate(var(--float-rotate, 0deg)); }
+}
+
+.animate-float-slow {
+  animation: floatSlow 5s ease-in-out infinite;
+}
+
+.animate-float-delayed {
+  animation: floatDelayed 6s ease-in-out 1s infinite;
 }
