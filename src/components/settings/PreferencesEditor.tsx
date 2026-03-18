@@ -87,7 +87,7 @@ function CollapsibleSection({
   );
 }
 
-export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compact = false }: PreferencesEditorProps) {
+export function PreferencesEditor({ defaultExpanded = ['notes', 'mealTypes', 'dietary', 'allergies', 'cuisines', 'servings', 'macros'], compact = false }: PreferencesEditorProps) {
   const { settings, updateSettings } = useSettings();
   const { showToast } = useToast();
   const { track } = useAnalytics();
@@ -188,88 +188,89 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
 
   const isExpanded = (key: string) => defaultExpanded.includes(key);
 
+  const notesSection = (
+    <CollapsibleSection
+      id="notes"
+      title="Additional Preferences"
+      description="Anything else you'd like to add?"
+      defaultOpen={isExpanded('notes')}
+      compact={compact}
+      onClear={(prefs.mealNotes || []).length > 0 ? () => handleUpdate({ mealNotes: [] }) : undefined}
+    >
+      <div className="space-y-2">
+        {(prefs.mealNotes || []).map((note, index) => {
+          const isFocused = focusedNoteIndex === index;
+          const saveNote = () => {
+            const updated = (prefs.mealNotes || []).filter(n => n.trim() !== '');
+            if (updated.length !== (prefs.mealNotes || []).length) {
+              handleUpdate({ mealNotes: updated });
+            } else if (!compact) {
+              showToast('Preferences updated');
+            }
+          };
+          const handleBlur = () => {
+            setFocusedNoteIndex(null);
+            saveNote();
+          };
+          return (
+            <div key={index} className="flex items-center gap-2 min-w-0">
+              <input
+                type="text"
+                value={note}
+                onChange={(e) => {
+                  const updated = [...(prefs.mealNotes || [])];
+                  updated[index] = e.target.value;
+                  handleUpdate({ mealNotes: updated }, false);
+                }}
+                onFocus={() => setFocusedNoteIndex(index)}
+                onBlur={handleBlur}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    (e.target as HTMLInputElement).blur();
+                  }
+                }}
+                placeholder="e.g., No cilantro in my dishes"
+                className="min-w-0 flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
+              />
+              {isFocused ? (
+                <button
+                  type="button"
+                  onClick={() => (document.activeElement as HTMLElement | null)?.blur()}
+                  className="p-1.5 text-primary hover:text-primary/80 transition-colors"
+                  aria-label="Save"
+                >
+                  <Check className="w-5 h-5" />
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    const updated = (prefs.mealNotes || []).filter((_, i) => i !== index);
+                    handleUpdate({ mealNotes: updated });
+                  }}
+                  className="p-1.5 text-muted hover:text-foreground transition-colors"
+                  aria-label="Remove note"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          );
+        })}
+        <button
+          onClick={() => handleUpdate({ mealNotes: [...(prefs.mealNotes || []), ''] })}
+          className="w-full px-3 py-2 border-2 border-dashed border-border rounded-lg text-sm text-muted hover:text-foreground hover:border-primary/50 transition-colors flex items-center justify-center gap-2"
+        >
+          <Plus className="w-4 h-4" />
+          Add preference
+        </button>
+      </div>
+    </CollapsibleSection>
+  );
+
   return (
     <div className={`space-y-3 ${compact ? 'max-h-[60vh] overflow-y-auto pr-1' : ''}`}>
-      {/* Additional Meal Preferences */}
-      <CollapsibleSection
-        id="notes"
-        title="Additional Preferences"
-        description="Anything else you'd like to add?"
-        defaultOpen={isExpanded('notes')}
-        compact={compact}
-        onClear={(prefs.mealNotes || []).length > 0 ? () => handleUpdate({ mealNotes: [] }) : undefined}
-      >
-        <div className="space-y-2">
-          {(prefs.mealNotes || []).map((note, index) => {
-            const isFocused = focusedNoteIndex === index;
-            const saveNote = () => {
-              const updated = (prefs.mealNotes || []).filter(n => n.trim() !== '');
-              if (updated.length !== (prefs.mealNotes || []).length) {
-                handleUpdate({ mealNotes: updated });
-              } else if (!compact) {
-                showToast('Preferences updated');
-              }
-            };
-            const handleBlur = () => {
-              setFocusedNoteIndex(null);
-              saveNote();
-            };
-            return (
-              <div key={index} className="flex items-center gap-2 min-w-0">
-                <input
-                  type="text"
-                  value={note}
-                  onChange={(e) => {
-                    const updated = [...(prefs.mealNotes || [])];
-                    updated[index] = e.target.value;
-                    handleUpdate({ mealNotes: updated }, false);
-                  }}
-                  onFocus={() => setFocusedNoteIndex(index)}
-                  onBlur={handleBlur}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      (e.target as HTMLInputElement).blur();
-                    }
-                  }}
-                  placeholder="e.g., No cilantro in my dishes"
-                  className="min-w-0 flex-1 px-3 py-1.5 border border-border rounded-lg bg-white text-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 text-sm"
-                />
-                {isFocused ? (
-                  <button
-                    type="button"
-                    onClick={() => (document.activeElement as HTMLElement | null)?.blur()}
-                    className="p-1.5 text-primary hover:text-primary/80 transition-colors"
-                    aria-label="Save"
-                  >
-                    <Check className="w-5 h-5" />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const updated = (prefs.mealNotes || []).filter((_, i) => i !== index);
-                      handleUpdate({ mealNotes: updated });
-                    }}
-                    className="p-1.5 text-muted hover:text-foreground transition-colors"
-                    aria-label="Remove note"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                )}
-              </div>
-            );
-          })}
-          <button
-            onClick={() => handleUpdate({ mealNotes: [...(prefs.mealNotes || []), ''] })}
-            className="w-full px-3 py-2 border-2 border-dashed border-border rounded-lg text-sm text-muted hover:text-foreground hover:border-primary/50 transition-colors flex items-center justify-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            Add preference
-          </button>
-        </div>
-      </CollapsibleSection>
-
       {/* Meal Types */}
       <CollapsibleSection
         id="mealTypes"
@@ -757,6 +758,9 @@ export function PreferencesEditor({ defaultExpanded = ['pantry', 'notes'], compa
           )}
         </div>
       </CollapsibleSection>
+
+      {/* Additional Preferences */}
+      {notesSection}
 
       {/* Reset all preferences */}
       <button

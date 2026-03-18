@@ -71,7 +71,7 @@ export function TopBanner() {
           <button
             type="button"
             onClick={handleLogoClick}
-            className="flex-shrink-0 focus:outline-none"
+            className="flex items-center gap-1.5 sm:gap-2 min-w-0 group hover:opacity-80 active:scale-95 transition-all duration-150 focus:outline-none"
             aria-label="Scroll to top"
           >
             <img
@@ -79,31 +79,43 @@ export function TopBanner() {
               alt="PlateMyDay"
               width={64}
               height={64}
-              className="block w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 drop-shadow-lg object-contain"
+              className="flex-shrink-0 block w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 drop-shadow-lg object-contain"
             />
+            <div className="flex flex-col -space-y-1 min-w-0">
+              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white tracking-normal drop-shadow-md relative font-[family-name:var(--font-outfit)] truncate">
+                <span className="bg-gradient-to-r from-white via-yellow-50 to-white bg-clip-text text-transparent animate-shimmer">
+                  PlateMyDay
+                </span>
+              </h1>
+              <p className="text-[9px] sm:text-[10px] md:text-xs text-white/80 font-medium tracking-wide hidden sm:block font-[family-name:var(--font-outfit)]">
+                Ingredient-first meal planning
+              </p>
+            </div>
           </button>
         ) : (
-          <Link href="/" className="flex-shrink-0">
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 sm:gap-2 min-w-0 group hover:opacity-80 active:scale-95 transition-all duration-150"
+          >
             <img
               src="/assets/logo.png"
               alt="PlateMyDay"
               width={64}
               height={64}
-              className="block w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 drop-shadow-lg object-contain"
+              className="flex-shrink-0 block w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 drop-shadow-lg object-contain"
             />
+            <div className="flex flex-col -space-y-1 min-w-0">
+              <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white tracking-normal drop-shadow-md relative font-[family-name:var(--font-outfit)] truncate">
+                <span className="bg-gradient-to-r from-white via-yellow-50 to-white bg-clip-text text-transparent animate-shimmer">
+                  PlateMyDay
+                </span>
+              </h1>
+              <p className="text-[9px] sm:text-[10px] md:text-xs text-white/80 font-medium tracking-wide hidden sm:block font-[family-name:var(--font-outfit)]">
+                Ingredient-first meal planning
+              </p>
+            </div>
           </Link>
         )}
-
-        <Link href="/" className="flex flex-col -space-y-1 min-w-0">
-          <h1 className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-white tracking-normal drop-shadow-md relative font-[family-name:var(--font-outfit)] truncate">
-            <span className="bg-gradient-to-r from-white via-yellow-50 to-white bg-clip-text text-transparent animate-shimmer">
-              PlateMyDay
-            </span>
-          </h1>
-          <p className="text-[9px] sm:text-[10px] md:text-xs text-white/80 font-medium tracking-wide hidden sm:block font-[family-name:var(--font-outfit)]">
-            Ingredient-first meal planning
-          </p>
-        </Link>
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">

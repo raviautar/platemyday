@@ -17,10 +17,6 @@ export const EVENTS = {
   SUGGESTED_RECIPE_SAVED: 'suggested_recipe_saved',
 
   // ── Metric 2: User Activation Rate ────────────────────────────────
-  ONBOARDING_STARTED: 'onboarding_started',
-  ONBOARDING_STEP_COMPLETED: 'onboarding_step_completed',
-  ONBOARDING_COMPLETED: 'onboarding_completed',
-  ONBOARDING_SKIPPED: 'onboarding_skipped',
   FIRST_MEAL_PLAN_GENERATED: 'first_meal_plan_generated',
   FIRST_RECIPE_CREATED: 'first_recipe_created',
 
@@ -54,7 +50,6 @@ export const EVENTS = {
   UPGRADE_PAGE_VIEWED: 'upgrade_page_viewed',
   UPGRADE_CTA_CLICKED: 'upgrade_cta_clicked',
   LANDING_CTA_CLICKED: 'landing_cta_clicked',
-  ONBOARDING_AUTH_ATTEMPTED: 'onboarding_auth_attempted',
   PAYWALL_HIT: 'paywall_hit',
   UPGRADE_PLAN_SELECTED: 'upgrade_plan_selected',
   CHECKOUT_STARTED: 'checkout_started',

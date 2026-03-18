@@ -29,10 +29,70 @@ export const viewport: Viewport = {
   themeColor: "#10b981",
 };
 
+const BASE_URL = "https://platemyday.com";
+
 export const metadata: Metadata = {
-  title: "PlateMyDay",
-  description: "Personalized meal planning made simple",
+  metadataBase: new URL(BASE_URL),
+  title: {
+    default: "PlateMyDay — Stop Wasting Food, Start Eating Better",
+    template: "%s | PlateMyDay",
+  },
+  description:
+    "Turn what's already in your kitchen into a week of delicious meals. PlateMyDay builds personalized meal plans from your pantry ingredients to reduce food waste and save money.",
+  keywords: [
+    "meal planning",
+    "food waste reduction",
+    "pantry meals",
+    "ingredient-based cooking",
+    "weekly meal plan",
+    "recipe generator",
+    "meal prep",
+    "reduce food waste",
+    "cook from pantry",
+    "meal planner app",
+  ],
+  authors: [{ name: "Ravilution", url: "https://ravilution.ai" }],
+  creator: "Ravilution",
   manifest: "/manifest.json",
+  alternates: {
+    canonical: BASE_URL,
+  },
+  openGraph: {
+    type: "website",
+    url: BASE_URL,
+    siteName: "PlateMyDay",
+    title: "PlateMyDay — Stop Wasting Food, Start Eating Better",
+    description:
+      "Turn what's already in your kitchen into a week of delicious meals. Build personalized meal plans from your pantry ingredients.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "PlateMyDay — Personalized meal planning from your pantry",
+      },
+    ],
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "PlateMyDay — Stop Wasting Food, Start Eating Better",
+    description:
+      "Turn what's already in your kitchen into a week of delicious meals. Build personalized meal plans from your pantry ingredients.",
+    images: ["/og-image.png"],
+    creator: "@ravilution",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-snippet": -1,
+      "max-image-preview": "large",
+      "max-video-preview": -1,
+    },
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -41,6 +101,27 @@ export const metadata: Metadata = {
   icons: {
     icon: "/assets/icon.png",
     apple: "/assets/icon-180.png",
+  },
+};
+
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  name: "PlateMyDay",
+  url: BASE_URL,
+  description:
+    "Turn what's already in your kitchen into a week of delicious meals. PlateMyDay builds personalized meal plans from your pantry ingredients to reduce food waste and save money.",
+  applicationCategory: "LifestyleApplication",
+  operatingSystem: "Web",
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "USD",
+  },
+  author: {
+    "@type": "Organization",
+    name: "Ravilution",
+    url: "https://ravilution.ai",
   },
 };
 
@@ -54,6 +135,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable} antialiased`}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        />
         <PostHogProvider>
           <UserbackProvider>
             <AppShell>{children}</AppShell>

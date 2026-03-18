@@ -24,10 +24,10 @@ export default function HomePage() {
       <div className="fixed top-0 left-0 right-0 z-20 flex justify-end items-center gap-2 sm:gap-3 px-4 py-3 sm:px-6 sm:py-4">
         <Link
           href="/upgrade"
-          className="text-sm font-semibold text-foreground/70 hover:text-foreground transition-all backdrop-blur-sm bg-white/50 px-4 py-2 rounded-full border border-white/60 shadow-sm hover:shadow inline-flex items-center gap-1.5"
+          className="text-foreground/70 hover:text-foreground transition-all backdrop-blur-sm bg-white/50 p-2 rounded-full border border-white/60 shadow-sm hover:shadow inline-flex items-center"
+          title="Pricing"
         >
-          <Crown className="w-3.5 h-3.5" />
-          Pricing
+          <Crown className="w-4 h-4" />
         </Link>
         <Link
           href="/about"

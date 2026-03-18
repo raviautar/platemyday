@@ -14,6 +14,10 @@ export async function GET(request: Request) {
     if (!error) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        const isNewUser = user.created_at && (Date.now() - new Date(user.created_at).getTime() < 60_000);
+        if (isNewUser) {
+          trackServerEvent(EVENTS.USER_SIGNED_UP, user.id, '', { method: 'google' });
+        }
         trackServerEvent(EVENTS.USER_SIGNED_IN, user.id, '', { method: 'google' });
       }
       return NextResponse.redirect(`${origin}${redirect}`);

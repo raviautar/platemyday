@@ -1,8 +1,10 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Terms of Service - PlateMyDay',
-  description: 'Terms of Service for PlateMyDay meal planning application',
+  title: 'Terms of Service',
+  description: 'Terms of Service for PlateMyDay — rules and conditions for using the app.',
+  alternates: { canonical: 'https://platemyday.com/terms' },
+  robots: { index: false },
 };
 
 export default function TermsOfServicePage() {

@@ -87,6 +87,7 @@ export function AuthForm({
                 setLoading(false);
                 return;
             }
+            track(EVENTS.USER_SIGNED_UP, { method: 'email' });
             if (data.session) {
                 onSuccess(redirect);
                 return;

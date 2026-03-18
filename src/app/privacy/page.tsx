@@ -1,8 +1,10 @@
 import Link from 'next/link';
 
 export const metadata = {
-  title: 'Privacy Policy - PlateMyDay',
-  description: 'Privacy Policy for PlateMyDay meal planning application',
+  title: 'Privacy Policy',
+  description: 'Privacy Policy for PlateMyDay — how we collect, use, and protect your data.',
+  alternates: { canonical: 'https://platemyday.com/privacy' },
+  robots: { index: false },
 };
 
 export default function PrivacyPolicyPage() {
