@@ -114,7 +114,7 @@ export default function HomePage() {
             {/* H1 — keyword-rich */}
             <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-2 font-[family-name:var(--font-outfit)] tracking-tight">
               <span className="bg-gradient-to-r from-[#3A7D44] via-[#2D6235] to-[#3A7D44] bg-clip-text text-transparent">
-                Meal Planner from<br className="hidden sm:block" /> Pantry Ingredients
+                Ingredient-Based<br className="hidden sm:block" /> Meal Planner
               </span>
             </h1>
 
