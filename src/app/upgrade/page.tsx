@@ -447,6 +447,13 @@ function UpgradeContent() {
         Payments are securely handled by Stripe. Existing paid users stay on unlimited access.
       </p>
 
+      <p className="relative z-10 mt-4 text-xs text-muted">
+        Not sure yet?{' '}
+        <Link href="/about" className="text-primary underline underline-offset-2 hover:no-underline">
+          Learn how ingredient-based meal planning works →
+        </Link>
+      </p>
+
       <style jsx>{`
         .animate-pack-in {
           animation: pack-in 0.55s ease-out both;

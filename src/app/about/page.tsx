@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Crown } from 'lucide-react';
 
 export default function AboutPage() {
   return (
@@ -131,6 +131,24 @@ export default function AboutPage() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Internal CTA */}
+        <div className="mt-16 flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            href="/meal-plan"
+            className="inline-flex items-center justify-center gap-2 bg-gradient-to-br from-[#3A7D44] to-[#2D6235] text-white font-semibold px-7 py-3 rounded-2xl shadow-md hover:shadow-lg transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] text-sm"
+          >
+            Start planning for free
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href="/upgrade"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-2xl border-2 border-[#3A7D44]/30 text-[#3A7D44] font-semibold text-sm hover:bg-[#3A7D44]/5 hover:border-[#3A7D44]/50 transition-all duration-200"
+          >
+            <Crown className="w-4 h-4" />
+            See Pro pricing
+          </Link>
         </div>
       </div>
     </div>
