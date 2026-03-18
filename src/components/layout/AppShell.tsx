@@ -54,7 +54,7 @@ function SettingsGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { isSettingsLoaded } = useSettings();
 
-  const isPublicPage = pathname === '/' || pathname === '/about' || pathname === '/login' || pathname === '/signup' || pathname === '/privacy' || pathname === '/terms' || pathname === '/onboarding';
+  const isPublicPage = pathname === '/' || pathname === '/about' || pathname === '/login' || pathname === '/signup' || pathname === '/privacy' || pathname === '/terms';
 
   if (!isSettingsLoaded && !isPublicPage) return null;
 
@@ -63,7 +63,7 @@ function SettingsGuard({ children }: { children: React.ReactNode }) {
 
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isFullScreenPage = pathname === '/' || pathname === '/about' || pathname === '/login' || pathname === '/signup' || pathname === '/privacy' || pathname === '/terms' || pathname === '/onboarding';
+  const isFullScreenPage = pathname === '/' || pathname === '/about' || pathname === '/login' || pathname === '/signup' || pathname === '/privacy' || pathname === '/terms';
 
   return (
     <SettingsProvider>
