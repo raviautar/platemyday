@@ -10,6 +10,7 @@ import {
   getUserPantryIngredients,
 } from '@/lib/ai-guardrails';
 import { checkCredits, consumeCredit } from '@/lib/supabase/billing';
+import { getAuthUser } from '@/lib/supabase/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -24,7 +25,16 @@ export async function POST(req: Request) {
     });
     if (validation instanceof Response) return validation;
 
-    const { recipes, systemPrompt, preferences, recipeMix, weekStartDay, userId, anonymousId } = validation.data;
+    const { recipes, systemPrompt, preferences, recipeMix, weekStartDay, anonymousId: clientAnonymousId } = validation.data;
+
+    // Server-side identity: trust session, not request body
+    const { userId: authUserId } = await getAuthUser();
+    const userId = authUserId;
+    const anonymousId = userId ? '' : (clientAnonymousId ?? '');
+
+    if (!userId && !anonymousId) {
+      return Response.json({ error: 'Authentication required' }, { status: 401 });
+    }
 
     // Credit check — only meal plan generation costs credits
     const creditCheck = await checkCredits(userId ?? null, anonymousId ?? '');
@@ -45,8 +55,8 @@ export async function POST(req: Request) {
     }
 
     const [prefsPrompt, pantryIngredients] = await Promise.all([
-      getUserPreferencesPrompt(userId, anonymousId),
-      getUserPantryIngredients(userId, anonymousId),
+      getUserPreferencesPrompt(userId ?? undefined, anonymousId || undefined),
+      getUserPantryIngredients(userId ?? undefined, anonymousId || undefined),
     ]);
     const effectivePrefs = prefsPrompt || preferences || '';
 

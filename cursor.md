@@ -5,9 +5,9 @@
 ## Critical Rules
 
 1. **ALWAYS use `bun`** (not npm) - `bun install`, `bun add`, `bun run build`
-2. **AI Provider**: Google Gemini (`gemini-3-flash-preview`) via `@ai-sdk/google` - NOT Claude/Anthropic
-3. **Environment**: `GOOGLE_GENERATIVE_AI_API_KEY` + Clerk keys (`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`) in `.env.local`
-4. **Auth**: Clerk for optional authentication - app works without login, auth only for saving recipes
+2. **AI Provider**: Google Gemini (`gemini-2.5-flash` / `gemini-2.5-flash-lite`) via `@ai-sdk/google` - NOT Claude/Anthropic
+3. **Environment**: `GOOGLE_GENERATIVE_AI_API_KEY` + Supabase keys in `.env.local`
+4. **Auth**: Supabase Auth (`@supabase/ssr`) with anonymous user support - app works without login, auth for saving data
 5. **No AI-slop comments** - Only comment when logic is non-obvious
 6. **Build verification**: Always run `bun run build` after completing new features to verify everything works
 7. **NEVER run `bun run dev`** - Dev server is ALWAYS running in background. Only run `bun run build` for verification. Do NOT start dev server unless explicitly requested.
@@ -23,10 +23,14 @@ AI-powered meal planning app with recipe management and weekly meal planning usi
 - **Styling**: Tailwind CSS v4
 - **Fonts**: Outfit (Google Font) for branding/headers, Geist for body text
 - **AI**: Google Gemini via Vercel AI SDK
-- **Auth**: Clerk (optional, for recipe storage)
-- **State**: React Context + localStorage
+- **Auth**: Supabase Auth (email/password + Google OAuth, anonymous user support)
+- **Database**: Supabase (PostgreSQL)
+- **Payments**: Stripe
+- **Analytics**: PostHog
+- **State**: React Context + Supabase persistence
 - **Validation**: Zod v3
 - **Icons**: Lucide React
+- **Drag & Drop**: @hello-pangea/dnd
 
 ## Architecture Essentials
 
@@ -38,20 +42,20 @@ AI-powered meal planning app with recipe management and weekly meal planning usi
 - **Mobile Navigation**: `BottomNav.tsx` fixed at bottom (h-16), FABs must account for this spacing
 
 ### Data Flow
-1. **State Management**: React Context (Recipe, MealPlan, Settings) → auto-syncs to localStorage
-2. **AI Generation**: 
+1. **State Management**: React Context (Recipe, MealPlan, Settings, Billing) → auto-syncs to Supabase
+2. **AI Generation**:
    - Recipe generation: `generateText` with `Output.object()` → complete recipe object
-   - Meal plan generation: `streamText` with `Output.object()` → Server-Sent Events → progressive UI updates
-   - API routes: `/api/generate-recipe`, `/api/generate-meal-plan`
-3. **Storage Keys**: `platemyday-recipes`, `platemyday-meal-plans`, `platemyday-settings` (defined in `src/lib/constants.ts`)
+   - Meal plan generation: `streamText` with `Output.array()` → NDJSON streaming → progressive UI updates
+   - API routes: `/api/generate-recipe`, `/api/generate-meal-plan`, `/api/regenerate-meal`, `/api/edit-recipe`
+3. **Auth flow**: Anonymous users get a UUID in localStorage. On Supabase Auth sign-in, data migrates via `migrateAnonymousData()` RPC
 
 ### Key Entry Points
-- **Layout**: `src/app/layout.tsx` - ClerkProvider wraps app, then AppShell with context providers
+- **Layout**: `src/app/layout.tsx` - PostHogProvider + UserbackProvider wraps AppShell with context providers
 - **Navigation**: `src/components/layout/Sidebar.tsx` (desktop), `BottomNav.tsx` (mobile) + logo at `public/icon.png`
-- **Auth Middleware**: `src/middleware.ts` - Clerk config (all routes public)
-- **Types**: `src/types/index.ts` - Core interfaces (Recipe, MealSlot, WeekPlan, AppSettings, LoadingRecipe)
+- **Auth**: `src/lib/supabase/auth.ts` - `getAuthUser()` for server-side session
+- **Types**: `src/types/index.ts` - Core interfaces (Recipe, MealSlot, WeekPlan, AppSettings, BillingInfo)
 - **AI Schemas**: `src/lib/ai.ts` - Zod schemas for AI validation (recipeSchema, mealPlanDaySchema, consolidatedShoppingListSchema)
-- **Contexts**: `src/contexts/` - RecipeContext, MealPlanContext, SettingsContext
+- **Contexts**: `src/contexts/` - RecipeContext, MealPlanContext, SettingsContext, BillingContext
 - **Constants**: `src/lib/constants.ts` - Default prompts, unit system functions
 
 ## Common Modification Patterns
@@ -65,22 +69,15 @@ AI-powered meal planning app with recipe management and weekly meal planning usi
 1. Create `src/app/[page-name]/page.tsx`
 2. Add to `src/components/layout/Sidebar.tsx` and `BottomNav.tsx`
 
-### Adding Floating Action Buttons
-- Position: `fixed bottom-20 md:bottom-8 right-4 md:right-8` (accounts for mobile BottomNav)
-- Size: `w-16 h-16 rounded-full`
-- Style: `bg-gradient-to-br from-primary to-emerald-600` with hover scale effects
-- z-index: `z-40` (above content, below modals)
-
 ### Modifying AI Behavior
 - Default prompts: `src/contexts/SettingsContext.tsx`
 - User customization: Settings page
 - API routes: Accept custom system prompts in request body
 
 ### Working with Streaming AI
-- Use `streamText` with `Output.object({ schema })` (NOT deprecated `streamObject`)
-- Access partial results via `partialOutputStream` (NOT `partialObjectStream`)
-- Final result via `.output` property (NOT `.object`)
-- Meal plan streaming: Shows loading states, progressive recipe details, cancellation support
+- Use `streamText` with `Output.array({ element: schema })` for meal plans
+- Use `streamObject` with schema for shopping list consolidation
+- NDJSON format: one JSON object per line, final line prefixed with "DONE:" or "ERROR:"
 
 ## Quick Commands
 
@@ -93,8 +90,9 @@ bun run lint                   # Run ESLint
 
 ## Important Notes
 
-- **Client-side only**: No backend database, all localStorage
+- **Supabase-backed**: All data persisted to Supabase PostgreSQL, not localStorage
 - **Server Components**: Use `'use client'` for interactivity
 - **Type safety**: Zod validates all AI outputs
 - **Responsive**: Mobile-first with Tailwind CSS
-- **Streaming UX**: Meal plans stream recipe details progressively with loading states, skeletons, and manual "Add to Library" for new recipes
+- **Billing**: 10 lifetime credits, only meal plan generation costs credits. Stripe for paid plans
+- **Never use "AI"** in user-facing text — use "personalized", "tailored", "generated", or "smart" instead

@@ -12,10 +12,13 @@ export default function AboutPage() {
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,_rgba(58,125,68,0.12),transparent)]" />
 
       {/* Top Nav */}
-      <div className="relative z-20 flex items-center px-6 py-4">
+      <div className="relative z-20 flex items-center justify-between px-6 py-4">
         <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Home
+        </Link>
+        <Link href="/blog" className="inline-flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors backdrop-blur-sm bg-white/50 px-3 py-1.5 rounded-full border border-white/60">
+          Blog
         </Link>
       </div>
 

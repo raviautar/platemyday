@@ -3,7 +3,18 @@ import { createClient } from '@supabase/supabase-js';
 
 export async function POST(request: Request) {
     try {
-        const { email } = await request.json();
+        const adminKey = request.headers.get('x-admin-key');
+        if (!adminKey || adminKey !== process.env.ADMIN_SECRET_KEY) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
+
+        let body: any;
+        try {
+            body = await request.json();
+        } catch {
+            return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+        }
+        const { email } = body;
 
         if (!email) {
             return NextResponse.json({ error: 'Email is required' }, { status: 400 });

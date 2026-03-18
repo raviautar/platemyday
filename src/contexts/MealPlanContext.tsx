@@ -148,7 +148,10 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       .then((plan) => {
         if (!cancelled) setWeekPlanState(plan);
       })
-      .catch((err) => console.error('Failed to load meal plan:', err))
+      .catch((err) => {
+        console.error('Failed to load meal plan:', err);
+        showToast('Failed to load meal plan', 'error');
+      })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
@@ -346,8 +349,9 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       setWeekPlanState(prev => prev ? { ...prev, id: saved.id, createdAt: saved.createdAt } : prev);
     } catch (err) {
       console.error('Failed to save meal plan:', err);
+      showToast('Failed to save meal plan', 'error');
     }
-  }, [userId, anonymousId, supabase]);
+  }, [userId, anonymousId, supabase, showToast]);
 
   const updateLocalPlan = useCallback((updater: (prev: WeekPlan) => WeekPlan) => {
     setWeekPlanState(prev => {
@@ -481,6 +485,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       setMealPlanHistory(plans);
     } catch (err) {
       console.error('Failed to load meal plan history:', err);
+      showToast('Failed to load meal plan history', 'error');
     } finally {
       setHistoryLoading(false);
     }
@@ -493,8 +498,9 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       setWeekPlanState(plan);
     } catch (err) {
       console.error('Failed to restore meal plan:', err);
+      showToast('Failed to restore meal plan', 'error');
     }
-  }, [userId, anonymousId, supabase]);
+  }, [userId, anonymousId, supabase, showToast]);
 
   const deleteMealPlan = useCallback(async (planId: string) => {
     try {
@@ -505,8 +511,9 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (err) {
       console.error('Failed to delete meal plan:', err);
+      showToast('Failed to delete meal plan', 'error');
     }
-  }, [weekPlan?.id, supabase]);
+  }, [weekPlan?.id, supabase, showToast]);
 
   // --- Generation logic ---
 

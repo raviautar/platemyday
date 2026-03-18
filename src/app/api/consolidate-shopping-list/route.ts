@@ -7,6 +7,7 @@ import {
 } from '@/lib/ai-guardrails';
 import { getMealPlanById, getRecipes } from '@/lib/supabase/db';
 import { createServiceClient } from '@/lib/supabase/server';
+import { getAuthUser } from '@/lib/supabase/auth';
 import { Recipe, WeekPlan } from '@/types';
 import { logger } from '@/lib/logger';
 
@@ -45,7 +46,17 @@ export async function POST(req: Request) {
     });
     if (validation instanceof Response) return validation;
 
-    const { mealPlanId, userId, anonymousId } = validation.data;
+    const { mealPlanId, anonymousId: clientAnonymousId } = validation.data;
+
+    // Server-side identity: trust session, not request body
+    const { userId: authUserId } = await getAuthUser();
+    const userId = authUserId;
+    const anonymousId = userId ? '' : (clientAnonymousId ?? '');
+
+    if (!userId && !anonymousId) {
+      return Response.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
     logger.log('[consolidate-shopping-list] request received', { mealPlanId, userId, anonymousId });
 
     const supabase = createServiceClient();

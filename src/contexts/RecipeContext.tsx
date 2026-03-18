@@ -10,6 +10,7 @@ import {
   updateRecipeDb,
   deleteRecipeDb,
 } from '@/lib/supabase/db';
+import { useToast } from '@/components/ui/Toast';
 
 interface RecipeContextType {
   recipes: Recipe[];
@@ -25,6 +26,7 @@ const RecipeContext = createContext<RecipeContextType | null>(null);
 export function RecipeProvider({ children }: { children: React.ReactNode }) {
   const { userId, anonymousId, isLoaded } = useUserIdentity();
   const supabase = useSupabase();
+  const { showToast } = useToast();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -38,7 +40,10 @@ export function RecipeProvider({ children }: { children: React.ReactNode }) {
       .then((data) => {
         if (!cancelled) setRecipes(data);
       })
-      .catch((err) => console.error('Failed to load recipes:', err))
+      .catch((err) => {
+        console.error('Failed to load recipes:', err);
+        showToast('Failed to load recipes', 'error');
+      })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
@@ -54,13 +59,19 @@ export function RecipeProvider({ children }: { children: React.ReactNode }) {
 
   const updateRecipe = useCallback((id: string, updates: Partial<Recipe>) => {
     setRecipes(prev => prev.map(r => r.id === id ? { ...r, ...updates } : r));
-    updateRecipeDb(supabase, id, updates).catch(err => console.error('Failed to update recipe:', err));
-  }, [supabase]);
+    updateRecipeDb(supabase, id, updates).catch(err => {
+      console.error('Failed to update recipe:', err);
+      showToast('Failed to save recipe changes', 'error');
+    });
+  }, [supabase, showToast]);
 
   const deleteRecipe = useCallback((id: string) => {
     setRecipes(prev => prev.filter(r => r.id !== id));
-    deleteRecipeDb(supabase, id).catch(err => console.error('Failed to delete recipe:', err));
-  }, [supabase]);
+    deleteRecipeDb(supabase, id).catch(err => {
+      console.error('Failed to delete recipe:', err);
+      showToast('Failed to delete recipe', 'error');
+    });
+  }, [supabase, showToast]);
 
   const getRecipe = useCallback((id: string) => {
     return recipes.find(r => r.id === id);

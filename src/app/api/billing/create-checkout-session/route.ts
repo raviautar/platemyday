@@ -13,7 +13,13 @@ export async function POST(req: Request) {
       return Response.json({ error: 'Sign in required to purchase credits' }, { status: 401 });
     }
 
-    const { pack } = await req.json() as { pack?: CreditPackId };
+    let body: any;
+    try {
+      body = await req.json();
+    } catch {
+      return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+    }
+    const { pack } = body as { pack?: CreditPackId };
     if (!pack || !Object.hasOwn(CREDIT_PACKS, pack)) {
       return Response.json(
         { error: 'Invalid pack', details: { pack, availablePacks: Object.keys(CREDIT_PACKS) } },

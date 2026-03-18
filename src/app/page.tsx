@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { UserCircle, ArrowRight, Leaf, Package, Sparkles, Crown, ChevronDown } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
@@ -28,19 +27,27 @@ const FAQ_ITEMS = [
   },
 ];
 
+const FAQ_SCHEMA = {
+  '@context': 'https://schema.org',
+  '@type': 'FAQPage',
+  mainEntity: FAQ_ITEMS.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
+};
+
 export default function HomePage() {
-  const router = useRouter();
   const { track } = useAnalytics();
   const { isLoaded: isAuthLoaded, isAuthenticated } = useUserIdentity();
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
-  const handleStart = () => {
-    track(EVENTS.LANDING_CTA_CLICKED, { cta: 'hero_start_planning' });
-    router.push('/meal-plan');
-  };
-
   return (
     <div className="w-full relative overflow-x-hidden overflow-y-auto bg-background">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(FAQ_SCHEMA) }}
+      />
       {/* Top Nav */}
       <div className="fixed top-0 left-0 right-0 z-20 flex justify-end items-center gap-2 sm:gap-3 px-4 py-3 sm:px-6 sm:py-4">
         <Link
@@ -49,6 +56,12 @@ export default function HomePage() {
           title="Pricing"
         >
           <Crown className="w-4 h-4" />
+        </Link>
+        <Link
+          href="/blog"
+          className="text-sm font-semibold text-foreground/70 hover:text-foreground transition-all backdrop-blur-sm bg-white/50 px-4 py-2 rounded-full border border-white/60 shadow-sm hover:shadow"
+        >
+          Blog
         </Link>
         <Link
           href="/about"
@@ -111,48 +124,43 @@ export default function HomePage() {
               />
             </div>
 
-            {/* H1 — keyword-rich */}
+            {/* H1 */}
             <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold mb-2 font-[family-name:var(--font-outfit)] tracking-tight">
               <span className="bg-gradient-to-r from-[#3A7D44] via-[#2D6235] to-[#3A7D44] bg-clip-text text-transparent">
-                Ingredient-Based<br className="hidden sm:block" /> Meal Planner
+                Ingredient-Based<br className="hidden sm:block" /> Pantry Meal Planner
               </span>
             </h1>
 
-            {/* Subtitle */}
-            <p className="text-base sm:text-lg md:text-xl font-medium text-foreground/80 mb-1 font-[family-name:var(--font-outfit)]">
-              Stop wasting food. Start eating better.
-            </p>
+            {/* H2 subtitle — contains food waste keyword for SEO */}
+            <h2 className="text-base sm:text-lg md:text-xl font-medium text-foreground/80 mb-1 font-[family-name:var(--font-outfit)]">
+              Reduce food waste. Start eating better.
+            </h2>
 
             {/* Tagline */}
             <p className="text-sm sm:text-base text-muted max-w-xs sm:max-w-sm mx-auto mb-8 leading-relaxed">
               Tell us what&apos;s in your kitchen. We&apos;ll build a full week of delicious meals — and a shopping list for only what you&apos;re missing.
             </p>
 
-            {/* CTA */}
-            {!isAuthLoaded ? (
-              <div className="h-14 flex items-center justify-center">
-                <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-3">
-                <button
-                  onClick={handleStart}
-                  className="inline-flex items-center justify-center gap-2 bg-gradient-to-br from-primary to-primary-dark hover:from-primary-dark hover:to-[#1F4D28] text-white font-semibold px-8 py-3.5 rounded-2xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] text-base sm:text-lg w-full sm:w-auto min-w-[220px]"
+            {/* CTA — primary Link is always server-rendered for crawlers */}
+            <div className="flex flex-col items-center gap-3">
+              <Link
+                href="/meal-plan"
+                onClick={() => track(EVENTS.LANDING_CTA_CLICKED, { cta: 'hero_start_planning' })}
+                className="inline-flex items-center justify-center gap-2 bg-gradient-to-br from-primary to-primary-dark hover:from-primary-dark hover:to-[#1F4D28] text-white font-semibold px-8 py-3.5 rounded-2xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] text-base sm:text-lg w-full sm:w-auto min-w-[220px]"
+              >
+                Reduce My Food Waste
+                <ArrowRight className="w-5 h-5" />
+              </Link>
+              {isAuthLoaded && !isAuthenticated && (
+                <Link
+                  href="/login"
+                  className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-2xl border-2 border-primary/30 text-primary font-semibold text-sm hover:bg-primary/5 hover:border-primary/50 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
                 >
-                  Reduce My Food Waste
-                  <ArrowRight className="w-5 h-5" />
-                </button>
-                {!isAuthenticated && (
-                  <Link
-                    href="/login"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-2xl border-2 border-primary/30 text-primary font-semibold text-sm hover:bg-primary/5 hover:border-primary/50 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
-                  >
-                    <UserCircle className="w-4 h-4" />
-                    Sign in to your account
-                  </Link>
-                )}
-              </div>
-            )}
+                  <UserCircle className="w-4 h-4" />
+                  Sign in to your account
+                </Link>
+              )}
+            </div>
 
             {/* 3-step strip */}
             <div className="mt-10 flex justify-center gap-6 sm:gap-8 max-w-sm mx-auto">
@@ -235,13 +243,14 @@ export default function HomePage() {
           </div>
 
           <div className="mt-12 text-center">
-            <button
-              onClick={handleStart}
+            <Link
+              href="/meal-plan"
+              onClick={() => track(EVENTS.LANDING_CTA_CLICKED, { cta: 'how_it_works_cta' })}
               className="inline-flex items-center gap-2 bg-gradient-to-br from-primary to-primary-dark text-white font-semibold px-7 py-3 rounded-2xl shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
             >
               Try It Free — No Account Needed
               <ArrowRight className="w-4 h-4" />
-            </button>
+            </Link>
           </div>
         </section>
 
@@ -307,18 +316,33 @@ export default function HomePage() {
                     className={`w-4 h-4 text-muted shrink-0 transition-transform duration-200 ${openFaq === i ? 'rotate-180' : ''}`}
                   />
                 </button>
-                {openFaq === i && (
+                {/* Answer always in DOM so Google can index it; CSS controls visibility */}
+                <div className={`overflow-hidden transition-[max-height] duration-300 ease-in-out ${openFaq === i ? 'max-h-96' : 'max-h-0'}`}>
                   <div className="px-5 pb-5">
                     <p className="text-sm text-muted leading-relaxed">{item.a}</p>
                   </div>
-                )}
+                </div>
               </div>
             ))}
           </div>
         </section>
 
-        {/* Footer badge */}
-        <div className="border-t border-[#E4D9CC]/60 py-8 flex justify-center">
+        {/* Footer */}
+        <div className="border-t border-[#E4D9CC]/60 py-8 flex flex-col sm:flex-row items-center justify-between gap-4 px-2">
+          <div className="flex items-center gap-4 text-sm">
+            <Link href="/blog" className="font-semibold text-[#3A7D44] hover:text-[#2D6235] transition-colors">
+              Blog
+            </Link>
+            <Link href="/features" className="text-foreground/50 hover:text-foreground transition-colors">
+              Features
+            </Link>
+            <Link href="/about" className="text-foreground/50 hover:text-foreground transition-colors">
+              About
+            </Link>
+            <Link href="/upgrade" className="text-foreground/50 hover:text-foreground transition-colors">
+              Pricing
+            </Link>
+          </div>
           <a
             href="https://ravilution.ai"
             target="_blank"

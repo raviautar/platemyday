@@ -9,7 +9,13 @@ export async function POST(req: Request) {
     return Response.json({ error: 'Forbidden' }, { status: 403 });
   }
 
-  const { userId, unlimited, extraCredits, note } = await req.json() as {
+  let body: any;
+  try {
+    body = await req.json();
+  } catch {
+    return Response.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+  const { userId, unlimited, extraCredits, note } = body as {
     userId: string;
     unlimited?: boolean;
     extraCredits?: number;

@@ -8,6 +8,7 @@ import {
   validateAndRateLimit,
   getUserPreferencesPrompt,
 } from '@/lib/ai-guardrails';
+import { getAuthUser } from '@/lib/supabase/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -34,7 +35,12 @@ export async function POST(req: Request) {
     });
     if (validation instanceof Response) return validation;
 
-    const { prompt, strictIngredients, systemPrompt, userId, anonymousId } = validation.data;
+    const { prompt, strictIngredients, systemPrompt, anonymousId: clientAnonymousId } = validation.data;
+
+    // Server-side identity: trust session, not request body
+    const { userId: authUserId } = await getAuthUser();
+    const userId = authUserId;
+    const anonymousId = userId ? '' : (clientAnonymousId ?? '');
 
     if (!isFoodRelated(prompt)) {
       return Response.json(
@@ -43,7 +49,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const prefsPrompt = await getUserPreferencesPrompt(userId, anonymousId);
+    const prefsPrompt = await getUserPreferencesPrompt(userId ?? undefined, anonymousId || undefined);
     let enhancedPrompt = prompt;
     if (strictIngredients) {
       enhancedPrompt += '\n\nIMPORTANT: Use ONLY the ingredients mentioned above. Do not add extra ingredients beyond basic seasonings (salt, pepper, oil). Keep the recipe simple and focused on these ingredients.';

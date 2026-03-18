@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode } from 'react';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
+import { useToast } from '@/components/ui/Toast';
 import type { BillingInfo } from '@/types';
 
 interface BillingContextValue extends BillingInfo {
@@ -21,6 +22,7 @@ const BillingContext = createContext<BillingContextValue>({
 
 export function BillingProvider({ children }: { children: ReactNode }) {
   const { userId, anonymousId, isLoaded } = useUserIdentity();
+  const { showToast } = useToast();
   const [billing, setBilling] = useState<BillingInfo>({
     plan: 'free',
     unlimited: false,
@@ -54,12 +56,13 @@ export function BillingProvider({ children }: { children: ReactNode }) {
       }
     } catch (err) {
       console.error('Failed to fetch billing info:', err);
+      showToast('Failed to load billing info', 'error');
     } finally {
       hasFetchedRef.current = true;
       setLoading(false);
     }
     return null;
-  }, [userId, anonymousId, isLoaded]);
+  }, [userId, anonymousId, isLoaded, showToast]);
 
   useEffect(() => {
     fetchBilling();

@@ -8,6 +8,7 @@ import {
   validateAndRateLimit,
   getUserPreferencesPrompt,
 } from '@/lib/ai-guardrails';
+import { getAuthUser } from '@/lib/supabase/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -22,9 +23,14 @@ export async function POST(req: Request) {
     });
     if (validation instanceof Response) return validation;
 
-    const { currentRecipe, editPrompt, systemPrompt, userId, anonymousId } = validation.data;
+    const { currentRecipe, editPrompt, systemPrompt, anonymousId: clientAnonymousId } = validation.data;
 
-    const prefsPrompt = await getUserPreferencesPrompt(userId, anonymousId);
+    // Server-side identity: trust session, not request body
+    const { userId: authUserId } = await getAuthUser();
+    const userId = authUserId;
+    const anonymousId = userId ? '' : (clientAnonymousId ?? '');
+
+    const prefsPrompt = await getUserPreferencesPrompt(userId ?? undefined, anonymousId || undefined);
 
     const prompt = `Here is an existing recipe:
 
