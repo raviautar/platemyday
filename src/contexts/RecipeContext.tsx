@@ -12,6 +12,13 @@ import {
 } from '@/lib/supabase/db';
 import { useToast } from '@/components/ui/Toast';
 
+export interface GenerateRecipeOptions {
+  strictIngredients?: boolean;
+  systemPrompt?: string;
+  userId?: string | null;
+  anonymousId?: string | null;
+}
+
 interface RecipeContextType {
   recipes: Recipe[];
   addRecipe: (recipe: Omit<Recipe, 'id' | 'createdAt'>) => Promise<Recipe>;
@@ -19,6 +26,8 @@ interface RecipeContextType {
   deleteRecipe: (id: string) => void;
   getRecipe: (id: string) => Recipe | undefined;
   loading: boolean;
+  isGeneratingRecipe: boolean;
+  generateRecipe: (prompt: string, options?: GenerateRecipeOptions) => Promise<Recipe | null>;
 }
 
 const RecipeContext = createContext<RecipeContextType | null>(null);
@@ -29,6 +38,7 @@ export function RecipeProvider({ children }: { children: React.ReactNode }) {
   const { showToast } = useToast();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
 
   useEffect(() => {
     if (!isLoaded || !anonymousId) return;
@@ -77,8 +87,43 @@ export function RecipeProvider({ children }: { children: React.ReactNode }) {
     return recipes.find(r => r.id === id);
   }, [recipes]);
 
+  const generateRecipe = useCallback(async (prompt: string, options: GenerateRecipeOptions = {}): Promise<Recipe | null> => {
+    const { strictIngredients = false, systemPrompt, userId: optUserId, anonymousId: optAnonymousId } = options;
+    setIsGeneratingRecipe(true);
+    try {
+      const res = await fetch('/api/generate-recipe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt,
+          strictIngredients,
+          systemPrompt,
+          userId: optUserId ?? userId,
+          anonymousId: optAnonymousId ?? anonymousId,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to generate recipe');
+      }
+
+      const recipeData = await res.json();
+      const savedRecipe = await insertRecipe(supabase, { ...recipeData, isAIGenerated: true }, optUserId ?? userId, optAnonymousId ?? anonymousId);
+      setRecipes(prev => [savedRecipe, ...prev]);
+      showToast(`"${savedRecipe.title}" saved to library!`);
+      return savedRecipe;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Something went wrong';
+      showToast(`Failed to generate recipe: ${message}`, 'error');
+      return null;
+    } finally {
+      setIsGeneratingRecipe(false);
+    }
+  }, [userId, anonymousId, supabase, showToast]);
+
   return (
-    <RecipeContext.Provider value={{ recipes, addRecipe, updateRecipe, deleteRecipe, getRecipe, loading }}>
+    <RecipeContext.Provider value={{ recipes, addRecipe, updateRecipe, deleteRecipe, getRecipe, loading, isGeneratingRecipe, generateRecipe }}>
       {children}
     </RecipeContext.Provider>
   );

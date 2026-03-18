@@ -92,6 +92,13 @@ export function BlogPost({ title, description, publishedAt, readingTime, childre
             ← Back to all articles
           </Link>
         </div>
+        <div className="mt-4 flex items-center justify-center gap-4 text-xs text-[#9B8B7A]">
+          <Link href="/" className="hover:text-[#3A7D44] transition-colors">Home</Link>
+          <span>·</span>
+          <Link href="/features" className="hover:text-[#3A7D44] transition-colors">Features</Link>
+          <span>·</span>
+          <Link href="/upgrade" className="hover:text-[#3A7D44] transition-colors">Pricing</Link>
+        </div>
       </div>
     </div>
   );

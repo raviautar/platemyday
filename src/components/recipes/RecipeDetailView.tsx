@@ -377,7 +377,7 @@ export function RecipeDetailView({
 
         {canEdit && (
           <div className="sticky bottom-0 bg-white border-t border-border/60 px-4 py-3 safe-area-bottom">
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <input
                 type="text"
                 value={editPrompt}
@@ -385,13 +385,13 @@ export function RecipeDetailView({
                 onKeyDown={(e) => e.key === 'Enter' && handleEditSubmit()}
                 placeholder="e.g., Add more cheese, make it vegetarian..."
                 disabled={isEditing}
-                className="flex-1 text-sm px-3 py-2 border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50"
+                className="w-full min-w-0 text-sm px-3 py-2 border border-border rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent disabled:opacity-50 sm:flex-1"
               />
               <Button
                 size="sm"
                 onClick={handleEditSubmit}
                 disabled={!editPrompt.trim() || isEditing}
-                className="gap-1.5 px-4"
+                className="gap-1.5 px-4 whitespace-nowrap w-full justify-center sm:w-auto"
               >
                 {isEditing ? (
                   <Loader2 className="w-4 h-4 animate-spin" />

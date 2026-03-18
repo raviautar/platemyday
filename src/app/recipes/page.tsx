@@ -33,11 +33,10 @@ function saveUnseenRecipeIds(ids: Set<string>) {
 export default function RecipesPage() {
   const { settings } = useSettings();
   const { userId, anonymousId } = useUserIdentity();
-  const { recipes, addRecipe, updateRecipe, deleteRecipe } = useRecipes();
+  const { recipes, updateRecipe, deleteRecipe, isGeneratingRecipe, generateRecipe } = useRecipes();
   const { track } = useAnalytics();
   const { showToast } = useToast();
   const [showAI, setShowAI] = useState(false);
-  const [isGeneratingRecipe, setIsGeneratingRecipe] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -121,58 +120,32 @@ export default function RecipesPage() {
   };
 
   const handleGenerateAI = async (prompt: string, strictIngredients?: boolean) => {
-    setIsGeneratingRecipe(true);
     const startTime = Date.now();
 
-    try {
-      const res = await fetch('/api/generate-recipe', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          prompt,
-          strictIngredients: strictIngredients || false,
-          systemPrompt: settings.recipeSystemPrompt,
-          userId,
-          anonymousId,
-        }),
-      });
+    const savedRecipe = await generateRecipe(prompt, {
+      strictIngredients: strictIngredients || false,
+      systemPrompt: settings.recipeSystemPrompt,
+      userId,
+      anonymousId,
+    });
 
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.error || 'Failed to generate recipe');
-      }
-
-      const recipeData = await res.json();
+    if (savedRecipe) {
       track(EVENTS.RECIPE_GENERATION_COMPLETED, {
-        recipe_title: recipeData.title,
+        recipe_title: savedRecipe.title,
         generation_time_ms: Date.now() - startTime,
       });
-
-      // Auto-save the generated recipe
-      const savedRecipe = await addRecipe({
-        ...recipeData,
-        isAIGenerated: true,
-      });
-
       track(EVENTS.RECIPE_CREATED, { recipe_title: savedRecipe.title, source: 'ai_generator', is_ai_generated: true });
       if (recipes.length === 0) track(EVENTS.FIRST_RECIPE_CREATED);
       track(EVENTS.AI_RECIPE_SAVED, { recipe_title: savedRecipe.title });
 
-      // Mark as unseen so the card shows the "new" indicator
       setUnseenRecipeIds(prev => {
         const next = new Set(prev);
         next.add(savedRecipe.id);
         saveUnseenRecipeIds(next);
         return next;
       });
-
-      showToast(`"${savedRecipe.title}" saved to library!`);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Something went wrong';
-      track(EVENTS.RECIPE_GENERATION_FAILED, { error_message: message });
-      showToast(`Failed to generate recipe: ${message}`, 'error');
-    } finally {
-      setIsGeneratingRecipe(false);
+    } else {
+      track(EVENTS.RECIPE_GENERATION_FAILED, { error_message: 'Generation failed' });
     }
   };
 
