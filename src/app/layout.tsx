@@ -65,6 +65,15 @@ export const metadata: Metadata = {
     title: "PlateMyDay — Stop Wasting Food, Start Eating Better",
     description:
       "Turn what's already in your kitchen into a week of delicious meals. Build personalized meal plans from your pantry ingredients.",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "PlateMyDay — Personalized meal planning from your pantry",
+        type: "image/jpeg",
+      },
+    ],
     locale: "en_US",
   },
   twitter: {
@@ -72,6 +81,7 @@ export const metadata: Metadata = {
     title: "PlateMyDay — Stop Wasting Food, Start Eating Better",
     description:
       "Turn what's already in your kitchen into a week of delicious meals. Build personalized meal plans from your pantry ingredients.",
+    images: ["/og-image.jpg"],
     creator: "@ravilutionx",
   },
   robots: {
