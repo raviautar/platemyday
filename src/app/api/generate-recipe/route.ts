@@ -9,6 +9,7 @@ import {
   getUserPreferencesPrompt,
 } from '@/lib/ai-guardrails';
 import { getAuthUser } from '@/lib/supabase/auth';
+import { checkCredits, consumeCredit } from '@/lib/supabase/billing';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -42,6 +43,23 @@ export async function POST(req: Request) {
     const userId = authUserId;
     const anonymousId = userId ? '' : (clientAnonymousId ?? '');
 
+    const creditCheck = await checkCredits(userId ?? null, anonymousId ?? '');
+    if (!creditCheck.allowed) {
+      trackServerEvent(EVENTS.PAYWALL_HIT, userId ?? null, anonymousId ?? '', {
+        credits_used: creditCheck.creditsUsed,
+        credits_limit: creditCheck.creditsLimit,
+      });
+      return Response.json(
+        {
+          error: 'no_credits',
+          message: 'You\'ve used all your free recipe generations. Upgrade for unlimited access.',
+          creditsUsed: creditCheck.creditsUsed,
+          creditsLimit: creditCheck.creditsLimit,
+        },
+        { status: 402 },
+      );
+    }
+
     if (!isFoodRelated(prompt)) {
       return Response.json(
         { error: "Hmm, that doesn't look like a recipe request! Please describe a dish or meal you'd like to make." },
@@ -73,6 +91,10 @@ export async function POST(req: Request) {
         { error: "We couldn't create a recipe from that description. Please try describing a specific dish or meal!" },
         { status: 400 }
       );
+    }
+
+    if (!creditCheck.unlimited) {
+      await consumeCredit(userId ?? null, anonymousId ?? '');
     }
 
     trackServerEvent(EVENTS.RECIPE_GENERATION_COMPLETED, userId ?? null, anonymousId ?? '', {

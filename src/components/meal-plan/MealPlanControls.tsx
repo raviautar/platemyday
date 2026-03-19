@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal } from '@/components/ui/Modal';
 import { PreferencesEditor } from '@/components/settings/PreferencesEditor';
 import { PantryBar } from '@/components/meal-plan/PantryBar';
-import { Settings2, Sparkles, X, BookOpen, CalendarDays, ChevronDown } from 'lucide-react';
+import { Settings2, Sparkles, Zap, X, BookOpen, CalendarDays, ChevronDown } from 'lucide-react';
 import { useBilling } from '@/contexts/BillingContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useRecipes } from '@/contexts/RecipeContext';
@@ -143,39 +144,54 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
           </div>
 
           {/* Action row */}
-          <div className="flex gap-1.5 sm:gap-2 md:gap-3">
+          <div className="space-y-2">
             <button
               onClick={() => setShowPreferences(true)}
-              className="flex items-center justify-center gap-2 px-3 sm:px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 text-muted hover:text-primary transition-all duration-200 relative"
+              className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 text-muted hover:text-primary transition-all duration-200 relative"
               aria-label="Meal plan preferences"
             >
               <Settings2 className="w-5 h-5 shrink-0" />
-              <span className="font-medium hidden sm:inline">Preferences</span>
+              <span className="font-medium">Meal preferences</span>
               {hasCustomizations && (
                 <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
               )}
             </button>
 
-            <Button
-              onClick={() => onGenerate(recipeMix, numberOfDays)}
-              disabled={loading}
-              size="lg"
-              className="flex-1 gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base min-w-0"
-            >
-              {loading ? (
-                <>
-                  <LoadingSpinner size="sm" className="shrink-0" />
-                  <span className="hidden sm:inline">Generating...</span>
-                </>
-              ) : (
-                <>
-                  <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-                  <span className="whitespace-nowrap">
-                    {hasExistingPlan ? 'Regenerate' : prefs.pantryIngredients.length > 0 ? 'Generate from pantry' : 'Generate'}
-                  </span>
-                </>
+            <div className="min-w-0">
+              <Button
+                onClick={() => onGenerate(recipeMix, numberOfDays)}
+                disabled={loading}
+                size="lg"
+                className="w-full gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base min-w-0"
+              >
+                {loading ? (
+                  <>
+                    <LoadingSpinner size="sm" className="shrink-0" />
+                    <span className="hidden sm:inline">Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                    <span className="whitespace-nowrap">
+                      {hasExistingPlan ? 'Regenerate' : 'Generate'}
+                    </span>
+                  </>
+                )}
+              </Button>
+
+              {!hasExistingPlan && (
+                <div className="mt-2 text-center">
+                  <p className="text-[11px] text-muted mb-1">or</p>
+                  <Link
+                    href="/recipes?create=quick-meal"
+                    className="inline-flex w-full items-center justify-center gap-1.5 px-3 py-2 rounded-lg border border-border bg-surface/70 text-xs font-medium text-foreground hover:bg-surface hover:border-primary/40 transition-all shadow-sm"
+                  >
+                    <Zap className="w-3.5 h-3.5 shrink-0 text-primary" />
+                    Generate quick recipe
+                  </Link>
+                </div>
               )}
-            </Button>
+            </div>
           </div>
 
           {!billingLoading && !unlimited && (

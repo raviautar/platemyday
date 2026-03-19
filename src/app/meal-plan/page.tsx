@@ -247,40 +247,31 @@ export default function MealPlanPage() {
 
             {/* Heading */}
             <h2 className="text-xl sm:text-2xl font-bold text-foreground text-center mb-2 font-[family-name:var(--font-outfit)]">
-              What&apos;s in your kitchen?
+              Build your first plan
             </h2>
-            <p className="text-sm text-muted text-center max-w-md mx-auto mb-8 leading-relaxed">
-              Add ingredients above and hit generate. We&apos;ll build a full week of meals using what you already have — so nothing goes to waste.
+            <p className="text-sm text-muted text-center max-w-sm mx-auto mb-6 leading-relaxed">
+              Add a few pantry items, then tap generate.
             </p>
 
             {/* Steps */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-lg mx-auto">
-              <div className="flex sm:flex-col items-center gap-3 sm:gap-2 text-center">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-lg mx-auto">
+              <div className="flex items-center sm:justify-center gap-2 text-sm text-foreground">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                   <span className="text-sm font-bold text-primary">1</span>
                 </div>
-                <div className="sm:text-center">
-                  <p className="text-sm font-semibold text-foreground">Add pantry items</p>
-                  <p className="text-xs text-muted mt-0.5">What do you need to use up?</p>
-                </div>
+                <span className="font-medium">Add pantry items</span>
               </div>
-              <div className="flex sm:flex-col items-center gap-3 sm:gap-2 text-center">
+              <div className="flex items-center sm:justify-center gap-2 text-sm text-foreground">
                 <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center shrink-0">
                   <span className="text-sm font-bold text-accent-dark">2</span>
                 </div>
-                <div className="sm:text-center">
-                  <p className="text-sm font-semibold text-foreground">Generate your plan</p>
-                  <p className="text-xs text-muted mt-0.5">Meals built around your ingredients</p>
-                </div>
+                <span className="font-medium">Tap generate</span>
               </div>
-              <div className="flex sm:flex-col items-center gap-3 sm:gap-2 text-center">
+              <div className="flex items-center sm:justify-center gap-2 text-sm text-foreground">
                 <div className="w-10 h-10 rounded-full bg-secondary/15 flex items-center justify-center shrink-0">
                   <span className="text-sm font-bold text-secondary-dark">3</span>
                 </div>
-                <div className="sm:text-center">
-                  <p className="text-sm font-semibold text-foreground">Cook & save</p>
-                  <p className="text-xs text-muted mt-0.5">Less waste, smaller grocery bills</p>
-                </div>
+                <span className="font-medium">Start cooking</span>
               </div>
             </div>
           </div>

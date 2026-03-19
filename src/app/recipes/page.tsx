@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Recipe } from '@/types';
 import { useRecipes } from '@/contexts/RecipeContext';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -36,7 +37,9 @@ export default function RecipesPage() {
   const { recipes, updateRecipe, deleteRecipe, isGeneratingRecipe, generateRecipe } = useRecipes();
   const { track } = useAnalytics();
   const { showToast } = useToast();
-  const [showAI, setShowAI] = useState(false);
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [showAI, setShowAI] = useState(() => searchParams.get('create') === 'quick-meal');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -50,6 +53,13 @@ export default function RecipesPage() {
   useEffect(() => {
     setUnseenRecipeIds(getUnseenRecipeIds());
   }, []);
+
+  // Consume the ?create=quick-meal param so the modal doesn't reopen on refresh
+  useEffect(() => {
+    if (searchParams.get('create') === 'quick-meal') {
+      router.replace('/recipes', { scroll: false });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const allTags = Array.from(new Set(recipes.flatMap(r => r.tags))).sort();
 
