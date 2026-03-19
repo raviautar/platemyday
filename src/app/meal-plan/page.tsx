@@ -45,6 +45,7 @@ export default function MealPlanPage() {
   const [historyOpen, setHistoryOpen] = useState(false);
   const [shoppingListOpen, setShoppingListOpen] = useState(false);
   const [nutritionOpen, setNutritionOpen] = useState(false);
+  const [showCartNudge, setShowCartNudge] = useState(false);
 
   // Prefetch generating animation images
   useEffect(() => {
@@ -59,11 +60,27 @@ export default function MealPlanPage() {
     () => (shoppingList || []).reduce((sum, category) => sum + (category.items?.length || 0), 0),
     [shoppingList],
   );
-  const shouldHighlightCart = shoppingListUpdated && itemsToBuyCount > 0 && !shoppingListOpen;
+  const shouldHighlightCart =
+    showCartNudge &&
+    itemsToBuyCount > 0 &&
+    !shoppingListOpen &&
+    !shoppingListLoading;
+
+  useEffect(() => {
+    if (!shoppingListUpdated || itemsToBuyCount <= 0 || shoppingListOpen || shoppingListLoading) return;
+
+    setShowCartNudge(true);
+    const timer = setTimeout(() => {
+      setShowCartNudge(false);
+    }, 3000);
+
+    return () => clearTimeout(timer);
+  }, [shoppingListUpdated, itemsToBuyCount, shoppingListOpen, shoppingListLoading]);
 
   return (
     <div>
-      <div className="flex items-center justify-between gap-4 pb-3 border-b border-border/60 mb-6">
+      <div className="sticky top-14 z-30 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 pt-2">
+        <div className="flex items-center justify-between gap-4 pb-3 border-b border-border/60 mb-2">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-primary-dark font-[family-name:var(--font-outfit)]">
             Meal Plan
@@ -102,15 +119,17 @@ export default function MealPlanPage() {
                 }
               }}
               disabled={!weekPlan && !shoppingListLoading}
-              className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-sm shrink-0 transition-all ${shouldHighlightCart ? 'animate-cart-shake' : ''} ${weekPlan
+              className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-sm shrink-0 transition-all ${shouldHighlightCart ? 'animate-cart-shake ring-2 ring-secondary/50' : ''} ${weekPlan
                 ? 'bg-gradient-to-r from-primary to-primary-dark text-white hover:from-primary-dark hover:to-[#1F4D28] shadow-md hover:shadow-lg'
                 : 'bg-surface border border-border text-muted cursor-not-allowed opacity-60'
                 }`}
             >
               <ShoppingCart className="w-5 h-5" strokeWidth={2} />
               <span className="text-sm font-semibold hidden sm:inline">Shopping List</span>
-              {shoppingListUpdated && (
-                <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-secondary border-2 border-white animate-pulse" />
+              {itemsToBuyCount > 0 && (
+                <span className="absolute -top-2 -right-2 min-w-5 h-5 px-1 rounded-full bg-accent-dark text-white text-[10px] font-bold border border-white flex items-center justify-center">
+                  {itemsToBuyCount > 99 ? '99+' : itemsToBuyCount}
+                </span>
               )}
             </button>
 
@@ -139,6 +158,14 @@ export default function MealPlanPage() {
             </button>
           )}
         </div>
+      </div>
+        {shouldHighlightCart && (
+          <div className="mb-4">
+            <div className="ml-auto w-fit max-w-full rounded-lg border border-secondary/40 bg-secondary/10 px-3 py-2 text-xs text-secondary-dark font-medium animate-fade-in">
+              You have {itemsToBuyCount} ingredient{itemsToBuyCount === 1 ? '' : 's'} to buy. Tap the cart to view your list.
+            </div>
+          </div>
+        )}
       </div>
 
       <MealPlanControls

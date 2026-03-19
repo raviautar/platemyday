@@ -37,7 +37,7 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
   const [showPreferences, setShowPreferences] = useState(false);
   const [recipeMix, setRecipeMix] = useState<RecipeMix>('balanced');
   const [showRecipeMix, setShowRecipeMix] = useState(false);
-  const [numberOfDays, setNumberOfDays] = useState(7);
+  const [numberOfDays, setNumberOfDays] = useState(3);
   const [showDayCount, setShowDayCount] = useState(false);
 
   const prefs = { ...DEFAULT_USER_PREFERENCES, ...settings.preferences };
@@ -55,52 +55,52 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
 
         {/* Recipe Mix + Generate */}
         <div className="bg-white rounded-xl border border-border p-3 sm:p-4 space-y-3">
-          {/* Recipe mix selector — only show when user has library recipes */}
-          {hasLibraryRecipes && (
-            <div>
-              <button
-                type="button"
-                onClick={() => setShowRecipeMix(v => !v)}
-                className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors group"
-              >
-                <BookOpen className="w-3.5 h-3.5 shrink-0" />
-                <span>
-                  Recipe mix:{' '}
-                  <span className="text-foreground font-medium">
-                    {RECIPE_MIX_OPTIONS.find(o => o.value === recipeMix)?.label}
-                  </span>
+          <div>
+            <button
+              type="button"
+              onClick={() => hasLibraryRecipes && setShowRecipeMix(v => !v)}
+              disabled={!hasLibraryRecipes}
+              className={`flex items-center gap-1.5 text-xs transition-colors group ${hasLibraryRecipes ? 'text-muted hover:text-foreground' : 'text-muted/70 cursor-not-allowed'}`}
+            >
+              <BookOpen className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                Recipe mix:{' '}
+                <span className="text-foreground font-medium">
+                  {RECIPE_MIX_OPTIONS.find(o => o.value === recipeMix)?.label}
                 </span>
-                <ChevronDown
-                  className={`w-3 h-3 transition-transform duration-200 ${showRecipeMix ? 'rotate-180' : ''}`}
-                />
-              </button>
+              </span>
+              <ChevronDown
+                className={`w-3 h-3 transition-transform duration-200 ${showRecipeMix ? 'rotate-180' : ''}`}
+              />
+            </button>
 
-              {showRecipeMix && (
-                <div className="mt-2 space-y-1.5">
-                  <div className="flex gap-1">
-                    {RECIPE_MIX_OPTIONS.map((option) => (
-                      <button
-                        key={option.value}
-                        onClick={() => { setRecipeMix(option.value); setShowRecipeMix(false); }}
-                        title={option.description}
-                        className={`flex-1 px-1.5 sm:px-2 py-2 rounded-lg text-xs font-medium transition-all ${
-                          recipeMix === option.value
-                            ? 'bg-primary/10 text-primary border border-primary/30'
-                            : 'bg-surface/60 text-muted hover:bg-surface border border-transparent hover:text-foreground'
-                        }`}
-                      >
-                        <span className="hidden sm:inline">{option.label}</span>
-                        <span className="sm:hidden">{option.label.split(' ')[0]}</span>
-                      </button>
-                    ))}
-                  </div>
-                  <p className="text-xs text-muted">
-                    {RECIPE_MIX_OPTIONS.find(o => o.value === recipeMix)?.description}
-                  </p>
+            {!hasLibraryRecipes ? (
+              <p className="mt-2 text-xs text-muted">Add saved recipes to customize recipe mix.</p>
+            ) : showRecipeMix ? (
+              <div className="mt-2 space-y-1.5">
+                <div className="flex gap-1">
+                  {RECIPE_MIX_OPTIONS.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => { setRecipeMix(option.value); setShowRecipeMix(false); }}
+                      title={option.description}
+                      className={`flex-1 px-1.5 sm:px-2 py-2 rounded-lg text-xs font-medium transition-all ${
+                        recipeMix === option.value
+                          ? 'bg-primary/10 text-primary border border-primary/30'
+                          : 'bg-surface/60 text-muted hover:bg-surface border border-transparent hover:text-foreground'
+                      }`}
+                    >
+                      <span className="hidden sm:inline">{option.label}</span>
+                      <span className="sm:hidden">{option.label.split(' ')[0]}</span>
+                    </button>
+                  ))}
                 </div>
-              )}
-            </div>
-          )}
+                <p className="text-xs text-muted">
+                  {RECIPE_MIX_OPTIONS.find(o => o.value === recipeMix)?.description}
+                </p>
+              </div>
+            ) : null}
+          </div>
 
           {/* Plan duration selector */}
           <div>

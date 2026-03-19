@@ -614,7 +614,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
           preferences,
           recipeMix: recipeMix || 'balanced',
           weekStartDay: settings.weekStartDay,
-          numberOfDays: numberOfDays ?? 7,
+          numberOfDays: numberOfDays ?? 3,
           userId,
           anonymousId,
         }),
