@@ -17,7 +17,7 @@ export function BottomNav() {
   const generating = mealPlan?.generating ?? false;
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-sm border-t border-border shadow-lg z-[100] md:hidden">
+    <nav className="fixed bottom-0 inset-x-0 bg-white/95 backdrop-blur-sm border-t border-border shadow-lg z-[100] md:hidden" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
       <div className="flex justify-around relative">
         {navItems.map(item => {
           const isActive = pathname.startsWith(item.href);
