@@ -85,6 +85,28 @@ body {
   animation: fadeIn 0.2s ease-out;
 }
 
+@keyframes cartShake {
+  0%, 80%, 100% {
+    transform: translateX(0);
+  }
+  84% {
+    transform: translateX(-2px) rotate(-2deg);
+  }
+  88% {
+    transform: translateX(2px) rotate(2deg);
+  }
+  92% {
+    transform: translateX(-1px) rotate(-1deg);
+  }
+  96% {
+    transform: translateX(1px) rotate(1deg);
+  }
+}
+
+.animate-cart-shake {
+  animation: cartShake 2s ease-in-out infinite;
+}
+
 @keyframes floatSlow {
   0%, 100% { transform: translateY(0) rotate(var(--float-rotate, 0deg)); }
   50% { transform: translateY(-12px) rotate(var(--float-rotate, 0deg)); }

@@ -55,6 +55,11 @@ export default function MealPlanPage() {
   }, []);
 
   const suggestedRecipes = useMemo(() => weekPlan?.suggestedRecipes || {}, [weekPlan?.suggestedRecipes]);
+  const itemsToBuyCount = useMemo(
+    () => (shoppingList || []).reduce((sum, category) => sum + (category.items?.length || 0), 0),
+    [shoppingList],
+  );
+  const shouldHighlightCart = shoppingListUpdated && itemsToBuyCount > 0 && !shoppingListOpen;
 
   return (
     <div>
@@ -85,28 +90,36 @@ export default function MealPlanPage() {
           )}
         </div>
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            aria-label="Shopping list"
-            title={!weekPlan && !shoppingListLoading ? 'Generate a meal plan first' : 'Shopping List'}
-            onClick={() => {
-              if (weekPlan || shoppingListLoading) {
-                setShoppingListOpen(true);
-                dismissShoppingListUpdated();
-              }
-            }}
-            disabled={!weekPlan && !shoppingListLoading}
-            className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-sm shrink-0 transition-all ${weekPlan
-              ? 'bg-gradient-to-r from-primary to-primary-dark text-white hover:from-primary-dark hover:to-[#1F4D28] shadow-md hover:shadow-lg'
-              : 'bg-surface border border-border text-muted cursor-not-allowed opacity-60'
-              }`}
-          >
-            <ShoppingCart className="w-5 h-5" strokeWidth={2} />
-            <span className="text-sm font-semibold hidden sm:inline">Shopping List</span>
-            {shoppingListUpdated && (
-              <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-secondary border-2 border-white animate-pulse" />
+          <div className="relative">
+            <button
+              type="button"
+              aria-label="Shopping list"
+              title={!weekPlan && !shoppingListLoading ? 'Generate a meal plan first' : 'Shopping List'}
+              onClick={() => {
+                if (weekPlan || shoppingListLoading) {
+                  setShoppingListOpen(true);
+                  dismissShoppingListUpdated();
+                }
+              }}
+              disabled={!weekPlan && !shoppingListLoading}
+              className={`relative flex items-center gap-2 px-4 py-2.5 rounded-xl shadow-sm shrink-0 transition-all ${shouldHighlightCart ? 'animate-cart-shake' : ''} ${weekPlan
+                ? 'bg-gradient-to-r from-primary to-primary-dark text-white hover:from-primary-dark hover:to-[#1F4D28] shadow-md hover:shadow-lg'
+                : 'bg-surface border border-border text-muted cursor-not-allowed opacity-60'
+                }`}
+            >
+              <ShoppingCart className="w-5 h-5" strokeWidth={2} />
+              <span className="text-sm font-semibold hidden sm:inline">Shopping List</span>
+              {shoppingListUpdated && (
+                <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-secondary border-2 border-white animate-pulse" />
+              )}
+            </button>
+
+            {shouldHighlightCart && (
+              <div className="hidden md:flex absolute top-1/2 -translate-y-1/2 right-[calc(100%+0.5rem)] bg-white border border-border rounded-lg px-2.5 py-1 shadow-md text-xs font-medium text-foreground whitespace-nowrap animate-fade-in">
+                {itemsToBuyCount} item{itemsToBuyCount === 1 ? '' : 's'} left to buy
+              </div>
             )}
-          </button>
+          </div>
           {weekPlan && (
             <button
               type="button"
