@@ -66,15 +66,6 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 
 const nextConfig = {
   turbopack: {},
-  async redirects() {
-    return [
-      {
-        source: '/og-image.png',
-        destination: '/opengraph-image',
-        permanent: true,
-      },
-    ];
-  },
 };
 
 const { withSentryConfig } = require("@sentry/nextjs");
