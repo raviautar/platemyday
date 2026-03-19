@@ -6,7 +6,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal } from '@/components/ui/Modal';
 import { PreferencesEditor } from '@/components/settings/PreferencesEditor';
 import { PantryBar } from '@/components/meal-plan/PantryBar';
-import { Settings2, Sparkles, X, BookOpen, ChevronDown } from 'lucide-react';
+import { Settings2, Sparkles, X, BookOpen, CalendarDays, ChevronDown } from 'lucide-react';
 import { useBilling } from '@/contexts/BillingContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useRecipes } from '@/contexts/RecipeContext';
@@ -22,8 +22,10 @@ const RECIPE_MIX_OPTIONS: { value: RecipeMix; label: string; description: string
   { value: 'all_existing', label: 'All saved', description: 'Only from your recipe library' },
 ];
 
+const DAY_COUNT_OPTIONS = [1, 3, 5, 7, 10, 14] as const;
+
 interface MealPlanControlsProps {
-  onGenerate: (recipeMix: RecipeMix) => Promise<void>;
+  onGenerate: (recipeMix: RecipeMix, numberOfDays: number) => Promise<void>;
   hasExistingPlan: boolean;
   loading: boolean;
 }
@@ -35,6 +37,8 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
   const [showPreferences, setShowPreferences] = useState(false);
   const [recipeMix, setRecipeMix] = useState<RecipeMix>('balanced');
   const [showRecipeMix, setShowRecipeMix] = useState(false);
+  const [numberOfDays, setNumberOfDays] = useState(7);
+  const [showDayCount, setShowDayCount] = useState(false);
 
   const prefs = { ...DEFAULT_USER_PREFERENCES, ...settings.preferences };
   const hasCustomizations =
@@ -98,6 +102,46 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
             </div>
           )}
 
+          {/* Plan duration selector */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowDayCount(v => !v)}
+              className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors group"
+            >
+              <CalendarDays className="w-3.5 h-3.5 shrink-0" />
+              <span>
+                Plan duration:{' '}
+                <span className="text-foreground font-medium">
+                  {numberOfDays} {numberOfDays === 1 ? 'day' : 'days'}
+                </span>
+              </span>
+              <ChevronDown
+                className={`w-3 h-3 transition-transform duration-200 ${showDayCount ? 'rotate-180' : ''}`}
+              />
+            </button>
+
+            {showDayCount && (
+              <div className="mt-2">
+                <div className="flex gap-1">
+                  {DAY_COUNT_OPTIONS.map((count) => (
+                    <button
+                      key={count}
+                      onClick={() => { setNumberOfDays(count); setShowDayCount(false); }}
+                      className={`flex-1 px-1.5 sm:px-2 py-2 rounded-lg text-xs font-medium transition-all ${
+                        numberOfDays === count
+                          ? 'bg-primary/10 text-primary border border-primary/30'
+                          : 'bg-surface/60 text-muted hover:bg-surface border border-transparent hover:text-foreground'
+                      }`}
+                    >
+                      {count}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Action row */}
           <div className="flex gap-1.5 sm:gap-2 md:gap-3">
             <button
@@ -113,7 +157,7 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
             </button>
 
             <Button
-              onClick={() => onGenerate(recipeMix)}
+              onClick={() => onGenerate(recipeMix, numberOfDays)}
               disabled={loading}
               size="lg"
               className="flex-1 gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base min-w-0"

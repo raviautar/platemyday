@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     });
     if (validation instanceof Response) return validation;
 
-    const { recipes, systemPrompt, preferences, recipeMix, weekStartDay, anonymousId: clientAnonymousId } = validation.data;
+    const { recipes, systemPrompt, preferences, recipeMix, weekStartDay, numberOfDays, anonymousId: clientAnonymousId } = validation.data;
 
     // Server-side identity: trust session, not request body
     const { userId: authUserId } = await getAuthUser();
@@ -71,7 +71,7 @@ export async function POST(req: Request) {
 
     const daysOrder = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const startIndex = daysOrder.indexOf(weekStartDay);
-    const orderedDays = [...daysOrder.slice(startIndex), ...daysOrder.slice(0, startIndex)];
+    const orderedDays = Array.from({ length: numberOfDays }, (_, index) => daysOrder[(startIndex + index) % daysOrder.length]);
 
     const hasPantry = pantryIngredients.length > 0;
     const pantrySection = hasPantry
@@ -92,7 +92,7 @@ This is the #1 priority: design meals around these ingredients to minimize food 
     };
     const mixInstruction = recipeMixInstructions[recipeMix] || recipeMixInstructions.balanced;
 
-    const prompt = `Create a 7-day meal plan starting from ${weekStartDay}. Generate each day in order: ${orderedDays.join(', ')}.
+    const prompt = `Create a ${numberOfDays}-day meal plan starting from ${weekStartDay}. Generate each day in order: ${orderedDays.join(', ')}.
 ${pantrySection}
 
 ${hasRecipes ? `${recipes.length > recipesForPrompt.length ? `NOTE: Only the first ${recipesForPrompt.length} recipes are included to keep generation stable.\n` : ''}Available recipes in user's library:\n${recipeList}` : 'The user has no recipes in their library yet. Create ALL new recipes with complete details.'}
@@ -110,7 +110,7 @@ ${hasRecipes ? `1. ${mixInstruction} When using existing recipes, include their 
    - Servings, prep time, cook time
    - Relevant tags (e.g., "vegetarian", "quick", "italian")
    - Estimated nutrition per serving (calories, protein in grams, carbs in grams, fat in grams)
-3. Each day MUST have breakfast, lunch, dinner, AND at least one snack — no exceptions
+3. Generate exactly ${numberOfDays} days. Each day MUST have breakfast, lunch, dinner, AND at least one snack — no exceptions
 4. Snacks should be varied and nutritious (e.g., yogurt parfait, hummus with veggies, trail mix, fruit smoothie, etc.)
 5. Days must be in this exact order: ${orderedDays.join(', ')}
 6. For EVERY meal, include estimatedNutrition with realistic calorie and macro estimates per serving

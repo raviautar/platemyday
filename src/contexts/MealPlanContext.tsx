@@ -76,7 +76,7 @@ interface MealPlanContextType {
   isPaywalled: boolean;
   partialPlan: PartialPlan | null;
   isStreaming: boolean;
-  startGeneration: (preferences: string, systemPrompt?: string, recipeMix?: string) => void;
+  startGeneration: (preferences: string, systemPrompt?: string, recipeMix?: string, numberOfDays?: number) => void;
   retryGeneration: () => void;
   clearGenerationError: () => void;
 }
@@ -587,7 +587,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     return plan;
   }, [getWeekStartDate, settings.weekStartDay]);
 
-  const startGeneration = useCallback((preferences: string, systemPrompt?: string, recipeMix?: string) => {
+  const startGeneration = useCallback((preferences: string, systemPrompt?: string, recipeMix?: string, numberOfDays?: number) => {
     setGenerating(true);
     setGenerationError(null);
     setIsPaywalled(false);
@@ -614,6 +614,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
           preferences,
           recipeMix: recipeMix || 'balanced',
           weekStartDay: settings.weekStartDay,
+          numberOfDays: numberOfDays ?? 7,
           userId,
           anonymousId,
         }),

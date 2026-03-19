@@ -26,8 +26,8 @@ export function useMealPlanGeneration() {
   const { track } = useAnalytics();
   const { showToast } = useToast();
 
-  const handleGenerate = useCallback(async (recipeMix?: RecipeMix) => {
-    startGeneration('', undefined, recipeMix);
+  const handleGenerate = useCallback(async (recipeMix?: RecipeMix, numberOfDays?: number) => {
+    startGeneration('', undefined, recipeMix, numberOfDays);
   }, [startGeneration]);
 
   const handleAddToLibrary = useCallback(async (suggestedRecipe: SuggestedRecipe) => {

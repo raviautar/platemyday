@@ -129,7 +129,7 @@ export default function MealPlanPage() {
       </div>
 
       <MealPlanControls
-        onGenerate={(recipeMix) => handleGenerate(recipeMix)}
+        onGenerate={(recipeMix, numberOfDays) => handleGenerate(recipeMix, numberOfDays)}
         hasExistingPlan={!!weekPlan}
         loading={loading}
       />

@@ -56,6 +56,7 @@ export const generateMealPlanRequestSchema = z.object({
   preferences: z.string().trim().max(4000).optional(),
   recipeMix: z.enum(['all_new', 'mostly_new', 'balanced', 'mostly_existing', 'all_existing']).optional().default('balanced'),
   weekStartDay: z.enum(DAYS_OF_WEEK).optional().default('Monday'),
+  numberOfDays: z.number().int().min(1).max(14).optional().default(7),
   userId: optionalActorIdSchema,
   anonymousId: optionalActorIdSchema,
 });
