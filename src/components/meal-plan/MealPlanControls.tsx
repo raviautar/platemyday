@@ -56,52 +56,51 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
 
         {/* Recipe Mix + Generate */}
         <div className="bg-white rounded-xl border border-border p-3 sm:p-4 space-y-3">
-          <div>
-            <button
-              type="button"
-              onClick={() => hasLibraryRecipes && setShowRecipeMix(v => !v)}
-              disabled={!hasLibraryRecipes}
-              className={`flex items-center gap-1.5 text-xs transition-colors group ${hasLibraryRecipes ? 'text-muted hover:text-foreground' : 'text-muted/70 cursor-not-allowed'}`}
-            >
-              <BookOpen className="w-3.5 h-3.5 shrink-0" />
-              <span>
-                Recipe mix:{' '}
-                <span className="text-foreground font-medium">
-                  {RECIPE_MIX_OPTIONS.find(o => o.value === recipeMix)?.label}
+          {hasLibraryRecipes && (
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowRecipeMix(v => !v)}
+                className="flex items-center gap-1.5 text-xs transition-colors group text-muted hover:text-foreground"
+              >
+                <BookOpen className="w-3.5 h-3.5 shrink-0" />
+                <span>
+                  Recipe mix:{' '}
+                  <span className="text-foreground font-medium">
+                    {RECIPE_MIX_OPTIONS.find(o => o.value === recipeMix)?.label}
+                  </span>
                 </span>
-              </span>
-              <ChevronDown
-                className={`w-3 h-3 transition-transform duration-200 ${showRecipeMix ? 'rotate-180' : ''}`}
-              />
-            </button>
+                <ChevronDown
+                  className={`w-3 h-3 transition-transform duration-200 ${showRecipeMix ? 'rotate-180' : ''}`}
+                />
+              </button>
 
-            {!hasLibraryRecipes ? (
-              <p className="mt-2 text-xs text-muted">Add saved recipes to customize recipe mix.</p>
-            ) : showRecipeMix ? (
-              <div className="mt-2 space-y-1.5">
-                <div className="flex gap-1">
-                  {RECIPE_MIX_OPTIONS.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => { setRecipeMix(option.value); setShowRecipeMix(false); }}
-                      title={option.description}
-                      className={`flex-1 px-1.5 sm:px-2 py-2 rounded-lg text-xs font-medium transition-all ${
-                        recipeMix === option.value
-                          ? 'bg-primary/10 text-primary border border-primary/30'
-                          : 'bg-surface/60 text-muted hover:bg-surface border border-transparent hover:text-foreground'
-                      }`}
-                    >
-                      <span className="hidden sm:inline">{option.label}</span>
-                      <span className="sm:hidden">{option.label.split(' ')[0]}</span>
-                    </button>
-                  ))}
+              {showRecipeMix && (
+                <div className="mt-2 space-y-1.5">
+                  <div className="flex gap-1">
+                    {RECIPE_MIX_OPTIONS.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => { setRecipeMix(option.value); setShowRecipeMix(false); }}
+                        title={option.description}
+                        className={`flex-1 px-1.5 sm:px-2 py-2 rounded-lg text-xs font-medium transition-all ${
+                          recipeMix === option.value
+                            ? 'bg-primary/10 text-primary border border-primary/30'
+                            : 'bg-surface/60 text-muted hover:bg-surface border border-transparent hover:text-foreground'
+                        }`}
+                      >
+                        <span className="hidden sm:inline">{option.label}</span>
+                        <span className="sm:hidden">{option.label.split(' ')[0]}</span>
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs text-muted">
+                    {RECIPE_MIX_OPTIONS.find(o => o.value === recipeMix)?.description}
+                  </p>
                 </div>
-                <p className="text-xs text-muted">
-                  {RECIPE_MIX_OPTIONS.find(o => o.value === recipeMix)?.description}
-                </p>
-              </div>
-            ) : null}
-          </div>
+              )}
+            </div>
+          )}
 
           {/* Plan duration selector */}
           <div>
@@ -147,13 +146,13 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
           <div className="space-y-2">
             <button
               onClick={() => setShowPreferences(true)}
-              className="w-full flex items-center justify-center gap-2 px-3 sm:px-4 py-3 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 text-muted hover:text-primary transition-all duration-200 relative"
+              className="mx-auto w-fit flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-dashed border-border hover:border-primary hover:bg-primary/5 text-muted hover:text-primary transition-all duration-200 relative text-sm"
               aria-label="Meal plan preferences"
             >
-              <Settings2 className="w-5 h-5 shrink-0" />
+              <Settings2 className="w-4 h-4 shrink-0" />
               <span className="font-medium">Meal preferences</span>
               {hasCustomizations && (
-                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
+                <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-primary" />
               )}
             </button>
 
