@@ -7,7 +7,8 @@ import { EVENTS } from '@/lib/analytics/events';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
-import { Plus, Sparkles, ChefHat, Wand2, Settings2, Package, Lightbulb } from 'lucide-react';
+import { ImageIngredientScanner } from '@/components/ui/ImageIngredientScanner';
+import { Plus, Sparkles, ChefHat, Wand2, Settings2, Package, Lightbulb, Camera } from 'lucide-react';
 
 interface AIRecipeGeneratorProps {
   isOpen: boolean;
@@ -49,6 +50,7 @@ export function AIRecipeGenerator({ isOpen, onClose, onGenerate }: AIRecipeGener
   const router = useRouter();
   const [prompt, setPrompt] = useState('');
   const [strictIngredients, setStrictIngredients] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -97,6 +99,13 @@ export function AIRecipeGenerator({ isOpen, onClose, onGenerate }: AIRecipeGener
     router.push('/customize');
   };
 
+  const handleScannedIngredients = (ingredients: string[]) => {
+    const currentText = prompt.trim();
+    const newText = ingredients.join(', ');
+    setPrompt(currentText ? `${currentText}, ${newText}` : newText);
+    track(EVENTS.INGREDIENT_SCAN_COMPLETED, { ingredient_count: ingredients.length, context: 'recipe' });
+  };
+
   return (
     <Modal isOpen={isOpen} onClose={handleClose} title="Create a New Recipe" fullscreen>
       <div className="md:max-w-3xl md:mx-auto w-full space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -115,9 +124,19 @@ export function AIRecipeGenerator({ isOpen, onClose, onGenerate }: AIRecipeGener
               rows={5}
               className="text-lg bg-white shadow-inner resize-none focus:ring-primary/50 transition-all"
             />
-            <div className="flex items-start gap-2 mt-4 text-muted text-sm">
-              <Lightbulb className="w-4 h-4 mt-0.5 shrink-0 text-amber-500" />
-              <p>Describe a craving, a cultural dish, or simply list the ingredients you want to use up.</p>
+            <div className="flex items-center justify-between mt-4">
+              <div className="flex items-start gap-2 text-muted text-sm">
+                <Lightbulb className="w-4 h-4 mt-0.5 shrink-0 text-amber-500" />
+                <p>Describe a craving, a cultural dish, or simply list the ingredients you want to use up.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowScanner(true)}
+                className="shrink-0 ml-3 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-primary/30 bg-primary/5 text-primary text-sm font-semibold hover:bg-primary/10 hover:border-primary/50 transition-all"
+              >
+                <Camera className="w-4 h-4" />
+                <span className="hidden sm:inline">Scan</span>
+              </button>
             </div>
           </div>
 
@@ -187,6 +206,12 @@ export function AIRecipeGenerator({ isOpen, onClose, onGenerate }: AIRecipeGener
           
         </div>
       </div>
+
+      <ImageIngredientScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onIngredientsDetected={handleScannedIngredients}
+      />
     </Modal>
   );
 }

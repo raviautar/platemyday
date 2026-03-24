@@ -5,7 +5,8 @@ import { useSettings } from '@/contexts/SettingsContext';
 import { UserPreferences } from '@/types';
 import { DEFAULT_USER_PREFERENCES } from '@/lib/constants';
 import { searchIngredients } from '@/lib/ingredients';
-import { Package, Plus, X, ChevronDown } from 'lucide-react';
+import { ImageIngredientScanner } from '@/components/ui/ImageIngredientScanner';
+import { Package, Plus, X, ChevronDown, Camera } from 'lucide-react';
 
 interface PantryBarProps {
   compact?: boolean;
@@ -19,6 +20,7 @@ export function PantryBar({ compact }: PantryBarProps) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(-1);
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [showScanner, setShowScanner] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -51,6 +53,14 @@ export function PantryBar({ compact }: PantryBarProps) {
 
   const removeIngredient = (ingredient: string) => {
     handleUpdate(prefs.pantryIngredients.filter(i => i !== ingredient));
+  };
+
+  const handleScannedIngredients = (ingredients: string[]) => {
+    const existing = new Set(prefs.pantryIngredients.map(i => i.toLowerCase()));
+    const newIngredients = ingredients.filter(i => !existing.has(i.toLowerCase()));
+    if (newIngredients.length > 0) {
+      handleUpdate([...prefs.pantryIngredients, ...newIngredients]);
+    }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -169,6 +179,14 @@ export function PantryBar({ compact }: PantryBarProps) {
               >
                 <Plus className="w-4 h-4" />
               </button>
+              <button
+                onClick={() => setShowScanner(true)}
+                className="rounded-lg bg-primary/10 text-primary hover:bg-primary/15 transition-colors px-2.5 py-2"
+                aria-label="Scan ingredients from photo"
+                title="Scan ingredients from photo"
+              >
+                <Camera className="w-4 h-4" />
+              </button>
             </div>
             {suggestions.length > 0 && (
               <div className="absolute z-20 w-full mt-1 bg-white border border-border/60 rounded-lg shadow-lg max-h-48 overflow-y-auto">
@@ -225,6 +243,12 @@ export function PantryBar({ compact }: PantryBarProps) {
           )}
         </div>
       )}
+
+      <ImageIngredientScanner
+        isOpen={showScanner}
+        onClose={() => setShowScanner(false)}
+        onIngredientsDetected={handleScannedIngredients}
+      />
     </div>
   );
 }

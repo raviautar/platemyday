@@ -228,6 +228,12 @@ async function parseJsonBody(request: Request): Promise<unknown | null> {
   }
 }
 
+export const extractIngredientsRequestSchema = z.object({
+  images: z.array(z.string().max(6_000_000)).min(1).max(10),
+  userId: optionalActorIdSchema,
+  anonymousId: optionalActorIdSchema,
+});
+
 export const editRecipeRequestSchema = z.object({
   currentRecipe: z.object({
     title: z.string().trim().min(1).max(300),

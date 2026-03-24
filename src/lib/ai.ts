@@ -44,6 +44,10 @@ export const consolidatedShoppingListSchema = z.object({
   pantryItems: z.array(z.string()).describe('Common staples the cook likely already has at home (e.g. salt, pepper, olive oil, rice, flour, sugar, soy sauce, butter). List with approximate total quantities needed.'),
 });
 
+export const ingredientExtractionSchema = z.object({
+  ingredients: z.array(z.string()).describe('List of food ingredient names detected in the images'),
+});
+
 export type AIRecipeOutput = z.infer<typeof recipeSchema>;
 export type AIMealPlanDayOutput = z.infer<typeof mealPlanDaySchema>;
 export type AIConsolidatedShoppingList = z.infer<typeof consolidatedShoppingListSchema>;

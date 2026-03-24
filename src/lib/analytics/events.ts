@@ -15,6 +15,9 @@ export const EVENTS = {
   AI_RECIPE_SAVED: 'ai_recipe_saved',
   AI_RECIPE_DISCARDED: 'ai_recipe_discarded',
   SUGGESTED_RECIPE_SAVED: 'suggested_recipe_saved',
+  INGREDIENT_SCAN_STARTED: 'ingredient_scan_started',
+  INGREDIENT_SCAN_COMPLETED: 'ingredient_scan_completed',
+  INGREDIENT_SCAN_FAILED: 'ingredient_scan_failed',
 
   // ── Metric 2: User Activation Rate ────────────────────────────────
   FIRST_MEAL_PLAN_GENERATED: 'first_meal_plan_generated',
