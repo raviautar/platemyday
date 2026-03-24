@@ -25,7 +25,7 @@ export async function POST(req: Request) {
     });
     if (validation instanceof Response) return validation;
 
-    const { recipes, systemPrompt, preferences, recipeMix, weekStartDay, numberOfDays, anonymousId: clientAnonymousId } = validation.data;
+    const { recipes, systemPrompt, preferences, strictIngredients, recipeMix, weekStartDay, numberOfDays, anonymousId: clientAnonymousId } = validation.data;
 
     // Server-side identity: trust session, not request body
     const { userId: authUserId } = await getAuthUser();
@@ -74,8 +74,19 @@ export async function POST(req: Request) {
     const orderedDays = Array.from({ length: numberOfDays }, (_, index) => daysOrder[(startIndex + index) % daysOrder.length]);
 
     const hasPantry = pantryIngredients.length > 0;
+    const useStrictIngredients = strictIngredients && hasPantry;
     const pantrySection = hasPantry
-      ? `\n## PANTRY INGREDIENTS (TOP PRIORITY)
+      ? useStrictIngredients
+        ? `\n## STRICT PANTRY MODE — USE ONLY THESE INGREDIENTS
+The user wants meals made EXCLUSIVELY from these ingredients: ${pantryIngredients.join(', ')}
+
+RULES:
+- Use ONLY the ingredients listed above. Do NOT add any extra grocery items.
+- Basic seasonings (salt, pepper, cooking oil, water) are allowed without being listed.
+- Be creative with combinations to maximize variety across meals.
+- If the ingredient list is small, keep recipes simple (fewer ingredients per meal) rather than inventing items the user doesn't have.
+- Every recipe must be realistically cookable with only these ingredients.`
+        : `\n## PANTRY INGREDIENTS (TOP PRIORITY)
 The user has these ingredients on hand that MUST be used as much as possible: ${pantryIngredients.join(', ')}
 
 This is the #1 priority: design meals around these ingredients to minimize food waste. Every ingredient listed should appear in at least one meal. Build recipes that creatively combine these pantry items. Only add additional grocery items when necessary to complete a recipe.`
@@ -114,7 +125,7 @@ ${hasRecipes ? `1. ${mixInstruction} When using existing recipes, include their 
 4. Snacks should be varied and nutritious (e.g., yogurt parfait, hummus with veggies, trail mix, fruit smoothie, etc.)
 5. Days must be in this exact order: ${orderedDays.join(', ')}
 6. For EVERY meal, include estimatedNutrition with realistic calorie and macro estimates per serving
-${hasPantry ? `7. PANTRY PRIORITY: Recipes MUST incorporate the pantry ingredients (${pantryIngredients.join(', ')}). Spread them across the entire week. The shopping list should be minimal beyond these items.` : ''}`;
+${useStrictIngredients ? `7. STRICT INGREDIENTS: Use ONLY the pantry ingredients (${pantryIngredients.join(', ')}) plus basic seasonings. Do NOT include any ingredients the user hasn't listed. If variety is limited, repeat simpler meals rather than adding unlisted ingredients.` : hasPantry ? `7. PANTRY PRIORITY: Recipes MUST incorporate the pantry ingredients (${pantryIngredients.join(', ')}). Spread them across the entire week. The shopping list should be minimal beyond these items.` : ''}`;
 
     const generationStart = Date.now();
 

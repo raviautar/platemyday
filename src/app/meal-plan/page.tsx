@@ -17,7 +17,7 @@ import { useBilling } from '@/contexts/BillingContext';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
 import Link from 'next/link';
-import { History, ShoppingCart, AlertTriangle, RefreshCw, Trash2, Crown } from 'lucide-react';
+import { History, ShoppingCart, AlertTriangle, RefreshCw, Trash2, Crown, Package } from 'lucide-react';
 
 export default function MealPlanPage() {
   const { recipes } = useRecipes();
@@ -34,6 +34,7 @@ export default function MealPlanPage() {
     isPaywalled,
     partialPlan,
     isStreaming,
+    lastStrictIngredients,
     handleGenerate,
     retryGeneration,
     handleAddToLibrary,
@@ -169,7 +170,7 @@ export default function MealPlanPage() {
       </div>
 
       <MealPlanControls
-        onGenerate={(recipeMix, numberOfDays) => handleGenerate(recipeMix, numberOfDays)}
+        onGenerate={(recipeMix, numberOfDays, strictIngredients) => handleGenerate(recipeMix, numberOfDays, strictIngredients)}
         hasExistingPlan={!!weekPlan}
         loading={loading}
       />
@@ -181,9 +182,22 @@ export default function MealPlanPage() {
       <div className="mt-6">
         {loading ? (
           <>
-            <div className="bg-white rounded-xl border border-border mb-6">
+            <div className="bg-white rounded-xl border border-border mb-4">
               <GeneratingAnimation compact={isStreaming ? true : false} />
             </div>
+            {lastStrictIngredients ? (
+              <div className="flex items-center gap-2 px-3 py-2.5 mb-4 rounded-lg bg-primary/5 border border-primary/20 animate-fade-in">
+                <Package className="w-4 h-4 text-primary shrink-0" />
+                <p className="text-xs text-primary font-medium">Using only your pantry items</p>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-2.5 mb-4 rounded-lg bg-secondary/10 border border-secondary/30 animate-fade-in">
+                <ShoppingCart className="w-4 h-4 text-secondary-dark shrink-0" />
+                <p className="text-xs text-secondary-dark font-medium">
+                  Your plan may include new ingredients — check the shopping cart when it&apos;s ready
+                </p>
+              </div>
+            )}
             {isStreaming && (
               <StreamingMealView partialPlan={partialPlan!} />
             )}

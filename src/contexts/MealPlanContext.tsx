@@ -76,7 +76,8 @@ interface MealPlanContextType {
   isPaywalled: boolean;
   partialPlan: PartialPlan | null;
   isStreaming: boolean;
-  startGeneration: (preferences: string, systemPrompt?: string, recipeMix?: string, numberOfDays?: number) => void;
+  lastStrictIngredients: boolean;
+  startGeneration: (preferences: string, systemPrompt?: string, recipeMix?: string, numberOfDays?: number, strictIngredients?: boolean) => void;
   retryGeneration: () => void;
   clearGenerationError: () => void;
 }
@@ -131,7 +132,9 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
   const [generationError, setGenerationError] = useState<string | null>(null);
   const [isPaywalled, setIsPaywalled] = useState(false);
   const [partialPlan, setPartialPlan] = useState<PartialPlan | null>(null);
+  const [lastStrictIngredients, setLastStrictIngredients] = useState(false);
   const lastPreferencesRef = useRef('');
+  const lastStrictIngredientsRef = useRef(false);
 
   const isStreaming = generating && !!partialPlan && !!partialPlan.days && partialPlan.days.length > 0;
 
@@ -587,12 +590,14 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     return plan;
   }, [getWeekStartDate, settings.weekStartDay]);
 
-  const startGeneration = useCallback((preferences: string, systemPrompt?: string, recipeMix?: string, numberOfDays?: number) => {
+  const startGeneration = useCallback((preferences: string, systemPrompt?: string, recipeMix?: string, numberOfDays?: number, strictIngredients?: boolean) => {
     setGenerating(true);
     setGenerationError(null);
     setIsPaywalled(false);
     setPartialPlan(null);
     lastPreferencesRef.current = preferences;
+    lastStrictIngredientsRef.current = strictIngredients ?? false;
+    setLastStrictIngredients(strictIngredients ?? false);
     const isFirstPlan = !weekPlan;
     const generationStartTime = Date.now();
 
@@ -600,6 +605,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
       has_existing_plan: !!weekPlan,
       has_preferences: !!preferences,
       recipe_library_size: recipes.length,
+      strict_ingredients: strictIngredients ?? false,
     });
 
     const MAX_RETRIES = 2;
@@ -612,6 +618,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
           recipes: recipes.map(r => ({ id: r.id, title: r.title, tags: r.tags })),
           systemPrompt: systemPrompt || settings.mealPlanSystemPrompt,
           preferences,
+          strictIngredients: strictIngredients ?? false,
           recipeMix: recipeMix || 'balanced',
           weekStartDay: settings.weekStartDay,
           numberOfDays: numberOfDays ?? 3,
@@ -757,7 +764,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
 
   const retryGeneration = useCallback(() => {
     setGenerationError(null);
-    startGeneration(lastPreferencesRef.current);
+    startGeneration(lastPreferencesRef.current, undefined, undefined, undefined, lastStrictIngredientsRef.current);
   }, [startGeneration]);
 
   const clearGenerationError = useCallback(() => {
@@ -793,6 +800,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     isPaywalled,
     partialPlan,
     isStreaming,
+    lastStrictIngredients,
     startGeneration,
     retryGeneration,
     clearGenerationError,
@@ -802,7 +810,7 @@ export function MealPlanProvider({ children }: { children: React.ReactNode }) {
     historyLoading, loading, shoppingList, shoppingPantryItems, shoppingListLoading,
     shoppingListUpdated, nutritionUpdated, dismissShoppingListUpdated, dismissNutritionUpdated,
     addPantryItemToShoppingList,
-    generating, generationError, isPaywalled, partialPlan, isStreaming,
+    generating, generationError, isPaywalled, partialPlan, isStreaming, lastStrictIngredients,
     startGeneration, retryGeneration, clearGenerationError,
   ]);
 

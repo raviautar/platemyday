@@ -20,14 +20,15 @@ export function useMealPlanGeneration() {
     isPaywalled,
     partialPlan,
     isStreaming,
+    lastStrictIngredients,
     startGeneration,
     retryGeneration,
   } = useMealPlan();
   const { track } = useAnalytics();
   const { showToast } = useToast();
 
-  const handleGenerate = useCallback(async (recipeMix?: RecipeMix, numberOfDays?: number) => {
-    startGeneration('', undefined, recipeMix, numberOfDays);
+  const handleGenerate = useCallback(async (recipeMix?: RecipeMix, numberOfDays?: number, strictIngredients?: boolean) => {
+    startGeneration('', undefined, recipeMix, numberOfDays, strictIngredients);
   }, [startGeneration]);
 
   const handleAddToLibrary = useCallback(async (suggestedRecipe: SuggestedRecipe) => {
@@ -69,6 +70,7 @@ export function useMealPlanGeneration() {
     isPaywalled,
     partialPlan,
     isStreaming,
+    lastStrictIngredients,
     handleGenerate,
     retryGeneration,
     handleAddToLibrary,

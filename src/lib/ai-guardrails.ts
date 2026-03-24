@@ -54,6 +54,7 @@ export const generateMealPlanRequestSchema = z.object({
   recipes: z.array(recipeRefSchema).max(500).default([]),
   systemPrompt: optionalSystemPromptSchema,
   preferences: z.string().trim().max(4000).optional(),
+  strictIngredients: z.boolean().optional().default(false),
   recipeMix: z.enum(['all_new', 'mostly_new', 'balanced', 'mostly_existing', 'all_existing']).optional().default('balanced'),
   weekStartDay: z.enum(DAYS_OF_WEEK).optional().default('Monday'),
   numberOfDays: z.number().int().min(1).max(14).optional().default(3),

@@ -7,7 +7,7 @@ import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { Modal } from '@/components/ui/Modal';
 import { PreferencesEditor } from '@/components/settings/PreferencesEditor';
 import { PantryBar } from '@/components/meal-plan/PantryBar';
-import { Settings2, Sparkles, Zap, X, BookOpen, CalendarDays, ChevronDown } from 'lucide-react';
+import { Settings2, Sparkles, Zap, X, BookOpen, CalendarDays, ChevronDown, Package, AlertCircle } from 'lucide-react';
 import { useBilling } from '@/contexts/BillingContext';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useRecipes } from '@/contexts/RecipeContext';
@@ -26,7 +26,7 @@ const RECIPE_MIX_OPTIONS: { value: RecipeMix; label: string; description: string
 const DAY_COUNT_OPTIONS = [1, 3, 5, 7, 10, 14] as const;
 
 interface MealPlanControlsProps {
-  onGenerate: (recipeMix: RecipeMix, numberOfDays: number) => Promise<void>;
+  onGenerate: (recipeMix: RecipeMix, numberOfDays: number, strictIngredients: boolean) => Promise<void>;
   hasExistingPlan: boolean;
   loading: boolean;
 }
@@ -40,6 +40,7 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
   const [showRecipeMix, setShowRecipeMix] = useState(false);
   const [numberOfDays, setNumberOfDays] = useState(3);
   const [showDayCount, setShowDayCount] = useState(false);
+  const [strictIngredients, setStrictIngredients] = useState(false);
 
   const prefs = { ...DEFAULT_USER_PREFERENCES, ...settings.preferences };
   const hasCustomizations =
@@ -47,12 +48,51 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
     (prefs.mealNotes?.length ?? 0) > 0;
 
   const hasLibraryRecipes = recipes.length > 0;
+  const pantryCount = prefs.pantryIngredients?.length ?? 0;
+  const hasPantry = pantryCount > 0;
+  const MIN_STRICT_INGREDIENTS = 5;
 
   return (
     <>
       <div className="space-y-3">
         {/* Pantry Bar — hero section */}
         <PantryBar />
+
+        {/* Strict Ingredients Toggle */}
+        {hasPantry && (
+          <div>
+            <button
+              type="button"
+              onClick={() => setStrictIngredients(!strictIngredients)}
+              className={`w-full text-left p-3 sm:p-4 rounded-xl border-2 transition-all duration-300 flex items-center justify-between group ${
+                strictIngredients
+                  ? 'border-primary bg-primary/5 shadow-md shadow-primary/10'
+                  : 'border-border bg-white hover:border-primary/40 hover:bg-surface/50 shadow-sm'
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`p-2.5 rounded-xl transition-all duration-300 ${strictIngredients ? 'bg-primary text-white scale-110 shadow-sm' : 'bg-surface-dark text-muted group-hover:bg-primary/10 group-hover:text-primary'}`}>
+                  <Package className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className={`font-semibold text-sm sm:text-base transition-colors duration-300 ${strictIngredients ? 'text-primary' : 'text-foreground'}`}>Use only what I have</h4>
+                  <p className="text-xs text-muted mt-0.5 font-medium">No extra shopping items, stick to my pantry</p>
+                </div>
+              </div>
+              <div className={`relative w-12 h-6 rounded-full transition-colors duration-300 shrink-0 shadow-inner ${strictIngredients ? 'bg-primary' : 'bg-border/60'}`}>
+                <span className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow-md transition-transform duration-300 ${strictIngredients ? 'translate-x-6' : ''}`} />
+              </div>
+            </button>
+            {strictIngredients && pantryCount < MIN_STRICT_INGREDIENTS && (
+              <div className="mt-2 flex items-start gap-2 px-3 py-2 rounded-lg bg-amber-50 border border-amber-200">
+                <AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+                <p className="text-xs text-amber-700">
+                  With only {pantryCount} ingredient{pantryCount === 1 ? '' : 's'}, your plan may have limited variety. Add more pantry items for better results.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Recipe Mix + Generate */}
         <div className="bg-white rounded-xl border border-border p-3 sm:p-4 space-y-3">
@@ -158,7 +198,7 @@ export function MealPlanControls({ onGenerate, hasExistingPlan, loading }: MealP
 
             <div className="min-w-0">
               <Button
-                onClick={() => onGenerate(recipeMix, numberOfDays)}
+                onClick={() => onGenerate(recipeMix, numberOfDays, strictIngredients)}
                 disabled={loading}
                 size="lg"
                 className="w-full gap-1.5 sm:gap-2 px-3 sm:px-6 py-2.5 sm:py-3 text-sm sm:text-base min-w-0"
