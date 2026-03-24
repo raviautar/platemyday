@@ -182,9 +182,6 @@ export default function MealPlanPage() {
       <div className="mt-6">
         {loading ? (
           <>
-            <div className="bg-white rounded-xl border border-border mb-4">
-              <GeneratingAnimation compact={isStreaming ? true : false} />
-            </div>
             {lastStrictIngredients ? (
               <div className="flex items-center gap-2 px-3 py-2.5 mb-4 rounded-lg bg-primary/5 border border-primary/20 animate-fade-in">
                 <Package className="w-4 h-4 text-primary shrink-0" />
@@ -198,6 +195,9 @@ export default function MealPlanPage() {
                 </p>
               </div>
             )}
+            <div className="bg-white rounded-xl border border-border mb-4">
+              <GeneratingAnimation compact={isStreaming ? true : false} />
+            </div>
             {isStreaming && (
               <StreamingMealView partialPlan={partialPlan!} />
             )}
