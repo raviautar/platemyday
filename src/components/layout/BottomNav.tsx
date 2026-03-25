@@ -6,8 +6,8 @@ import { Heart, Calendar, Settings } from 'lucide-react';
 import { useMealPlanOptional } from '@/contexts/MealPlanContext';
 
 const navItems = [
-  { href: '/meal-plan', label: 'Meal Plan', icon: Calendar },
   { href: '/recipes', label: 'Recipes', icon: Heart },
+  { href: '/meal-plan', label: 'Meal Plan', icon: Calendar },
   { href: '/customize', label: 'Preferences', icon: Settings },
 ];
 

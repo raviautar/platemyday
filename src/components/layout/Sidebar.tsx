@@ -9,8 +9,8 @@ import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
 
 const navItems = [
-  { href: '/meal-plan', label: 'Meal Plan', icon: Calendar },
   { href: '/recipes', label: 'Recipes', icon: Heart },
+  { href: '/meal-plan', label: 'Meal Plan', icon: Calendar },
   { href: '/customize', label: 'Preferences', icon: Settings },
   { href: '/upgrade', label: 'Upgrade', icon: Crown },
 ];

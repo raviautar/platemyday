@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { UserCircle, ArrowRight, Leaf, Package, Sparkles, Crown, ChevronDown } from 'lucide-react';
+import { UserCircle, ArrowRight, Leaf, Package, Sparkles, Crown, ChevronDown, ChefHat, Calendar } from 'lucide-react';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { EVENTS } from '@/lib/analytics/events';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
@@ -144,11 +144,11 @@ export default function HomePage() {
             {/* CTA — primary Link is always server-rendered for crawlers */}
             <div className="flex flex-col items-center gap-3">
               <Link
-                href="/meal-plan"
-                onClick={() => track(EVENTS.LANDING_CTA_CLICKED, { cta: 'hero_start_planning' })}
+                href="/recipes?create=quick-meal"
+                onClick={() => track(EVENTS.LANDING_CTA_CLICKED, { cta: 'hero_create_recipe' })}
                 className="inline-flex items-center justify-center gap-2 bg-gradient-to-br from-primary to-primary-dark hover:from-primary-dark hover:to-[#1F4D28] text-white font-semibold px-8 py-3.5 rounded-2xl shadow-lg shadow-primary/25 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] text-base sm:text-lg w-full sm:w-auto min-w-[220px]"
               >
-                Reduce My Food Waste
+                Create a Recipe
                 <ArrowRight className="w-5 h-5" />
               </Link>
               {isAuthLoaded && !isAuthenticated && (
@@ -166,21 +166,21 @@ export default function HomePage() {
             <div className="mt-10 flex justify-center gap-6 sm:gap-8 max-w-sm mx-auto">
               <div className="flex flex-col items-center gap-1.5">
                 <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                  <Package className="w-4.5 h-4.5 text-primary" />
+                  <ChefHat className="w-4.5 h-4.5 text-primary" />
                 </div>
-                <span className="text-[10px] sm:text-xs font-medium text-muted">Add pantry</span>
+                <span className="text-[10px] sm:text-xs font-medium text-muted">Describe a meal</span>
               </div>
               <div className="flex flex-col items-center gap-1.5">
                 <div className="w-10 h-10 rounded-full bg-accent/15 flex items-center justify-center">
                   <Sparkles className="w-4.5 h-4.5 text-accent-dark" />
                 </div>
-                <span className="text-[10px] sm:text-xs font-medium text-muted">Generate plan</span>
+                <span className="text-[10px] sm:text-xs font-medium text-muted">Get a recipe</span>
               </div>
               <div className="flex flex-col items-center gap-1.5">
                 <div className="w-10 h-10 rounded-full bg-secondary/15 flex items-center justify-center">
-                  <Leaf className="w-4.5 h-4.5 text-secondary-dark" />
+                  <Calendar className="w-4.5 h-4.5 text-secondary-dark" />
                 </div>
-                <span className="text-[10px] sm:text-xs font-medium text-muted">Waste less</span>
+                <span className="text-[10px] sm:text-xs font-medium text-muted">Build a plan</span>
               </div>
             </div>
 
@@ -244,7 +244,7 @@ export default function HomePage() {
 
           <div className="mt-12 text-center">
             <Link
-              href="/meal-plan"
+              href="/recipes?create=quick-meal"
               onClick={() => track(EVENTS.LANDING_CTA_CLICKED, { cta: 'how_it_works_cta' })}
               className="inline-flex items-center gap-2 bg-gradient-to-br from-primary to-primary-dark text-white font-semibold px-7 py-3 rounded-2xl shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
             >

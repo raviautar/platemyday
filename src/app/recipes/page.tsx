@@ -12,11 +12,13 @@ import { RecipeDetailView } from '@/components/recipes/RecipeDetailView';
 import { AIRecipeGenerator } from '@/components/recipes/AIRecipeGenerator';
 import { Input } from '@/components/ui/Input';
 import { RecipeFilters } from '@/types';
-import { Plus, Search, SlidersHorizontal } from 'lucide-react';
+import { Plus, Search, SlidersHorizontal, Calendar, ArrowRight, X } from 'lucide-react';
+import Link from 'next/link';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useUserIdentity } from '@/hooks/useUserIdentity';
 
 const UNSEEN_RECIPES_KEY = 'platemyday-unseen-recipes';
+const MEAL_PLAN_HINT_DISMISSED_KEY = 'platemyday-meal-plan-hint-dismissed';
 
 function getUnseenRecipeIds(): Set<string> {
   try {
@@ -46,12 +48,13 @@ export default function RecipesPage() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [filters, setFilters] = useState<RecipeFilters>({ tags: [], maxPrepTimeMinutes: null });
   const [unseenRecipeIds, setUnseenRecipeIds] = useState<Set<string>>(new Set());
+  const [mealPlanHintDismissed, setMealPlanHintDismissed] = useState(true);
   const filterRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Load unseen recipe IDs from localStorage on mount
   useEffect(() => {
     setUnseenRecipeIds(getUnseenRecipeIds());
+    setMealPlanHintDismissed(localStorage.getItem(MEAL_PLAN_HINT_DISMISSED_KEY) === 'true');
   }, []);
 
   // Consume the ?create=quick-meal param so the modal doesn't reopen on refresh
@@ -298,6 +301,37 @@ export default function RecipesPage() {
           </div>
         )}
       </div>
+
+      {/* Meal plan cross-promotion banner */}
+      {recipes.length >= 1 && !mealPlanHintDismissed && (
+        <div className="mb-4 flex items-center gap-3 p-3.5 rounded-xl border border-primary/20 bg-primary/5 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="p-2 rounded-lg bg-primary/10 text-primary shrink-0">
+            <Calendar className="w-4.5 h-4.5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-foreground">Ready for a full meal plan?</p>
+            <p className="text-xs text-muted mt-0.5">Turn your recipes into a weekly plan with a shopping list.</p>
+          </div>
+          <Link
+            href="/meal-plan"
+            className="shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary-dark transition-colors"
+          >
+            Try it
+            <ArrowRight className="w-3 h-3" />
+          </Link>
+          <button
+            type="button"
+            onClick={() => {
+              setMealPlanHintDismissed(true);
+              localStorage.setItem(MEAL_PLAN_HINT_DISMISSED_KEY, 'true');
+            }}
+            className="shrink-0 p-1 text-muted hover:text-foreground transition-colors"
+            aria-label="Dismiss"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       <div>
         <RecipeList
