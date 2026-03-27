@@ -53,3 +53,9 @@ public/workbox-*.js.map
 supabase/.temp/
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Android release signing (never commit)
+android/keystore.properties
+android/*.keystore
+android/*.jks
+android/local.properties

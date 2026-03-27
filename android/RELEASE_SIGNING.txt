@@ -1,0 +1,25 @@
+PlateMyDay — Android release (Google Play)
+
+0) Tooling (Option 1a — Homebrew): openjdk@21 + Android Studio
+   brew install openjdk@21
+   brew install --cask android-studio
+   android/gradle.properties sets org.gradle.java.home (JDK 21 required for Capacitor 8). Intel Homebrew: /usr/local/opt/openjdk@21/libexec/openjdk.jdk/Contents/Home
+   Optional: openjdk@17 is fine for other tools; Gradle uses 21 via gradle.properties.
+
+   Android SDK: Open Android Studio once (More Actions → SDK Manager if needed) so ~/Library/Android/sdk exists. Copy android/local.properties.example to android/local.properties and set sdk.dir (see .gitignore).
+
+1) Create an upload keystore (once), from repo root:
+   bun run android:keystore
+   (Manual alternative: android/keystore.properties.example + keytool; see script.)
+
+2) Never commit keystore.properties, platemyday-upload.keystore, or *.jks.
+
+3) From repo root:
+   bun run cap:sync
+   bun run android:bundle
+
+4) Upload android/app/build/outputs/bundle/release/app-release.aab to Play Console (Testing → Internal testing first).
+
+5) App Links: In Play Console → App integrity, copy the App signing key certificate SHA-256. Add it to public/.well-known/assetlinks.json inside sha256_cert_fingerprints (colon-separated hex). Deploy the site so https://platemyday.com/.well-known/assetlinks.json is served with Content-Type application/json.
+
+6) Each Play upload: bump versionCode in android/app/build.gradle (integer, must increase).

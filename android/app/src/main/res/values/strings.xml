@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">PlateMyDay</string>
+    <string name="title_activity_main">PlateMyDay</string>
+    <string name="package_name">com.raviautar.platemyday</string>
+    <string name="custom_url_scheme">com.raviautar.platemyday</string>
+</resources>

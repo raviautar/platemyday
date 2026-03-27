@@ -1,0 +1,2 @@
+## Copy to local.properties (gitignored). macOS default after Android Studio installs the SDK:
+sdk.dir=/Users/YOUR_USERNAME/Library/Android/sdk

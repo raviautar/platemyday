@@ -8,6 +8,7 @@ import {
   validateAndRateLimit,
   getUserPreferencesPrompt,
 } from '@/lib/ai-guardrails';
+import { RECIPE_EDIT_SYSTEM_RULES } from '@/lib/recipeEditConstraints';
 import { getAuthUser } from '@/lib/supabase/auth';
 
 export const runtime = 'nodejs';
@@ -32,7 +33,10 @@ export async function POST(req: Request) {
 
     const prefsPrompt = await getUserPreferencesPrompt(userId ?? undefined, anonymousId || undefined);
 
-    const prompt = `Here is an existing recipe:
+    const ingCount = currentRecipe.ingredients.length;
+    const stepCount = currentRecipe.instructions.length;
+
+    const prompt = `Here is an existing recipe (do not discard its structure unless the instruction explicitly requires add/remove of ingredients or steps):
 
 Title: ${currentRecipe.title}
 Description: ${currentRecipe.description}
@@ -42,20 +46,22 @@ Cook Time: ${currentRecipe.cookTimeMinutes} minutes
 Tags: ${currentRecipe.tags.join(', ')}
 ${currentRecipe.estimatedNutrition ? `Current Nutrition (per serving): ${currentRecipe.estimatedNutrition.calories} cal, ${currentRecipe.estimatedNutrition.protein}g protein, ${currentRecipe.estimatedNutrition.carbs}g carbs, ${currentRecipe.estimatedNutrition.fat}g fat` : ''}
 
-Ingredients:
+Ingredients (${ingCount} lines — keep this count unless the instruction clearly asks to add or remove an ingredient):
 ${currentRecipe.ingredients.map((i, idx) => `${idx + 1}. ${i}`).join('\n')}
 
-Instructions:
+Instructions (${stepCount} steps — keep this count unless the instruction clearly asks to add or remove a step):
 ${currentRecipe.instructions.map((i, idx) => `${idx + 1}. ${i}`).join('\n')}
 
-The user wants to modify this recipe with the following instruction: "${editPrompt}"
+User instruction (apply minimally; reuse unchanged text verbatim where possible): "${editPrompt}"
 
-Return the COMPLETE updated recipe with all fields. If the change fundamentally transforms the recipe (e.g., "completely new recipe"), feel free to change the title and all other fields. Always recalculate estimated nutrition based on the updated ingredients and servings.${prefsPrompt ? `\n\nUser preferences: ${prefsPrompt}` : ''}`;
+Return the full updated recipe object. Recalculate estimated nutrition when ingredients or servings change.${prefsPrompt ? `\n\nUser preferences: ${prefsPrompt}` : ''}`;
+
+    const combinedSystem = [RECIPE_EDIT_SYSTEM_RULES, systemPrompt].filter(Boolean).join('\n\n---\n\n');
 
     const result = await generateText({
       model: google('gemini-2.5-flash'),
       output: Output.object({ schema: recipeSchema }),
-      system: systemPrompt,
+      system: combinedSystem,
       prompt,
     });
 

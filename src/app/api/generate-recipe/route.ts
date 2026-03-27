@@ -70,7 +70,11 @@ export async function POST(req: Request) {
     const prefsPrompt = await getUserPreferencesPrompt(userId ?? undefined, anonymousId || undefined);
     let enhancedPrompt = prompt;
     if (strictIngredients) {
-      enhancedPrompt += '\n\nIMPORTANT: Use ONLY the ingredients mentioned above. Do not add extra ingredients beyond basic seasonings (salt, pepper, oil). Keep the recipe simple and focused on these ingredients.';
+      enhancedPrompt +=
+        '\n\nIMPORTANT: Use ONLY the ingredients the user listed. Do not add extra ingredients beyond basic seasonings (salt, pepper, oil). Keep the recipe simple and focused on those ingredients.';
+    } else {
+      enhancedPrompt +=
+        '\n\nIf the user named specific ingredients, center the recipe on those items. You may add only a few common pantry items when needed (salt, pepper, cooking oil, basic spices, or one small complementary item) so the dish makes sense. Do not swap their main ingredients for different foods and do not add many new primary ingredients—the list should stay close to what they specified.';
     }
     if (prefsPrompt) {
       enhancedPrompt += `\n\nUser preferences: ${prefsPrompt}`;

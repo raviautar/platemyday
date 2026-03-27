@@ -6,10 +6,20 @@
     "dev": "next dev",
     "build": "next build --webpack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "cap:sync": "bunx cap sync android",
+    "cap:open:android": "bunx cap open android",
+    "android:bundle": "cd android && ./gradlew bundleRelease",
+    "android:assemble-debug": "cd android && ./gradlew assembleDebug",
+    "android:keystore": "bash scripts/android-create-upload-keystore.sh"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.22",
+    "@capacitor/android": "^8.3.0",
+    "@capacitor/core": "^8.3.0",
+    "@capacitor/ios": "^8.3.0",
+    "@capacitor/splash-screen": "^8.0.1",
+    "@capacitor/status-bar": "^8.0.2",
     "@hello-pangea/dnd": "^18.0.1",
     "@sentry/nextjs": "^10",
     "@stripe/stripe-js": "^8.7.0",
@@ -28,6 +38,8 @@
     "zod": "^4.3.6"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
+    "@capacitor/cli": "^8.3.0",
     "@ducanh2912/next-pwa": "^10.2.9",
     "@playwright/test": "^1.58.2",
     "@tailwindcss/postcss": "^4",
@@ -38,6 +50,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
     "playwright": "^1.58.2",
+    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
